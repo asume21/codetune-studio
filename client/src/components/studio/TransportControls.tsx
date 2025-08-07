@@ -1,0 +1,104 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+
+export default function TransportControls() {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState("00:32");
+  const [totalTime] = useState("02:45");
+  const [bpm] = useState(120);
+  const [bar] = useState(5);
+  const [beat] = useState(2);
+  const [volume, setVolume] = useState(75);
+
+  const handlePlay = () => {
+    setIsPlaying(!isPlaying);
+    // TODO: Implement audio playback
+  };
+
+  const handleStop = () => {
+    setIsPlaying(false);
+    setCurrentTime("00:00");
+    // TODO: Implement audio stop
+  };
+
+  return (
+    <div className="bg-studio-panel border-t border-gray-700 px-6 py-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="secondary"
+            className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+          >
+            <i className="fas fa-step-backward"></i>
+          </Button>
+          
+          <Button
+            onClick={handlePlay}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+              isPlaying 
+                ? "bg-red-600 hover:bg-red-500" 
+                : "bg-studio-success hover:bg-green-500"
+            }`}
+          >
+            <i className={`fas ${isPlaying ? "fa-pause" : "fa-play"} text-lg`}></i>
+          </Button>
+          
+          <Button
+            onClick={handleStop}
+            className="bg-red-600 hover:bg-red-500 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+          >
+            <i className="fas fa-stop"></i>
+          </Button>
+          
+          <Button
+            variant="secondary"
+            className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+          >
+            <i className="fas fa-step-forward"></i>
+          </Button>
+          
+          <Button
+            variant="secondary"
+            className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+          >
+            <i className="fas fa-redo"></i>
+          </Button>
+        </div>
+        
+        <div className="flex items-center space-x-6">
+          <div className="text-sm">
+            <span className="font-mono text-lg">{currentTime}</span>
+            <span className="text-gray-400 ml-2">/ {totalTime}</span>
+          </div>
+          <div className="text-sm">
+            <span className="font-mono">Bar {bar}</span>
+            <span className="text-gray-400 ml-2">Beat {beat}</span>
+          </div>
+          <div className="text-sm">
+            <span className="font-mono">{bpm} BPM</span>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="secondary"
+            className="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm transition-colors"
+          >
+            <i className="fas fa-cog mr-2"></i>Settings
+          </Button>
+          <div className="flex items-center space-x-2">
+            <i className="fas fa-volume-up text-gray-400"></i>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={volume}
+              onChange={(e) => setVolume(Number(e.target.value))}
+              className="w-20"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
