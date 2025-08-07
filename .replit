@@ -38,8 +38,5 @@ task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
 
-[workflows.workflow.metadata]
-outputType = "webview"
-
 [agent]
 integrations = ["javascript_xai==1.0.0"]
