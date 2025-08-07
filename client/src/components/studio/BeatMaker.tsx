@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,10 +30,17 @@ export default function BeatMaker() {
   });
   
   const { toast } = useToast();
-  const { playDrumSound } = useAudio();
+  const { playDrumSound, initialize, isInitialized } = useAudio();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Initialize audio on first interaction
+  useEffect(() => {
+    if (!isInitialized) {
+      initialize();
+    }
+  }, [initialize, isInitialized]);
 
   const generateBeatMutation = useMutation({
     mutationFn: async (data: { style: string; bpm: number }) => {
@@ -107,10 +115,15 @@ export default function BeatMaker() {
     });
   };
 
-  const playPattern = () => {
+  const playPattern = async () => {
     if (isPlaying) {
       stopPattern();
       return;
+    }
+
+    // Ensure audio is initialized
+    if (!isInitialized) {
+      await initialize();
     }
 
     setIsPlaying(true);
@@ -123,8 +136,8 @@ export default function BeatMaker() {
         const step = prev % 16;
         
         // Play sounds for active steps
-        Object.entries(pattern).forEach(([track, steps]: [string, any]) => {
-          if (steps[step]) {
+        Object.entries(pattern).forEach(([track, steps]) => {
+          if (steps && steps[step]) {
             playDrumSound(track);
           }
         });
@@ -226,12 +239,12 @@ export default function BeatMaker() {
               </div>
               
               <div className="flex space-x-2">
-                {pattern[track.id as keyof BeatPattern].map((active, index) => (
+                {pattern[track.id as keyof BeatPattern]?.map((active, index) => (
                   <button
                     key={index}
                     onClick={() => {
                       toggleStep(track.id as keyof BeatPattern, index);
-                      if (!active) {
+                      if (!active && isInitialized) {
                         playDrumSound(track.id);
                       }
                     }}
@@ -244,6 +257,23 @@ export default function BeatMaker() {
                         ? "ring-2 ring-white ring-opacity-75" 
                         : ""
                     }`}
+                  >
+                    {index % 4 === 0 && (
+                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
+                        {(index / 4) + 1}
+                      </div>
+                    )}
+                  </button>
+                )) || Array(16).fill(false).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      toggleStep(track.id as keyof BeatPattern, index);
+                      if (isInitialized) {
+                        playDrumSound(track.id);
+                      }
+                    }}
+                    className="beat-pad w-8 h-8 rounded border bg-gray-700 hover:bg-gray-600 border-gray-600 transition-all relative"
                   >
                     {index % 4 === 0 && (
                       <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
