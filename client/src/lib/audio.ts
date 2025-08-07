@@ -1,8 +1,8 @@
 export class AudioEngine {
   private audioContext: AudioContext | null = null;
   private masterGain: GainNode | null = null;
-  private tracks: Map<string, AudioTrack> = new Map();
-  private isInitialized = false;
+  private initialized = false;
+  private currentlyPlaying: Map<string, OscillatorNode[]> = new Map();
 
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
@@ -26,7 +26,7 @@ export class AudioEngine {
 
   createOscillator(frequency: number, type: OscillatorType = "sine"): OscillatorNode {
     if (!this.audioContext) throw new Error("Audio context not initialized");
-    
+
     const oscillator = this.audioContext.createOscillator();
     oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
     oscillator.type = type;
@@ -35,146 +35,281 @@ export class AudioEngine {
 
   createGain(initialValue: number = 1): GainNode {
     if (!this.audioContext) throw new Error("Audio context not initialized");
-    
+
     const gain = this.audioContext.createGain();
     gain.gain.setValueAtTime(initialValue, this.audioContext.currentTime);
     return gain;
   }
 
-  playNote(frequency: number, duration: number = 0.5, volume: number = 0.3): void {
+  playNote(frequency: number, duration: number = 0.5, instrument: string = 'piano', velocity: number = 0.7) {
     if (!this.audioContext || !this.masterGain) return;
 
-    const oscillator = this.createOscillator(frequency, "sawtooth");
-    const gainNode = this.createGain(0);
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(this.masterGain);
+    const oscillators: OscillatorNode[] = [];
+    const gainNode = this.audioContext.createGain();
+    const filterNode = this.audioContext.createBiquad2Filter();
 
-    const now = this.audioContext.currentTime;
-    
-    // ADSR envelope
-    gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(volume, now + 0.01); // Attack
-    gainNode.gain.exponentialRampToValueAtTime(volume * 0.7, now + 0.1); // Decay
-    gainNode.gain.setValueAtTime(volume * 0.7, now + duration - 0.1); // Sustain
-    gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration); // Release
+    // Configure instrument presets
+    const presets = this.getInstrumentPreset(instrument);
 
-    oscillator.start(now);
-    oscillator.stop(now + duration);
+    // Create oscillators based on instrument type
+    presets.waveforms.forEach((waveform, index) => {
+      const osc = this.audioContext!.createOscillator();
+      osc.type = waveform;
+      osc.frequency.setValueAtTime(frequency * presets.detuning[index], this.audioContext!.currentTime);
+      oscillators.push(osc);
+      osc.connect(gainNode);
+    });
+
+    // Configure filter
+    filterNode.type = presets.filterType;
+    filterNode.frequency.setValueAtTime(presets.cutoff, this.audioContext.currentTime);
+    filterNode.Q.setValueAtTime(presets.resonance, this.audioContext.currentTime);
+
+    // ADSR Envelope
+    const baseVolume = velocity * presets.volume * 0.3;
+    gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(baseVolume, this.audioContext.currentTime + presets.attack);
+    gainNode.gain.exponentialRampToValueAtTime(baseVolume * presets.sustain, this.audioContext.currentTime + presets.attack + presets.decay);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration - presets.release);
+
+    gainNode.connect(filterNode);
+    filterNode.connect(this.masterGain);
+
+    // Start oscillators
+    oscillators.forEach(osc => {
+      osc.start(this.audioContext!.currentTime);
+      osc.stop(this.audioContext!.currentTime + duration);
+    });
+
+    // Track playing notes for stopping
+    const trackingKey = `${instrument}_${frequency}`;
+    this.currentlyPlaying.set(trackingKey, oscillators);
+
+    setTimeout(() => {
+      this.currentlyPlaying.delete(trackingKey);
+    }, duration * 1000);
   }
 
-  playDrumSound(type: string, volume: number = 0.5): void {
+  private getInstrumentPreset(instrument: string) {
+    const presets: { [key: string]: any } = {
+      piano: {
+        waveforms: ['sine', 'triangle'],
+        detuning: [1, 1.001],
+        volume: 1.0,
+        attack: 0.01,
+        decay: 0.3,
+        sustain: 0.7,
+        release: 1.0,
+        filterType: 'lowpass',
+        cutoff: 2000,
+        resonance: 1
+      },
+      bass: {
+        waveforms: ['sawtooth', 'square'],
+        detuning: [0.5, 0.501],
+        volume: 1.2,
+        attack: 0.01,
+        decay: 0.1,
+        sustain: 0.8,
+        release: 0.3,
+        filterType: 'lowpass',
+        cutoff: 400,
+        resonance: 4
+      },
+      lead: {
+        waveforms: ['sawtooth'],
+        detuning: [1],
+        volume: 0.8,
+        attack: 0.02,
+        decay: 0.2,
+        sustain: 0.6,
+        release: 0.5,
+        filterType: 'lowpass',
+        cutoff: 2500,
+        resonance: 6
+      },
+      strings: {
+        waveforms: ['sawtooth', 'triangle'],
+        detuning: [1, 1.002],
+        volume: 0.6,
+        attack: 0.2,
+        decay: 0.1,
+        sustain: 0.9,
+        release: 2.0,
+        filterType: 'lowpass',
+        cutoff: 3000,
+        resonance: 2
+      },
+      flute: {
+        waveforms: ['sine'],
+        detuning: [1],
+        volume: 0.7,
+        attack: 0.1,
+        decay: 0.2,
+        sustain: 0.8,
+        release: 0.8,
+        filterType: 'highpass',
+        cutoff: 800,
+        resonance: 1
+      },
+      synth: {
+        waveforms: ['square', 'sawtooth'],
+        detuning: [1, 0.99],
+        volume: 0.8,
+        attack: 0.05,
+        decay: 0.3,
+        sustain: 0.5,
+        release: 0.4,
+        filterType: 'lowpass',
+        cutoff: 1800,
+        resonance: 8
+      },
+      horn: {
+        waveforms: ['triangle', 'sawtooth'],
+        detuning: [1, 1.01],
+        volume: 0.9,
+        attack: 0.1,
+        decay: 0.2,
+        sustain: 0.7,
+        release: 1.5,
+        filterType: 'bandpass',
+        cutoff: 1500,
+        resonance: 3
+      }
+    };
+
+    return presets[instrument] || presets.piano;
+  }
+
+  playDrumSound(type: string, volume: number = 0.5) {
     if (!this.audioContext || !this.masterGain) return;
 
-    const now = this.audioContext.currentTime;
-    
+    const oscillator = this.audioContext.createOscillator();
+    const gainNode = this.audioContext.createGain();
+    const filterNode = this.audioContext.createBiquadFilter();
+
     switch (type) {
-      case "kick":
-        this.playKick(now, volume);
+      case 'kick':
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(60, this.audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(20, this.audioContext.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(volume * 1.2, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
+        filterNode.type = 'lowpass';
+        filterNode.frequency.setValueAtTime(150, this.audioContext.currentTime);
         break;
-      case "snare":
-        this.playSnare(now, volume);
+
+      case 'bass':
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(45, this.audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(25, this.audioContext.currentTime + 0.15);
+        gainNode.gain.setValueAtTime(volume * 1.5, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.8);
+        filterNode.type = 'lowpass';
+        filterNode.frequency.setValueAtTime(80, this.audioContext.currentTime);
         break;
-      case "hihat":
-        this.playHiHat(now, volume);
+
+      case 'snare':
+        const noiseBuffer = this.audioContext.createBuffer(1, this.audioContext.sampleRate * 0.1, this.audioContext.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < noiseBuffer.length; i++) {
+          output[i] = Math.random() * 2 - 1;
+        }
+        const noise = this.audioContext.createBufferSource();
+        noise.buffer = noiseBuffer;
+        gainNode.gain.setValueAtTime(volume * 0.4, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
+        filterNode.type = 'bandpass';
+        filterNode.frequency.setValueAtTime(2000, this.audioContext.currentTime);
+        filterNode.Q.setValueAtTime(1, this.audioContext.currentTime);
+        noise.connect(gainNode);
+        noise.start();
+        noise.stop(this.audioContext.currentTime + 0.2);
         break;
-      case "openhat":
-        this.playOpenHat(now, volume);
+
+      case 'hihat':
+      case 'openhat':
+        const duration = type === 'openhat' ? 0.3 : 0.05;
+        const hihatBuffer = this.audioContext.createBuffer(1, this.audioContext.sampleRate * duration, this.audioContext.sampleRate);
+        const hihatOutput = hihatBuffer.getChannelData(0);
+        for (let i = 0; i < hihatBuffer.length; i++) {
+          hihatOutput[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / hihatBuffer.length, type === 'openhat' ? 0.5 : 2);
+        }
+        const hihatNoise = this.audioContext.createBufferSource();
+        hihatNoise.buffer = hihatBuffer;
+        gainNode.gain.setValueAtTime(volume * (type === 'openhat' ? 0.15 : 0.1), this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+        filterNode.type = 'highpass';
+        filterNode.frequency.setValueAtTime(8000, this.audioContext.currentTime);
+        hihatNoise.connect(gainNode);
+        hihatNoise.start();
+        hihatNoise.stop(this.audioContext.currentTime + duration);
         break;
+
+      case 'clap':
+        // Create multiple short bursts for clap sound
+        for (let i = 0; i < 3; i++) {
+          const clapBuffer = this.audioContext.createBuffer(1, this.audioContext.sampleRate * 0.01, this.audioContext.sampleRate);
+          const clapOutput = clapBuffer.getChannelData(0);
+          for (let j = 0; j < clapBuffer.length; j++) {
+            clapOutput[j] = Math.random() * 2 - 1;
+          }
+          const clapNoise = this.audioContext.createBufferSource();
+          clapNoise.buffer = clapBuffer;
+          const clapGain = this.audioContext.createGain();
+          clapGain.gain.setValueAtTime(volume * 0.2, this.audioContext.currentTime + i * 0.01);
+          clapNoise.connect(clapGain);
+          clapGain.connect(this.masterGain);
+          clapNoise.start(this.audioContext.currentTime + i * 0.01);
+        }
+        return;
+
+      case 'crash':
+        const crashBuffer = this.audioContext.createBuffer(1, this.audioContext.sampleRate * 1.5, this.audioContext.sampleRate);
+        const crashOutput = crashBuffer.getChannelData(0);
+        for (let i = 0; i < crashBuffer.length; i++) {
+          crashOutput[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / crashBuffer.length, 0.1);
+        }
+        const crashNoise = this.audioContext.createBufferSource();
+        crashNoise.buffer = crashBuffer;
+        gainNode.gain.setValueAtTime(volume * 0.3, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1.5);
+        filterNode.type = 'highpass';
+        filterNode.frequency.setValueAtTime(3000, this.audioContext.currentTime);
+        crashNoise.connect(gainNode);
+        crashNoise.start();
+        crashNoise.stop(this.audioContext.currentTime + 1.5);
+        break;
+
+      default:
+        oscillator.frequency.setValueAtTime(200, this.audioContext.currentTime);
+        gainNode.gain.setValueAtTime(volume * 0.2, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
+    }
+
+    if (type !== 'snare' && type !== 'hihat' && type !== 'openhat' && type !== 'clap' && type !== 'crash') {
+      oscillator.connect(filterNode);
+      oscillator.start();
+      oscillator.stop(this.audioContext.currentTime + 0.8);
+    }
+
+    if (type !== 'clap') {
+      filterNode.connect(gainNode);
+      gainNode.connect(this.masterGain);
     }
   }
 
-  private playKick(time: number, volume: number): void {
-    if (!this.audioContext || !this.masterGain) return;
-
-    const oscillator = this.createOscillator(60, "sine");
-    const gainNode = this.createGain(0);
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(this.masterGain);
-
-    gainNode.gain.setValueAtTime(volume, time);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
-
-    oscillator.frequency.setValueAtTime(60, time);
-    oscillator.frequency.exponentialRampToValueAtTime(30, time + 0.1);
-
-    oscillator.start(time);
-    oscillator.stop(time + 0.5);
-  }
-
-  private playSnare(time: number, volume: number): void {
-    if (!this.audioContext || !this.masterGain) return;
-
-    // Create noise buffer
-    const bufferSize = this.audioContext.sampleRate * 0.2;
-    const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-    const data = buffer.getChannelData(0);
-    
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-
-    const noise = this.audioContext.createBufferSource();
-    noise.buffer = buffer;
-
-    const filter = this.audioContext.createBiquadFilter();
-    filter.type = "highpass";
-    filter.frequency.setValueAtTime(1000, time);
-
-    const gainNode = this.createGain(0);
-
-    noise.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(this.masterGain);
-
-    gainNode.gain.setValueAtTime(volume, time);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
-
-    noise.start(time);
-    noise.stop(time + 0.2);
-  }
-
-  private playHiHat(time: number, volume: number): void {
-    if (!this.audioContext || !this.masterGain) return;
-
-    const oscillator1 = this.createOscillator(8000, "square");
-    const oscillator2 = this.createOscillator(10000, "square");
-    
-    const gainNode = this.createGain(0);
-    
-    oscillator1.connect(gainNode);
-    oscillator2.connect(gainNode);
-    gainNode.connect(this.masterGain);
-
-    gainNode.gain.setValueAtTime(volume * 0.3, time);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
-
-    oscillator1.start(time);
-    oscillator1.stop(time + 0.1);
-    oscillator2.start(time);
-    oscillator2.stop(time + 0.1);
-  }
-
-  private playOpenHat(time: number, volume: number): void {
-    if (!this.audioContext || !this.masterGain) return;
-
-    const oscillator1 = this.createOscillator(8000, "square");
-    const oscillator2 = this.createOscillator(10000, "square");
-    
-    const gainNode = this.createGain(0);
-    
-    oscillator1.connect(gainNode);
-    oscillator2.connect(gainNode);
-    gainNode.connect(this.masterGain);
-
-    gainNode.gain.setValueAtTime(volume * 0.2, time);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
-
-    oscillator1.start(time);
-    oscillator1.stop(time + 0.5);
-    oscillator2.start(time);
-    oscillator2.stop(time + 0.5);
+  stopAllSounds() {
+    this.currentlyPlaying.forEach((oscillators, key) => {
+      oscillators.forEach(osc => {
+        try {
+          osc.stop();
+        } catch (e) {
+          // Oscillator may already be stopped
+        }
+      });
+    });
+    this.currentlyPlaying.clear();
   }
 
   setMasterVolume(volume: number): void {

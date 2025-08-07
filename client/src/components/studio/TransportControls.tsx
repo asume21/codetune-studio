@@ -21,6 +21,11 @@ export default function TransportControls() {
     // TODO: Implement audio stop
   };
 
+  const handleVolumeChange = (e) => {
+    setVolume(Number(e.target.value));
+    // TODO: Implement volume change on audio
+  };
+
   return (
     <div className="bg-studio-panel border-t border-gray-700 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -31,7 +36,7 @@ export default function TransportControls() {
           >
             <i className="fas fa-step-backward"></i>
           </Button>
-          
+
           <Button
             onClick={handlePlay}
             className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
@@ -42,21 +47,21 @@ export default function TransportControls() {
           >
             <i className={`fas ${isPlaying ? "fa-pause" : "fa-play"} text-lg`}></i>
           </Button>
-          
+
           <Button
             onClick={handleStop}
             className="bg-red-600 hover:bg-red-500 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
           >
             <i className="fas fa-stop"></i>
           </Button>
-          
+
           <Button
             variant="secondary"
             className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
           >
             <i className="fas fa-step-forward"></i>
           </Button>
-          
+
           <Button
             variant="secondary"
             className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
@@ -64,7 +69,7 @@ export default function TransportControls() {
             <i className="fas fa-redo"></i>
           </Button>
         </div>
-        
+
         <div className="flex items-center space-x-6">
           <div className="text-sm">
             <span className="font-mono text-lg">{currentTime}</span>
@@ -93,9 +98,10 @@ export default function TransportControls() {
               min="0"
               max="100"
               value={volume}
-              onChange={(e) => setVolume(Number(e.target.value))}
-              className="w-20"
+              onChange={handleVolumeChange}
+              className="w-20 h-2 bg-gray-700 rounded-lg appearance-none slider"
             />
+            <span className="text-sm text-gray-400 w-8">{volume}%</span>
           </div>
         </div>
       </div>

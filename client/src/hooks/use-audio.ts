@@ -30,7 +30,7 @@ export function useAudio(): UseAudioReturn {
     }
   }, [toast]);
 
-  const playNote = useCallback(async (note: string, octave: number = 4, duration: number = 0.5) => {
+  const playNote = useCallback(async (note: string, octave: number = 4, duration: number = 0.5, instrument: string = 'piano', velocity: number = 0.7) => {
     try {
       if (!isInitializedRef.current) {
         await initialize();
@@ -38,7 +38,7 @@ export function useAudio(): UseAudioReturn {
       
       await audioEngine.resumeContext();
       const frequency = AudioEngine.getNoteFrequency(note, octave);
-      audioEngine.playNote(frequency, duration);
+      audioEngine.playNote(frequency, duration, instrument, velocity);
     } catch (error) {
       console.error("Failed to play note:", error);
     }

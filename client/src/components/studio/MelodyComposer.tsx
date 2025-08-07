@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -6,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio, useMelodyPlayer } from "@/hooks/use-audio";
+import { Input } from "@/components/ui/input";
 
 interface Note {
   note: string;
@@ -25,7 +25,7 @@ interface Track {
   volume: number;
 }
 
-const instruments = [
+const instrumentsConfig = [
   { id: 'piano', name: 'Piano', color: 'bg-blue-500' },
   { id: 'strings', name: 'Strings', color: 'bg-green-500' },
   { id: 'flute', name: 'Flute', color: 'bg-purple-500' },
@@ -56,10 +56,10 @@ export default function MelodyComposer() {
   const [currentOctave, setCurrentOctave] = useState(4);
   const [gridSnapSize, setGridSnapSize] = useState(0.25); // 16th notes
   const [zoom, setZoom] = useState(1);
-  
+
   const { toast } = useToast();
   const { playNote } = useAudio();
-  const { playMelody, stopMelody } = useMelodyPlayer();
+  const { playMelody: playMelodySequence, stopMelody: stopMelodySequence } = useMelodyPlayer();
 
   const generateMelodyMutation = useMutation({
     mutationFn: async (data: { scale: string; style: string; complexity: number }) => {
@@ -121,7 +121,7 @@ export default function MelodyComposer() {
 
   const handlePlay = () => {
     if (isPlaying) {
-      stopMelody();
+      stopMelodySequence();
       setIsPlaying(false);
       setCurrentBeat(0);
     } else {
@@ -129,19 +129,19 @@ export default function MelodyComposer() {
         const track = tracks.find(t => t.id === note.track);
         return track && !track.muted;
       });
-      
-      playMelody(activeNotes, bpm);
+
+      playMelodySequence(activeNotes, bpm);
       setIsPlaying(true);
-      
+
       // Start beat counter
       const beatDuration = (60 / bpm) * 1000;
       const maxBeats = Math.max(...notes.map(n => n.start + n.duration), 8) * zoom;
-      
+
       let beat = 0;
       const beatInterval = setInterval(() => {
         beat += 0.25;
         setCurrentBeat(beat);
-        
+
         if (beat >= maxBeats) {
           clearInterval(beatInterval);
           setIsPlaying(false);
@@ -155,19 +155,19 @@ export default function MelodyComposer() {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     // Calculate beat position based on zoom
     const beatPosition = (x / rect.width) * (8 * zoom);
-    
+
     // Calculate note from y position (4 octaves visible, 48 chromatic notes)
     const noteIndex = Math.floor((rect.height - y) / (rect.height / 48));
     const octave = Math.floor(noteIndex / 12) + 2; // Starting from octave 2
     const noteInOctave = noteIndex % 12;
     const note = pianoKeys[noteInOctave].note;
-    
+
     // Snap to grid
     const snappedStart = Math.round(beatPosition / gridSnapSize) * gridSnapSize;
-    
+
     // Add new note to selected track
     const newNote: Note = {
       note,
@@ -176,9 +176,9 @@ export default function MelodyComposer() {
       start: snappedStart,
       track: selectedTrack,
     };
-    
+
     setNotes([...notes, newNote]);
-    playNote(note, octave, 0.3);
+    playNote(note, octave, gridSnapSize, tracks.find(t => t.id === selectedTrack)?.instrument || 'piano');
   };
 
   const removeNote = (index: number) => {
@@ -186,12 +186,12 @@ export default function MelodyComposer() {
   };
 
   const addTrack = () => {
-    const availableInstruments = instruments.filter(
+    const availableInstruments = instrumentsConfig.filter(
       inst => !tracks.some(track => track.instrument === inst.id)
     );
-    
+
     if (availableInstruments.length === 0) return;
-    
+
     const newInstrument = availableInstruments[0];
     const newTrack: Track = {
       id: `track${tracks.length + 1}`,
@@ -202,7 +202,7 @@ export default function MelodyComposer() {
       muted: false,
       volume: 70,
     };
-    
+
     setTracks([...tracks, newTrack]);
   };
 
@@ -219,9 +219,9 @@ export default function MelodyComposer() {
   };
 
   const updateTrackInstrument = (trackId: string, instrumentId: string) => {
-    const instrument = instruments.find(inst => inst.id === instrumentId);
+    const instrument = instrumentsConfig.find(inst => inst.id === instrumentId);
     if (!instrument) return;
-    
+
     setTracks(tracks.map(track => 
       track.id === trackId ? { 
         ...track, 
@@ -261,13 +261,61 @@ export default function MelodyComposer() {
     { value: 2, label: "1/2" },
   ];
 
+  const internalInstruments = [
+    { value: "piano", label: "Piano", icon: "fas fa-music" },
+    { value: "bass", label: "Bass", icon: "fas fa-guitar" },
+    { value: "lead", label: "Lead", icon: "fas fa-bolt" },
+    { value: "strings", label: "Strings", icon: "fas fa-violin" },
+    { value: "flute", label: "Flute", icon: "fas fa-wind" },
+    { value: "synth", label: "Synth", icon: "fas fa-wave-square" },
+    { value: "horn", label: "Horn", icon: "fas fa-trumpet" },
+  ];
+
+  const playMelodySequence = () => {
+    if (notes.length === 0) return;
+
+    setIsPlaying(true);
+    setCurrentBeat(0);
+
+    const beatDuration = 60000 / bpm; // ms per beat
+    let currentTime = 0;
+
+    notes.forEach((note, index) => {
+      setTimeout(() => {
+        playNote(note.note, note.octave, note.duration, tracks.find(t => t.id === note.track)?.instrument || 'piano');
+        setCurrentBeat(note.start + note.duration);
+
+        if (index === notes.length - 1) {
+          setTimeout(() => {
+            setIsPlaying(false);
+            setCurrentBeat(0);
+          }, note.duration * beatDuration);
+        }
+      }, currentTime);
+
+      currentTime += note.duration * beatDuration;
+    });
+  };
+
+  const stopMelodySequence = () => {
+    setIsPlaying(false);
+    setCurrentBeat(0);
+  };
+
+  const clearAllNotes = () => {
+    setNotes([]);
+    setIsPlaying(false);
+    setCurrentBeat(0);
+  };
+
+
   return (
     <div className="h-full p-6 flex flex-col space-y-4">
       {/* Transport and Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <h2 className="text-2xl font-heading font-bold">Melody Composer</h2>
-          
+
           <Button
             onClick={handlePlay}
             className={`${isPlaying ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
@@ -275,7 +323,7 @@ export default function MelodyComposer() {
             <i className={`fas ${isPlaying ? 'fa-stop' : 'fa-play'} mr-2`}></i>
             {isPlaying ? 'Stop' : 'Play'}
           </Button>
-          
+
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium">BPM:</label>
             <input
@@ -317,9 +365,9 @@ export default function MelodyComposer() {
             />
             <span className="text-sm w-8">{zoom}x</span>
           </div>
-          
+
           <Button
-            onClick={() => setNotes([])}
+            onClick={clearAllNotes}
             variant="outline"
             size="sm"
           >
@@ -327,7 +375,7 @@ export default function MelodyComposer() {
             Clear
           </Button>
         </div>
-        
+
         <div className="flex items-center space-x-4">
           <Select value={scale} onValueChange={setScale}>
             <SelectTrigger className="w-32">
@@ -341,7 +389,7 @@ export default function MelodyComposer() {
               ))}
             </SelectContent>
           </Select>
-          
+
           <Button
             onClick={handleGenerateAI}
             disabled={generateMelodyMutation.isPending}
@@ -359,7 +407,7 @@ export default function MelodyComposer() {
               </>
             )}
           </Button>
-          
+
           <Button
             onClick={handleSave}
             disabled={saveMelodyMutation.isPending}
@@ -381,7 +429,7 @@ export default function MelodyComposer() {
               Add
             </Button>
           </div>
-          
+
           {tracks.map((track) => (
             <div key={track.id} className={`p-3 rounded border ${selectedTrack === track.id ? 'border-studio-accent' : 'border-gray-600'} bg-gray-800`}>
               <div className="flex items-center justify-between mb-2">
@@ -404,7 +452,7 @@ export default function MelodyComposer() {
                   </button>
                 </div>
               </div>
-              
+
               <Select 
                 value={track.instrument} 
                 onValueChange={(val) => updateTrackInstrument(track.id, val)}
@@ -413,14 +461,14 @@ export default function MelodyComposer() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {instruments.map((inst) => (
+                  {instrumentsConfig.map((inst) => (
                     <SelectItem key={inst.id} value={inst.id}>
                       {inst.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              
+
               <button
                 onClick={() => setSelectedTrack(track.id)}
                 className={`w-full mt-2 px-2 py-1 text-xs rounded ${
@@ -446,7 +494,7 @@ export default function MelodyComposer() {
               Beat: {currentBeat.toFixed(2)} / {8 * zoom}
             </div>
           </div>
-          
+
           {/* Multi-track Piano Roll Grid */}
           <div 
             className="h-80 bg-gray-900 rounded border border-gray-600 relative overflow-hidden cursor-crosshair"
@@ -462,7 +510,7 @@ export default function MelodyComposer() {
                 />
               ))}
             </div>
-            
+
             {/* Horizontal grid lines (notes) */}
             <div className="absolute inset-0 pointer-events-none">
               {Array(48).fill(0).map((_, i) => {
@@ -482,7 +530,7 @@ export default function MelodyComposer() {
                 );
               })}
             </div>
-            
+
             {/* Playback cursor */}
             {isPlaying && (
               <div
@@ -492,15 +540,15 @@ export default function MelodyComposer() {
                 }}
               />
             )}
-            
+
             {/* Notes for all tracks */}
             {notes.map((note, index) => {
               const track = tracks.find(t => t.id === note.track);
               if (!track || !track.visible) return null;
-              
+
               const noteIndex = pianoKeys.findIndex(k => k.note === note.note);
               const yPosition = (47 - (noteIndex + (note.octave - 2) * 12)) * (100 / 48);
-              
+
               return (
                 <div
                   key={index}
@@ -524,7 +572,7 @@ export default function MelodyComposer() {
               );
             })}
           </div>
-          
+
           {/* Beat markers */}
           <div className="mt-2 text-xs text-gray-400">
             <div className="grid gap-8 text-center" style={{ gridTemplateColumns: `repeat(${Math.ceil(8 * zoom)}, 1fr)` }}>
@@ -534,32 +582,32 @@ export default function MelodyComposer() {
             </div>
           </div>
         </div>
-        
+
         {/* Virtual Piano */}
         <div className="w-80 bg-studio-panel border border-gray-600 rounded-lg p-4">
           <h3 className="font-medium mb-4">Virtual Piano</h3>
-          
+
           <div className="relative mb-4">
             {/* White Keys */}
             <div className="flex">
               {pianoKeys.filter(key => key.type === "white").map((key, index) => (
                 <button
                   key={`white-${index}`}
-                  onClick={() => playNote(key.note, currentOctave)}
+                  onClick={() => playNote(key.note, currentOctave, gridSnapSize, selectedInstrument)}
                   className={`piano-key w-8 h-32 border border-gray-400 rounded-b ${key.color} text-black text-xs flex items-end justify-center pb-2 hover:bg-gray-200`}
                 >
                   {key.note}
                 </button>
               ))}
             </div>
-            
+
             {/* Black Keys */}
             <div className="absolute top-0 flex">
               <div className="w-6"></div>
               {pianoKeys.filter(key => key.type === "black").map((key, index) => (
                 <button
                   key={`black-${index}`}
-                  onClick={() => playNote(key.note, currentOctave)}
+                  onClick={() => playNote(key.note, currentOctave, gridSnapSize, selectedInstrument)}
                   className={`piano-key w-4 h-20 border border-gray-700 rounded-b ${key.color} text-white text-xs flex items-end justify-center pb-1 hover:bg-gray-600 ${
                     index === 1 || index === 4 ? "mr-6" : "mr-4"
                   }`}
@@ -569,7 +617,7 @@ export default function MelodyComposer() {
               ))}
             </div>
           </div>
-          
+
           {/* Octave Controls */}
           <div className="flex items-center justify-between mb-6">
             <Button 

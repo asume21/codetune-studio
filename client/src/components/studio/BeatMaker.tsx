@@ -8,22 +8,31 @@ import { useAudio } from "@/hooks/use-audio";
 
 interface BeatPattern {
   kick: boolean[];
+  bass: boolean[];
   snare: boolean[];
   hihat: boolean[];
   openhat: boolean[];
+  clap: boolean[];
+  crash: boolean[];
 }
 
 export default function BeatMaker() {
   const [bpm, setBpm] = useState(120);
   const [pattern, setPattern] = useState<BeatPattern>({
     kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
+    bass: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false],
     snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
     hihat: [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
     openhat: [false, false, false, false, false, false, true, false, false, false, false, false, false, false, true, false],
+    clap: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+    crash: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
   });
   
   const { toast } = useToast();
   const { playDrumSound } = useAudio();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const generateBeatMutation = useMutation({
     mutationFn: async (data: { style: string; bpm: number }) => {
@@ -89,17 +98,67 @@ export default function BeatMaker() {
   const clearPattern = () => {
     setPattern({
       kick: Array(16).fill(false),
+      bass: Array(16).fill(false),
       snare: Array(16).fill(false),
       hihat: Array(16).fill(false),
       openhat: Array(16).fill(false),
+      clap: Array(16).fill(false),
+      crash: Array(16).fill(false),
     });
   };
 
+  const playPattern = () => {
+    if (isPlaying) {
+      stopPattern();
+      return;
+    }
+
+    setIsPlaying(true);
+    setCurrentStep(0);
+    
+    const stepDuration = (60 / bpm / 4) * 1000; // 16th notes in milliseconds
+    
+    intervalRef.current = setInterval(() => {
+      setCurrentStep(prev => {
+        const step = prev % 16;
+        
+        // Play sounds for active steps
+        Object.entries(pattern).forEach(([track, steps]: [string, any]) => {
+          if (steps[step]) {
+            playDrumSound(track);
+          }
+        });
+        
+        return prev + 1;
+      });
+    }, stepDuration);
+  };
+
+  const stopPattern = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setIsPlaying(false);
+    setCurrentStep(0);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
+
   const tracks = [
     { id: "kick", name: "Kick", color: "bg-red-500" },
+    { id: "bass", name: "Bass", color: "bg-purple-600" },
     { id: "snare", name: "Snare", color: "bg-blue-500" },
     { id: "hihat", name: "Hi-Hat", color: "bg-yellow-500" },
     { id: "openhat", name: "Open Hat", color: "bg-green-500" },
+    { id: "clap", name: "Clap", color: "bg-pink-500" },
+    { id: "crash", name: "Crash", color: "bg-orange-500" },
   ];
 
   return (
@@ -118,6 +177,13 @@ export default function BeatMaker() {
               max="200"
             />
           </div>
+          <Button
+            onClick={playPattern}
+            className={`${isPlaying ? 'bg-red-600 hover:bg-red-500' : 'bg-studio-success hover:bg-green-500'}`}
+          >
+            <i className={`fas ${isPlaying ? 'fa-stop' : 'fa-play'} mr-2`}></i>
+            {isPlaying ? 'Stop' : 'Play'}
+          </Button>
           <Button
             onClick={handleGenerateAI}
             disabled={generateBeatMutation.isPending}
@@ -165,16 +231,26 @@ export default function BeatMaker() {
                     key={index}
                     onClick={() => {
                       toggleStep(track.id as keyof BeatPattern, index);
-                      if (active) {
+                      if (!active) {
                         playDrumSound(track.id);
                       }
                     }}
-                    className={`beat-pad w-8 h-8 rounded border border-gray-600 transition-all ${
+                    className={`beat-pad w-8 h-8 rounded border transition-all relative ${
                       active 
-                        ? `${track.color} shadow-lg transform scale-105` 
-                        : "bg-gray-700 hover:bg-gray-600"
+                        ? `${track.color} shadow-lg transform scale-105 border-gray-400` 
+                        : "bg-gray-700 hover:bg-gray-600 border-gray-600"
+                    } ${
+                      isPlaying && (currentStep % 16) === index 
+                        ? "ring-2 ring-white ring-opacity-75" 
+                        : ""
                     }`}
-                  />
+                  >
+                    {index % 4 === 0 && (
+                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
+                        {(index / 4) + 1}
+                      </div>
+                    )}
+                  </button>
                 ))}
               </div>
               
