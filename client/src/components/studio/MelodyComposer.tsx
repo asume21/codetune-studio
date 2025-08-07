@@ -178,7 +178,7 @@ export default function MelodyComposer() {
     };
 
     setNotes([...notes, newNote]);
-    playNote(note, octave, gridSnapSize, tracks.find(t => t.id === selectedTrack)?.instrument || 'piano');
+    playNote(note, octave, gridSnapSize);
   };
 
   const removeNote = (index: number) => {
@@ -271,36 +271,6 @@ export default function MelodyComposer() {
     { value: "horn", label: "Horn", icon: "fas fa-trumpet" },
   ];
 
-  const playMelodySequence = () => {
-    if (notes.length === 0) return;
-
-    setIsPlaying(true);
-    setCurrentBeat(0);
-
-    const beatDuration = 60000 / bpm; // ms per beat
-    let currentTime = 0;
-
-    notes.forEach((note, index) => {
-      setTimeout(() => {
-        playNote(note.note, note.octave, note.duration, tracks.find(t => t.id === note.track)?.instrument || 'piano');
-        setCurrentBeat(note.start + note.duration);
-
-        if (index === notes.length - 1) {
-          setTimeout(() => {
-            setIsPlaying(false);
-            setCurrentBeat(0);
-          }, note.duration * beatDuration);
-        }
-      }, currentTime);
-
-      currentTime += note.duration * beatDuration;
-    });
-  };
-
-  const stopMelodySequence = () => {
-    setIsPlaying(false);
-    setCurrentBeat(0);
-  };
 
   const clearAllNotes = () => {
     setNotes([]);
@@ -593,7 +563,7 @@ export default function MelodyComposer() {
               {pianoKeys.filter(key => key.type === "white").map((key, index) => (
                 <button
                   key={`white-${index}`}
-                  onClick={() => playNote(key.note, currentOctave, gridSnapSize, selectedInstrument)}
+                  onClick={() => playNote(key.note, currentOctave, gridSnapSize)}
                   className={`piano-key w-8 h-32 border border-gray-400 rounded-b ${key.color} text-black text-xs flex items-end justify-center pb-2 hover:bg-gray-200`}
                 >
                   {key.note}
@@ -607,7 +577,7 @@ export default function MelodyComposer() {
               {pianoKeys.filter(key => key.type === "black").map((key, index) => (
                 <button
                   key={`black-${index}`}
-                  onClick={() => playNote(key.note, currentOctave, gridSnapSize, selectedInstrument)}
+                  onClick={() => playNote(key.note, currentOctave, gridSnapSize)}
                   className={`piano-key w-4 h-20 border border-gray-700 rounded-b ${key.color} text-white text-xs flex items-end justify-center pb-1 hover:bg-gray-600 ${
                     index === 1 || index === 4 ? "mr-6" : "mr-4"
                   }`}
