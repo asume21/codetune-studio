@@ -1,9 +1,18 @@
 import OpenAI from "openai";
 
+// Debug API key setup
+const apiKey = process.env.XAI_API_KEY;
+console.log("API Key Debug:", {
+  exists: !!apiKey,
+  length: apiKey?.length || 0,
+  prefix: apiKey?.substring(0, 4) || 'none',
+  format: apiKey?.startsWith('xai-') ? 'correct' : 'incorrect'
+});
+
 // Using xAI's Grok API as requested by the user instead of OpenAI
 const openai = new OpenAI({ 
   baseURL: "https://api.x.ai/v1",
-  apiKey: process.env.XAI_API_KEY
+  apiKey: apiKey
 });
 
 export async function translateCode(sourceCode: string, sourceLanguage: string, targetLanguage: string): Promise<string> {
