@@ -1,18 +1,29 @@
 import OpenAI from "openai";
 
 // Debug API key setup
-const apiKey = process.env.XAI_API_KEY;
+const apiKey = process.env.XAI_API_KEY?.trim();
 console.log("API Key Debug:", {
   exists: !!apiKey,
   length: apiKey?.length || 0,
   prefix: apiKey?.substring(0, 4) || 'none',
-  format: apiKey?.startsWith('xai-') ? 'correct' : 'incorrect'
+  suffix: apiKey?.substring(-4) || 'none',
+  format: apiKey?.startsWith('xai-') ? 'correct' : 'incorrect',
+  fullKey: apiKey ? `${apiKey.substring(0, 8)}...${apiKey.substring(-8)}` : 'none'
 });
+
+if (!apiKey) {
+  throw new Error("XAI_API_KEY environment variable is not set. Please add it to your Replit Secrets.");
+}
+
+if (!apiKey.startsWith('xai-')) {
+  throw new Error("Invalid XAI_API_KEY format. Key should start with 'xai-'");
+}
 
 // Using xAI's Grok API as requested by the user instead of OpenAI
 const openai = new OpenAI({ 
   baseURL: "https://api.x.ai/v1",
-  apiKey: apiKey
+  apiKey: apiKey,
+  timeout: 30000
 });
 
 export async function translateCode(sourceCode: string, sourceLanguage: string, targetLanguage: string): Promise<string> {
