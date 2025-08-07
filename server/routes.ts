@@ -8,7 +8,8 @@ import {
   scanCodeVulnerabilities, 
   generateLyrics, 
   getRhymeSuggestions, 
-  codeToMusic,
+  generateBeatFromLyrics,
+  codeToMusic, 
   chatAssistant 
 } from "./services/grok";
 import { 
@@ -27,9 +28,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/code/translate", async (req, res) => {
     try {
       const { sourceCode, sourceLanguage, targetLanguage } = insertCodeTranslationSchema.parse(req.body);
-      
+
       const translatedCode = await translateCode(sourceCode, sourceLanguage, targetLanguage);
-      
+
       const translation = await storage.createCodeTranslation(currentUserId, {
         sourceCode,
         sourceLanguage,
@@ -57,9 +58,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/beats/generate", async (req, res) => {
     try {
       const { style = "hip-hop", bpm = 120 } = req.body;
-      
+
       const pattern = await generateBeatPattern(style, bpm);
-      
+
       const beatPattern = await storage.createBeatPattern(currentUserId, {
         name: `${style} Beat`,
         pattern,
@@ -96,9 +97,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/melodies/generate", async (req, res) => {
     try {
       const { scale = "C Major", style = "electronic", complexity = 5 } = req.body;
-      
+
       const melodyData = await generateMelody(scale, style, complexity);
-      
+
       const melody = await storage.createMelody(currentUserId, {
         name: `${style} Melody`,
         notes: melodyData,
@@ -135,9 +136,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/security/scan", async (req, res) => {
     try {
       const { code, language } = insertVulnerabilityScanSchema.parse(req.body);
-      
+
       const results = await scanCodeVulnerabilities(code, language);
-      
+
       const scan = await storage.createVulnerabilityScan(currentUserId, {
         code,
         language,
@@ -164,9 +165,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/lyrics/generate", async (req, res) => {
     try {
       const { theme = "technology", genre = "hip-hop", mood = "upbeat" } = req.body;
-      
+
       const content = await generateLyrics(theme, genre, mood);
-      
+
       const lyrics = await storage.createLyrics(currentUserId, {
         title: `${theme} ${genre} Song`,
         content,
@@ -206,8 +207,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rhymes = await getRhymeSuggestions(word);
       res.json({ rhymes });
     } catch (error) {
-      console.error("Rhyme suggestions error:", error);
-      res.status(500).json({ error: "Failed to get rhyme suggestions" });
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Generate beat pattern from lyrics
+  app.post("/api/lyrics/generate-beat", async (req, res) => {
+    try {
+      const { lyrics, genre } = req.body;
+      const beatPattern = await generateBeatFromLyrics(lyrics, genre);
+      res.json({ beatPattern });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
     }
   });
 

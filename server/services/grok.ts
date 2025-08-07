@@ -202,6 +202,36 @@ export async function codeToMusic(code: string, language: string): Promise<any> 
   }
 }
 
+export async function generateBeatFromLyrics(lyrics: string, genre: string): Promise<any> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "grok-2-1212",
+      messages: [
+        {
+          role: "system",
+          content: `You are a music producer who analyzes lyrics to create matching beat patterns. 
+          Analyze the lyrics for rhythm, flow, syllable density, and mood, then generate a 16-step drum pattern.
+          Consider the genre: ${genre}. Return JSON with:
+          - beatPattern: object with kick, snare, hihat, openhat arrays (16 boolean values each)
+          - bpm: suggested tempo based on lyrical flow
+          - analysis: rhythm analysis, flow type, and reasoning
+          - suggestions: production tips for this lyrical style`
+        },
+        {
+          role: "user",
+          content: `Analyze these ${genre} lyrics and generate a matching beat pattern:\n\n${lyrics}`
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.6,
+    });
+
+    return JSON.parse(response.choices[0].message.content || "{}");
+  } catch (error) {
+    throw new Error("Failed to generate beat from lyrics: " + (error as Error).message);
+  }
+}
+
 export async function chatAssistant(message: string, context: string = ""): Promise<string> {
   try {
     const response = await openai.chat.completions.create({

@@ -91,6 +91,28 @@ Type here or use AI generation...`);
     },
   });
 
+  const generateBeatFromLyricsMutation = useMutation({
+    mutationFn: async (data: { lyrics: string; genre: string }) => {
+      const response = await apiRequest("POST", "/api/lyrics/generate-beat", data);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Beat Pattern Generated",
+        description: "AI has analyzed your lyrics and generated a matching beat pattern.",
+      });
+      // You can store the beat pattern in state or send it to the BeatMaker component
+      console.log("Generated beat pattern:", data.beatPattern);
+    },
+    onError: () => {
+      toast({
+        title: "Beat Generation Failed",
+        description: "Failed to generate beat from lyrics. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const { data: savedLyrics } = useQuery({
     queryKey: ["/api/lyrics"],
   });
@@ -233,6 +255,24 @@ Type here or use AI generation...`);
           >
             <i className="fas fa-save mr-2"></i>
             Save
+          </Button>
+          
+          <Button
+            onClick={() => generateBeatFromLyricsMutation.mutate({ lyrics: content, genre })}
+            disabled={generateBeatFromLyricsMutation.isPending || !content.trim()}
+            className="bg-green-600 hover:bg-green-500"
+          >
+            {generateBeatFromLyricsMutation.isPending ? (
+              <>
+                <i className="fas fa-spinner animate-spin mr-2"></i>
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-drum mr-2"></i>
+                Generate Beat
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -409,6 +449,45 @@ Type here or use AI generation...`);
                   <i className="fas fa-spinner animate-spin text-studio-accent"></i>
                 </div>
               )}
+            </div>
+          </div>
+          
+          {/* Lyric Analysis */}
+          <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
+            <h3 className="font-medium mb-3">Lyric Analysis</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Tempo Suggestion:</span>
+                <span className="text-studio-accent">
+                  {genre === "hip-hop" ? "80-90 BPM" : 
+                   genre === "pop" ? "120-130 BPM" :
+                   genre === "rock" ? "110-140 BPM" :
+                   genre === "r&b" ? "70-100 BPM" :
+                   genre === "electronic" ? "128-140 BPM" : "90-120 BPM"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Syllable Density:</span>
+                <span className="text-studio-accent">
+                  {Math.round((content.split(/\s+/).length / lineCount) * 10) / 10} words/line
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Rhythm Style:</span>
+                <span className="text-studio-accent">
+                  {wordCount / lineCount > 8 ? "Fast Flow" : 
+                   wordCount / lineCount > 5 ? "Medium Flow" : "Slow Flow"}
+                </span>
+              </div>
+              <Button
+                onClick={() => generateBeatFromLyricsMutation.mutate({ lyrics: content, genre })}
+                disabled={generateBeatFromLyricsMutation.isPending || !content.trim()}
+                className="w-full bg-green-600 hover:bg-green-500"
+                size="sm"
+              >
+                <i className="fas fa-drum mr-2"></i>
+                Analyze & Generate Beat
+              </Button>
             </div>
           </div>
           
