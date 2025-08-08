@@ -60,6 +60,8 @@ export default function MelodyComposer() {
   const { toast } = useToast();
   const { playNote } = useAudio();
   const { playMelody: playMelodySequence, stopMelody: stopMelodySequence } = useMelodyPlayer();
+  const [isMelodyPlaying, setIsMelodyPlaying] = useState(false);
+  const { playMelody, stopMelody } = useMelodyPlayer();
 
   const generateMelodyMutation = useMutation({
     mutationFn: async (data: { scale: string; style: string; complexity: number }) => {
@@ -278,6 +280,34 @@ export default function MelodyComposer() {
     setCurrentBeat(0);
   };
 
+  const generateMelody = () => {
+    generateMelodyMutation.mutate({
+      scale,
+      style: tracks.find(t => t.id === selectedTrack)?.instrument || 'electronic',
+      complexity: 5,
+    });
+  };
+
+  const handlePlayMelody = () => {
+    if (isMelodyPlaying) {
+      stopMelody();
+      setIsMelodyPlaying(false);
+    } else if (notes.length > 0) {
+      playMelody(notes, bpm);
+      setIsMelodyPlaying(true);
+      // Stop after melody duration
+      setTimeout(() => {
+        setIsMelodyPlaying(false);
+      }, notes.length * (60 / bpm) * 1000); // This duration calculation is a simplification
+    } else {
+      toast({
+        title: "No Melody",
+        description: "Generate a melody first to play it.",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   return (
     <div className="h-full p-6 flex flex-col space-y-4">
@@ -360,8 +390,12 @@ export default function MelodyComposer() {
             </SelectContent>
           </Select>
 
+          <Button onClick={handlePlayMelody} className="bg-studio-success hover:bg-green-500">
+            <i className={`fas ${isMelodyPlaying ? "fa-pause" : "fa-play"} mr-2`}></i>
+            {isMelodyPlaying ? "Stop" : "Play Melody"}
+          </Button>
           <Button
-            onClick={handleGenerateAI}
+            onClick={generateMelody}
             disabled={generateMelodyMutation.isPending}
             className="bg-studio-accent hover:bg-blue-500"
           >

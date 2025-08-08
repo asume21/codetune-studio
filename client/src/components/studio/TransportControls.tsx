@@ -1,29 +1,60 @@
-import { useState } from "react";
+import { useState, useContext, createContext } from "react";
 import { Button } from "@/components/ui/button";
+import { useAudio, useSequencer } from "@/hooks/use-audio";
+
+// Audio Context for sharing state between components
+export const AudioContext = createContext({
+  isPlaying: false,
+  currentTime: "00:00",
+  bpm: 120,
+  volume: 75,
+  playAudio: () => {},
+  stopAudio: () => {},
+  setVolume: (volume: number) => {},
+});
 
 export default function TransportControls() {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState("00:32");
+  const [currentTime, setCurrentTime] = useState("00:00");
   const [totalTime] = useState("02:45");
   const [bpm] = useState(120);
-  const [bar] = useState(5);
-  const [beat] = useState(2);
+  const [bar] = useState(1);
+  const [beat] = useState(1);
   const [volume, setVolume] = useState(75);
+  
+  const { setMasterVolume, initialize, isInitialized } = useAudio();
+  const { playPattern, stopPattern, isPlaying: sequencerPlaying } = useSequencer();
 
-  const handlePlay = () => {
-    setIsPlaying(!isPlaying);
-    // TODO: Implement audio playback
+  const handlePlay = async () => {
+    if (!isInitialized) {
+      await initialize();
+    }
+    
+    if (isPlaying) {
+      stopPattern();
+      setIsPlaying(false);
+    } else {
+      // Start with a basic pattern - this will be enhanced when connected to other components
+      const basicPattern = {
+        kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
+        snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+        hihat: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+      };
+      playPattern(basicPattern, bpm);
+      setIsPlaying(true);
+    }
   };
 
   const handleStop = () => {
+    stopPattern();
     setIsPlaying(false);
     setCurrentTime("00:00");
-    // TODO: Implement audio stop
   };
 
-  const handleVolumeChange = (e) => {
-    setVolume(Number(e.target.value));
-    // TODO: Implement volume change on audio
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = Number(e.target.value);
+    setVolume(newVolume);
+    setMasterVolume(newVolume);
   };
 
   return (

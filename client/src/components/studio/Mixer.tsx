@@ -24,6 +24,7 @@ interface MixerChannel {
 
 export default function Mixer() {
   const [masterVolume, setMasterVolume] = useState(75);
+  const [isLinked, setIsLinked] = useState(false);
   const [channels, setChannels] = useState<MixerChannel[]>([
     {
       id: "kick",
@@ -145,16 +146,21 @@ export default function Mixer() {
   };
 
   const resetMix = () => {
-    setChannels(prev => prev.map(channel => ({
-      ...channel,
-      volume: 75,
-      pan: 0,
-      muted: false,
-      solo: false,
-      eq: { high: 0, mid: 0, low: 0 },
-      sends: { reverb: 0, delay: 0 },
-    })));
     setMasterVolume(75);
+    setChannels(channels.map(channel => ({
+      ...channel,
+      volume: channel.id === 'kick' ? 80 : channel.id === 'snare' ? 75 : channel.id === 'hihat' ? 60 : channel.id === 'melody' ? 70 : 65,
+      pan: channel.id === 'hihat' ? 10 : channel.id === 'melody' ? -5 : channel.id === 'codebeat' ? 5 : 0,
+      hi: 0, mid: 0, lo: 0, reverb: 0, delay: 0, muted: false, solo: false
+    })));
+  };
+
+  const handleLinkStudio = () => {
+    setIsLinked(!isLinked);
+    if (!isLinked) {
+      // When linking, the mixer will receive audio from active studio components
+      console.log("Mixer linked to studio - will receive audio from BeatMaker, MelodyComposer, etc.");
+    }
   };
 
   return (
@@ -172,15 +178,18 @@ export default function Mixer() {
           <Button onClick={resetMix} variant="secondary" className="bg-gray-700 hover:bg-gray-600">
             <i className="fas fa-undo mr-2"></i>Reset
           </Button>
+          <Button onClick={handleLinkStudio} className={isLinked ? "bg-green-500 hover:bg-green-400" : "bg-gray-700 hover:bg-gray-600"}>
+            {isLinked ? "Studio Linked" : "Link Studio"}
+          </Button>
         </div>
       </div>
-      
+
       <div className="flex-1 flex space-x-4 overflow-x-auto">
         {/* Mixer Channels */}
         {channels.map((channel) => (
           <div key={channel.id} className="bg-studio-panel border border-gray-600 rounded-lg p-3 w-24 flex flex-col flex-shrink-0">
             <div className="text-xs font-medium mb-2 text-center">{channel.name}</div>
-            
+
             {/* EQ Section */}
             <div className="space-y-2 mb-4">
               <div className="text-xs text-gray-400 text-center">EQ</div>
@@ -226,7 +235,7 @@ export default function Mixer() {
                 </div>
               </div>
             </div>
-            
+
             {/* Send Effects */}
             <div className="space-y-2 mb-4">
               <div className="text-xs text-gray-400 text-center">SEND</div>
@@ -259,7 +268,7 @@ export default function Mixer() {
                 </div>
               </div>
             </div>
-            
+
             {/* Pan */}
             <div className="mb-4">
               <div className="text-xs text-gray-400 text-center mb-1">PAN</div>
@@ -275,7 +284,7 @@ export default function Mixer() {
                 {channel.pan === 0 ? "CENTER" : channel.pan > 0 ? `R+${channel.pan}` : `L${channel.pan}`}
               </div>
             </div>
-            
+
             {/* Level Meter */}
             <div className="flex-1 flex justify-center mb-4">
               <div className="w-6 bg-gray-700 rounded-full relative overflow-hidden">
@@ -285,7 +294,7 @@ export default function Mixer() {
                 />
               </div>
             </div>
-            
+
             {/* Volume Fader */}
             <div className="text-center mb-4">
               <div className="text-xs text-gray-400 mb-2">VOL</div>
@@ -314,7 +323,7 @@ export default function Mixer() {
                 {channel.volume > 75 ? `+${Math.round((channel.volume - 75) / 3)}` : `-${Math.round((75 - channel.volume) / 3)}`}dB
               </div>
             </div>
-            
+
             {/* Mute/Solo */}
             <div className="space-y-1">
               <Button
@@ -340,11 +349,11 @@ export default function Mixer() {
             </div>
           </div>
         ))}
-        
+
         {/* Master Section */}
         <div className="bg-studio-panel border-2 border-studio-accent rounded-lg p-4 w-32 flex flex-col flex-shrink-0">
           <div className="text-sm font-bold mb-4 text-center text-studio-accent">MASTER</div>
-          
+
           {/* Master EQ */}
           <div className="space-y-2 mb-6">
             <div className="text-xs text-gray-400 text-center">MASTER EQ</div>
@@ -369,7 +378,7 @@ export default function Mixer() {
               </div>
             </div>
           </div>
-          
+
           {/* Master Volume */}
           <div className="flex-1 flex flex-col items-center">
             <div className="text-sm text-gray-400 mb-4">VOLUME</div>
@@ -398,7 +407,7 @@ export default function Mixer() {
               {masterVolume > 75 ? `+${Math.round((masterVolume - 75) / 3)}` : `-${Math.round((75 - masterVolume) / 3)}`}dB
             </div>
           </div>
-          
+
           {/* VU Meter */}
           <div className="mt-4">
             <div className="text-xs text-gray-400 text-center mb-2">VU METER</div>
@@ -417,11 +426,11 @@ export default function Mixer() {
             </div>
           </div>
         </div>
-        
+
         {/* Effects Rack */}
         <div className="bg-studio-panel border border-gray-600 rounded-lg p-4 w-64 flex flex-col flex-shrink-0">
           <div className="text-sm font-medium mb-4 text-center">Effects Rack</div>
-          
+
           {/* Reverb */}
           <div className="mb-6 p-3 bg-gray-800 rounded">
             <div className="text-xs font-medium mb-2 text-studio-accent">REVERB</div>
@@ -476,7 +485,7 @@ export default function Mixer() {
               </div>
             </div>
           </div>
-          
+
           {/* Delay */}
           <div className="mb-6 p-3 bg-gray-800 rounded">
             <div className="text-xs font-medium mb-2 text-studio-accent">DELAY</div>
@@ -531,7 +540,7 @@ export default function Mixer() {
               </div>
             </div>
           </div>
-          
+
           {/* Compressor */}
           <div className="p-3 bg-gray-800 rounded">
             <div className="text-xs font-medium mb-2 text-studio-accent">COMPRESSOR</div>

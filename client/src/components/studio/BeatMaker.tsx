@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +27,7 @@ export default function BeatMaker() {
     clap: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
     crash: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
   });
-  
+
   const { toast } = useToast();
   const { playDrumSound, initialize, isInitialized } = useAudio();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -128,20 +127,20 @@ export default function BeatMaker() {
 
     setIsPlaying(true);
     setCurrentStep(0);
-    
+
     const stepDuration = (60 / bpm / 4) * 1000; // 16th notes in milliseconds
-    
+
     intervalRef.current = setInterval(() => {
       setCurrentStep(prev => {
         const step = prev % 16;
-        
+
         // Play sounds for active steps
         Object.entries(pattern).forEach(([track, steps]) => {
           if (steps && steps[step]) {
             playDrumSound(track);
           }
         });
-        
+
         return prev + 1;
       });
     }, stepDuration);
@@ -195,7 +194,11 @@ export default function BeatMaker() {
             className={`${isPlaying ? 'bg-red-600 hover:bg-red-500' : 'bg-studio-success hover:bg-green-500'}`}
           >
             <i className={`fas ${isPlaying ? 'fa-stop' : 'fa-play'} mr-2`}></i>
-            {isPlaying ? 'Stop' : 'Play'}
+            {isPlaying ? 'Stop' : 'Play Beat'}
+          </Button>
+          <Button onClick={stopPattern} className="bg-red-600 hover:bg-red-500">
+            <i className="fas fa-stop mr-2"></i>
+            Stop
           </Button>
           <Button
             onClick={handleGenerateAI}
@@ -228,7 +231,7 @@ export default function BeatMaker() {
           </Button>
         </div>
       </div>
-      
+
       <div className="flex-1 bg-studio-panel border border-gray-600 rounded-lg p-6">
         <div className="space-y-4">
           {tracks.map((track) => (
@@ -237,7 +240,7 @@ export default function BeatMaker() {
                 <div className={`w-3 h-3 rounded ${track.color}`}></div>
                 <span>{track.name}</span>
               </div>
-              
+
               <div className="flex space-x-2">
                 {pattern[track.id as keyof BeatPattern]?.map((active, index) => (
                   <button
@@ -283,7 +286,7 @@ export default function BeatMaker() {
                   </button>
                 ))}
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <input
                   type="range"
@@ -298,7 +301,7 @@ export default function BeatMaker() {
           ))}
         </div>
       </div>
-      
+
       {/* Waveform Visualization */}
       <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
         <div className="flex items-center justify-between mb-4">
