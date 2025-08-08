@@ -1,6 +1,6 @@
 # Overview
 
-CodeTune Studio is a revolutionary web application that bridges the gap between coding and music creation. The platform offers an integrated development environment where developers can translate code between programming languages, generate musical compositions from code structures, create beats and melodies, scan code for security vulnerabilities, and write lyrics - all powered by AI assistance. The application combines a modern React frontend with an Express.js backend, featuring advanced multi-layered audio synthesis for realistic instrument sounds, comprehensive AI integrations, and a studio-grade interface designed for both developers and musicians.
+CodedSwitch is a revolutionary AI-powered web application that bridges the gap between coding and music creation. The platform offers an integrated development environment where developers can translate code between programming languages, generate musical compositions from code structures, create beats and melodies, scan code for security vulnerabilities, and write lyrics - all powered by AI assistance. The application combines a modern React frontend with an Express.js backend, featuring advanced multi-layered audio synthesis for realistic instrument sounds, comprehensive AI integrations, and a studio-grade interface designed for both developers and musicians.
 
 ## Recent Changes (January 2025)
 - **Audio Engine Overhaul**: Completely redesigned audio synthesis for professional-quality drum and instrument sounds
