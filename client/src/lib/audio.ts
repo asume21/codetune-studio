@@ -70,13 +70,14 @@ export class AudioEngine {
     filterNode.Q.setValueAtTime(presets.resonance, this.audioContext.currentTime);
 
     // ADSR Envelope
-    const baseVolume = velocity * presets.volume * 0.3;
+    const baseVolume = Math.max(0.001, velocity * presets.volume * 0.3);
     const currentTime = this.audioContext.currentTime;
     const sustainTime = Math.max(0.01, duration - presets.release);
+    const sustainLevel = Math.max(0.001, Math.min(1.0, baseVolume * presets.sustain));
     
-    gainNode.gain.setValueAtTime(0, currentTime);
-    gainNode.gain.linearRampToValueAtTime(baseVolume, currentTime + presets.attack);
-    gainNode.gain.exponentialRampToValueAtTime(Math.max(0.001, baseVolume * presets.sustain), currentTime + presets.attack + presets.decay);
+    gainNode.gain.setValueAtTime(0.001, currentTime);
+    gainNode.gain.linearRampToValueAtTime(baseVolume, currentTime + Math.max(0.001, presets.attack));
+    gainNode.gain.exponentialRampToValueAtTime(sustainLevel, currentTime + Math.max(0.001, presets.attack) + Math.max(0.001, presets.decay));
     gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + sustainTime);
 
     gainNode.connect(filterNode);
@@ -443,7 +444,7 @@ export class AudioEngine {
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(60, this.audioContext.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(20, this.audioContext.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(volume * 1.2, this.audioContext.currentTime);
+        gainNode.gain.setValueAtTime(Math.max(0.001, volume * 1.2), this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
         filterNode.type = 'lowpass';
         filterNode.frequency.setValueAtTime(150, this.audioContext.currentTime);
@@ -453,7 +454,7 @@ export class AudioEngine {
         oscillator.type = 'triangle';
         oscillator.frequency.setValueAtTime(45, this.audioContext.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(25, this.audioContext.currentTime + 0.15);
-        gainNode.gain.setValueAtTime(volume * 1.5, this.audioContext.currentTime);
+        gainNode.gain.setValueAtTime(Math.max(0.001, volume * 1.5), this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.8);
         filterNode.type = 'lowpass';
         filterNode.frequency.setValueAtTime(80, this.audioContext.currentTime);
@@ -467,7 +468,7 @@ export class AudioEngine {
         }
         const noise = this.audioContext.createBufferSource();
         noise.buffer = noiseBuffer;
-        gainNode.gain.setValueAtTime(volume * 0.4, this.audioContext.currentTime);
+        gainNode.gain.setValueAtTime(Math.max(0.001, volume * 0.4), this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
         filterNode.type = 'bandpass';
         filterNode.frequency.setValueAtTime(2000, this.audioContext.currentTime);
@@ -487,7 +488,7 @@ export class AudioEngine {
         }
         const hihatNoise = this.audioContext.createBufferSource();
         hihatNoise.buffer = hihatBuffer;
-        gainNode.gain.setValueAtTime(volume * (type === 'openhat' ? 0.15 : 0.1), this.audioContext.currentTime);
+        gainNode.gain.setValueAtTime(Math.max(0.001, volume * (type === 'openhat' ? 0.15 : 0.1)), this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
         filterNode.type = 'highpass';
         filterNode.frequency.setValueAtTime(8000, this.audioContext.currentTime);
@@ -507,7 +508,7 @@ export class AudioEngine {
           const clapNoise = this.audioContext.createBufferSource();
           clapNoise.buffer = clapBuffer;
           const clapGain = this.audioContext.createGain();
-          clapGain.gain.setValueAtTime(volume * 0.2, this.audioContext.currentTime + i * 0.01);
+          clapGain.gain.setValueAtTime(Math.max(0.001, volume * 0.2), this.audioContext.currentTime + i * 0.01);
           clapNoise.connect(clapGain);
           clapGain.connect(this.masterGain);
           clapNoise.start(this.audioContext.currentTime + i * 0.01);
@@ -522,7 +523,7 @@ export class AudioEngine {
         }
         const crashNoise = this.audioContext.createBufferSource();
         crashNoise.buffer = crashBuffer;
-        gainNode.gain.setValueAtTime(volume * 0.3, this.audioContext.currentTime);
+        gainNode.gain.setValueAtTime(Math.max(0.001, volume * 0.3), this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1.5);
         filterNode.type = 'highpass';
         filterNode.frequency.setValueAtTime(3000, this.audioContext.currentTime);
@@ -533,7 +534,7 @@ export class AudioEngine {
 
       default:
         oscillator.frequency.setValueAtTime(200, this.audioContext.currentTime);
-        gainNode.gain.setValueAtTime(volume * 0.2, this.audioContext.currentTime);
+        gainNode.gain.setValueAtTime(Math.max(0.001, volume * 0.2), this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
     }
 
