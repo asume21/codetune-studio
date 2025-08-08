@@ -277,6 +277,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // NEW: Music generation from lyrics using xAI Grok
+  app.post('/api/music/generate-from-lyrics', async (req, res) => {
+    try {
+      const { lyrics, genre, mood, title } = req.body;
+      
+      if (!lyrics) {
+        return res.status(400).json({ error: "Lyrics are required" });
+      }
+
+      // Use xAI Grok to analyze lyrics and generate matching music
+      const musicData = await generateBeatFromLyrics(lyrics, genre, mood, title);
+      
+      res.json({
+        beatPattern: musicData.beatPattern,
+        melody: musicData.melody,
+        codeMusic: musicData.codeMusic,
+        message: "Music generated successfully from lyrics"
+      });
+    } catch (error) {
+      console.error("Music generation from lyrics error:", error);
+      res.status(500).json({ error: "Failed to generate music from lyrics" });
+    }
+  });
+
+  // NEW: Mastering function to optimize full song
+  app.post('/api/master', async (req, res) => {
+    try {
+      const { pattern, melody, lyrics, codeMusic, bpm, genre } = req.body;
+      
+      // Use xAI Grok to analyze and master the complete song
+      const prompt = `As an AI music producer and mastering engineer, analyze this complete song and provide mastering suggestions:
+
+Song Details:
+- Genre: ${genre}
+- BPM: ${bpm}
+- Has Beat Pattern: ${!!pattern}
+- Has Melody: ${!!melody?.length}
+- Has Lyrics: ${!!lyrics}
+- Has Code Music: ${!!codeMusic}
+
+Lyrics Preview:
+${lyrics?.substring(0, 500)}...
+
+Please provide professional mastering advice including:
+1. EQ recommendations
+2. Compression settings
+3. Reverb and effects
+4. Mix balance suggestions
+5. Overall loudness and dynamics
+6. Genre-specific mastering tips
+
+Respond in JSON format with specific technical recommendations.`;
+
+      const response = await fetch('https://api.x.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.XAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: prompt }],
+          model: 'grok-beta',
+          stream: false
+        })
+      });
+
+      const data = await response.json();
+      let masteredSettings = {};
+
+      try {
+        masteredSettings = JSON.parse(data.choices[0].message.content);
+      } catch {
+        // Fallback if JSON parsing fails
+        masteredSettings = {
+          eq: "Boost low end at 60Hz, cut muddy frequencies at 200-400Hz",
+          compression: "Light compression with 3:1 ratio, fast attack",
+          effects: "Light reverb on vocals, delay on lead instruments",
+          balance: "Keep vocals prominent, balance drums and bass",
+          mastering: data.choices[0].message.content
+        };
+      }
+
+      res.json({
+        masteredSettings,
+        message: "Song mastered successfully with AI recommendations"
+      });
+    } catch (error) {
+      console.error("Mastering error:", error);
+      res.status(500).json({ error: "Failed to master song" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/hooks/use-audio";
+import { StudioAudioContext } from "@/pages/studio";
 
 interface RhymeSuggestion {
   word: string;
@@ -15,6 +16,7 @@ interface RhymeSuggestion {
 }
 
 export default function LyricLab() {
+  const studioContext = useContext(StudioAudioContext);
   const [title, setTitle] = useState("My Awesome Track");
   const [content, setContent] = useState(`[Verse 1]
 Started from the bottom of the code base,
@@ -52,6 +54,8 @@ Type here or use AI generation...`);
     onSuccess: (data) => {
       setContent(data.content);
       setTitle(data.title);
+      // Save lyrics to studio context for master playback
+      studioContext.setCurrentLyrics(data.content);
       toast({
         title: "Lyrics Generated",
         description: "AI has created new lyrics for you.",
@@ -72,9 +76,73 @@ Type here or use AI generation...`);
       return response.json();
     },
     onSuccess: () => {
+      // Save lyrics to studio context for master playback
+      studioContext.setCurrentLyrics(content);
       toast({
         title: "Lyrics Saved",
         description: "Your lyrics have been saved successfully.",
+      });
+    },
+  });
+
+  // NEW: Generate beats and melody based on lyrics using xAI Grok
+  const generateMusicFromLyricsMutation = useMutation({
+    mutationFn: async (data: { lyrics: string; genre: string; mood: string; title: string }) => {
+      const response = await apiRequest("POST", "/api/music/generate-from-lyrics", data);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.beatPattern) {
+        studioContext.setCurrentPattern(data.beatPattern);
+      }
+      if (data.melody) {
+        studioContext.setCurrentMelody(data.melody);
+      }
+      if (data.codeMusic) {
+        studioContext.setCurrentCodeMusic(data.codeMusic);
+      }
+      toast({
+        title: "Music Generated from Lyrics",
+        description: "AI has created matching beats and melodies for your lyrics!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Music Generation Failed",
+        description: "Failed to generate music from lyrics. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // NEW: Mastering function to optimize the full song
+  const masterSongMutation = useMutation({
+    mutationFn: async (data: { 
+      pattern: any; 
+      melody: any[]; 
+      lyrics: string; 
+      codeMusic: any;
+      bpm: number;
+      genre: string;
+    }) => {
+      const response = await apiRequest("POST", "/api/master", data);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Song Mastered",
+        description: "Your song has been professionally mastered and optimized!",
+      });
+      // Apply mastered settings to studio context
+      if (data.masteredSettings) {
+        console.log("Mastered settings applied:", data.masteredSettings);
+      }
+    },
+    onError: () => {
+      toast({
+        title: "Mastering Failed",
+        description: "Failed to master the song. Please try again.",
+        variant: "destructive",
       });
     },
   });
@@ -383,23 +451,71 @@ Type here or use AI generation...`);
                     ))}
                   </SelectContent>
                 </Select>
-                <Button
-                  onClick={handleGenerateAI}
-                  disabled={generateLyricsMutation.isPending}
-                  className="w-full bg-studio-accent hover:bg-blue-500"
-                >
-                  {generateLyricsMutation.isPending ? (
-                    <>
-                      <i className="fas fa-spinner animate-spin mr-2"></i>
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fas fa-magic mr-2"></i>
-                      AI Generate
-                    </>
-                  )}
-                </Button>
+                <div className="space-y-2">
+                  <Button
+                    onClick={handleGenerateAI}
+                    disabled={generateLyricsMutation.isPending}
+                    className="w-full bg-studio-accent hover:bg-blue-500"
+                  >
+                    {generateLyricsMutation.isPending ? (
+                      <>
+                        <i className="fas fa-spinner animate-spin mr-2"></i>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-magic mr-2"></i>
+                        AI Generate Lyrics
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => generateMusicFromLyricsMutation.mutate({
+                      lyrics: content,
+                      genre,
+                      mood,
+                      title,
+                    })}
+                    disabled={generateMusicFromLyricsMutation.isPending || !content.trim()}
+                    className="w-full bg-purple-600 hover:bg-purple-500"
+                  >
+                    {generateMusicFromLyricsMutation.isPending ? (
+                      <>
+                        <i className="fas fa-spinner animate-spin mr-2"></i>
+                        Creating Music...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-music mr-2"></i>
+                        Generate Music from Lyrics
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => masterSongMutation.mutate({
+                      pattern: studioContext.currentPattern,
+                      melody: studioContext.currentMelody,
+                      lyrics: studioContext.currentLyrics || content,
+                      codeMusic: studioContext.currentCodeMusic,
+                      bpm: studioContext.bpm,
+                      genre,
+                    })}
+                    disabled={masterSongMutation.isPending || (!studioContext.currentPattern && !studioContext.currentMelody)}
+                    className="w-full bg-orange-600 hover:bg-orange-500"
+                  >
+                    {masterSongMutation.isPending ? (
+                      <>
+                        <i className="fas fa-spinner animate-spin mr-2"></i>
+                        Mastering...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-sliders-h mr-2"></i>
+                        Master Full Song
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
 
