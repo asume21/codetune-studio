@@ -59,7 +59,7 @@ const instrumentCategories = {
     color: 'bg-yellow-500',
     instruments: [
       { id: 'horns-trumpet', name: 'Trumpet' },
-      { id: 'horns-trombone', name: 'Trombone' },
+      { id: 'horns- trombone', name: 'Trombone' },
       { id: 'horns-french', name: 'French Horn' }
     ]
   },
@@ -113,7 +113,7 @@ export default function MelodyComposer() {
     { note: "C", octave: 4, duration: 0.5, start: 0, track: 'track1' },
     { note: "E", octave: 4, duration: 0.5, start: 0.5, track: 'track1' },
     { note: "G", octave: 4, duration: 0.5, start: 1, track: 'track2' },
-    { note: "C", octave: 5, duration: 1, start: 1.5, track: 'track2' },
+    { note: "C", octave: 5, duration: 1, track: 'track2' },
   ]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(0);
@@ -121,12 +121,68 @@ export default function MelodyComposer() {
   const [currentOctave, setCurrentOctave] = useState(4);
   const [gridSnapSize, setGridSnapSize] = useState(0.25); // 16th notes
   const [zoom, setZoom] = useState(1);
+  const [arpeggioMode, setArpeggioMode] = useState(false);
+  const [arpeggioPattern, setArpeggioPattern] = useState('up');
 
   const { toast } = useToast();
   const { playNote, initialize, isInitialized } = useAudio();
   const { playMelody: playMelodySequence, stopMelody: stopMelodySequence } = useMelodyPlayer();
   const [isMelodyPlaying, setIsMelodyPlaying] = useState(false);
   const { playMelody, stopMelody } = useMelodyPlayer();
+
+  // Get appropriate note duration based on instrument type
+  const getInstrumentDuration = (instrument: string = 'piano'): number => {
+    if (instrument.includes('strings') || instrument.includes('violin') || instrument.includes('guitar')) {
+      return Math.max(gridSnapSize * 2, 1.0); // Minimum 1 second for string instruments
+    }
+    if (instrument.includes('pads') || instrument.includes('choir')) {
+      return Math.max(gridSnapSize * 3, 1.5); // Even longer for pads
+    }
+    if (instrument.includes('flute') || instrument.includes('horn')) {
+      return Math.max(gridSnapSize * 1.5, 0.8); // Moderate sustain for wind instruments
+    }
+    return gridSnapSize; // Default duration for other instruments
+  };
+
+  // Play arpeggio pattern
+  const playArpeggio = (baseNote: string, octave: number, instrument: string) => {
+    const chordNotes = [
+      { note: baseNote, octave },
+      { note: getNextNote(baseNote, 2), octave }, // Third
+      { note: getNextNote(baseNote, 4), octave }, // Fifth
+      { note: baseNote, octave: octave + 1 }, // Octave
+    ];
+
+    let pattern = [...chordNotes];
+    if (arpeggioPattern === 'down') {
+      pattern = pattern.reverse();
+    } else if (arpeggioPattern === 'updown') {
+      pattern = [...chordNotes, ...chordNotes.slice(1, -1).reverse()];
+    }
+
+    const duration = getInstrumentDuration(instrument);
+    const noteSpacing = 0.15; // Time between arpeggio notes
+
+    pattern.forEach((noteData, index) => {
+      setTimeout(() => {
+        playNote(noteData.note, noteData.octave, duration * 0.7, instrument, 0.6);
+      }, index * noteSpacing * 1000);
+    });
+  };
+
+  // Helper function to get next note in scale
+  const getNextNote = (baseNote: string, steps: number): string => {
+    const chromaticNotes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const majorScaleSteps = [0, 2, 4, 5, 7, 9, 11]; // Major scale intervals
+
+    const baseIndex = chromaticNotes.indexOf(baseNote.toUpperCase());
+    if (baseIndex === -1) return baseNote;
+
+    const scaleStepIndex = Math.floor(steps / 2);
+    const nextNoteIndex = (baseIndex + majorScaleSteps[scaleStepIndex % majorScaleSteps.length]) % 12;
+
+    return chromaticNotes[nextNoteIndex];
+  };
 
   const generateMelodyMutation = useMutation({
     mutationFn: async (data: { scale: string; style: string; complexity: number }) => {
@@ -135,11 +191,16 @@ export default function MelodyComposer() {
     },
     onSuccess: (data) => {
       if (data.notes && data.notes.notes) {
-        const generatedNotes = data.notes.notes.map((note: any) => ({
+        const currentTrack = tracks.find(t => t.id === selectedTrack);
+        const instrument = currentTrack?.instrument || 'piano';
+
+        const newNotes = data.notes.notes.map((note: any, index: number) => ({
           ...note,
-          track: selectedTrack
-        }));
-        setNotes(prev => [...prev.filter(n => n.track !== selectedTrack), ...generatedNotes]);
+          track: selectedTrack,
+          start: note.start || index * 0.5,
+          duration: note.duration || getInstrumentDuration(instrument),
+        })) || [];
+        setNotes(prev => [...prev.filter(n => n.track !== selectedTrack), ...newNotes]);
         toast({
           title: "Melody Generated",
           description: `AI has composed a new melody for ${tracks.find(t => t.id === selectedTrack)?.name}.`,
@@ -264,7 +325,7 @@ export default function MelodyComposer() {
     const newInstrument = allInstruments[0];
     const category = Object.values(instrumentCategories)
       .find(cat => cat.instruments.some(i => i.id === newInstrument.id));
-    
+
     const newTrack: Track = {
       id: `track${tracks.length + 1}`,
       name: newInstrument.name,
@@ -294,7 +355,7 @@ export default function MelodyComposer() {
     // Find the instrument and its category
     let foundInstrument = null;
     let foundCategory = null;
-    
+
     for (const [categoryKey, category] of Object.entries(instrumentCategories)) {
       const instrument = category.instruments.find(inst => inst.id === instrumentId);
       if (instrument) {
@@ -303,7 +364,7 @@ export default function MelodyComposer() {
         break;
       }
     }
-    
+
     if (!foundInstrument || !foundCategory) return;
 
     setTracks(tracks.map(track => 
@@ -455,7 +516,7 @@ export default function MelodyComposer() {
               <i className="fas fa-trash mr-2"></i>
               Clear All
             </Button>
-            
+
             <Button
               onClick={() => {
                 stopMelody();
@@ -678,7 +739,11 @@ export default function MelodyComposer() {
                     key={`white-${index}`}
                     onClick={() => {
                       const currentTrack = tracks.find(t => t.id === selectedTrack);
-                      playNote(key.note, currentOctave, gridSnapSize, currentTrack?.instrument || 'piano');
+                      if (arpeggioMode) {
+                        playArpeggio(key.note, currentOctave, currentTrack?.instrument || 'piano');
+                      } else {
+                        playNote(key.note, currentOctave, gridSnapSize, currentTrack?.instrument || 'piano');
+                      }
                     }}
                     className={`piano-key w-8 h-32 border border-gray-400 rounded-b ${key.color} text-black text-xs flex items-end justify-center pb-2 hover:bg-gray-200`}
                     title={`Play ${key.note}${currentOctave}`}
@@ -696,11 +761,15 @@ export default function MelodyComposer() {
                     key={`black-${index}`}
                     onClick={() => {
                       const currentTrack = tracks.find(t => t.id === selectedTrack);
-                      playNote(key.note, currentOctave, gridSnapSize, currentTrack?.instrument || 'piano');
+                      if (arpeggioMode) {
+                        playArpeggio(key.note, currentOctave, currentTrack?.instrument || 'piano');
+                      } else {
+                        playNote(key.note, currentOctave, gridSnapSize, currentTrack?.instrument || 'piano');
+                      }
                     }}
-                    className={`piano-key w-4 h-20 border border-gray-700 rounded-b ${key.color} text-white text-xs flex items-end justify-center pb-1 hover:bg-gray-600 ${
+                    className={`piano-key w-4 h-20 border border-gray-700 rounded-b ${key.color} text-white text-xs flex items-end justify-center pb-1 ${
                       index === 1 || index === 4 ? "mr-6" : "mr-4"
-                    }`}
+                    } hover:bg-gray-600`}
                     title={`Play ${key.note}${currentOctave}`}
                   >
                     {key.note}
@@ -709,28 +778,55 @@ export default function MelodyComposer() {
               </div>
             </div>
 
-            {/* Octave Controls */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-3">Piano Octave Range</label>
+            {/* Octave Control */}
+            <div className="bg-gray-800 rounded p-3">
+              <label className="block text-sm font-medium mb-2">Octave: {currentOctave}</label>
+              <input
+                type="range"
+                min="1"
+                max="7"
+                value={currentOctave}
+                onChange={(e) => setCurrentOctave(parseInt(e.target.value))}
+                className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+              />
+            </div>
+
+            {/* Arpeggio Controls */}
+            <div className="bg-gray-800 rounded p-3 space-y-3">
               <div className="flex items-center justify-between">
-                <Button 
-                  variant="secondary" 
-                  size="sm"
-                  onClick={() => setCurrentOctave(Math.max(1, currentOctave - 1))}
-                  title="Lower octave"
+                <label className="text-sm font-medium">Arpeggio Mode</label>
+                <button
+                  onClick={() => setArpeggioMode(!arpeggioMode)}
+                  className={`px-3 py-1 text-xs rounded ${
+                    arpeggioMode
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-600 text-gray-300"
+                  }`}
                 >
-                  <i className="fas fa-minus mr-1"></i>Lower
-                </Button>
-                <span className="text-lg font-mono font-bold text-studio-accent">Octave {currentOctave}</span>
-                <Button 
-                  variant="secondary" 
-                  size="sm"
-                  onClick={() => setCurrentOctave(Math.min(7, currentOctave + 1))}
-                  title="Higher octave"
-                >
-                  <i className="fas fa-plus mr-1"></i>Higher
-                </Button>
+                  {arpeggioMode ? "ON" : "OFF"}
+                </button>
               </div>
+
+              {arpeggioMode && (
+                <div className="space-y-2">
+                  <label className="block text-xs text-gray-400">Pattern</label>
+                  <div className="flex space-x-1">
+                    {(['up', 'down', 'updown'] as const).map(pattern => (
+                      <button
+                        key={pattern}
+                        onClick={() => setArpeggioPattern(pattern)}
+                        className={`px-2 py-1 text-xs rounded capitalize ${
+                          arpeggioPattern === pattern
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-600 text-gray-300"
+                        }`}
+                      >
+                        {pattern}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Current Track Info */}
