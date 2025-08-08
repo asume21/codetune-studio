@@ -133,7 +133,7 @@ export default function MelodyComposer() {
         return track && !track.muted;
       });
 
-      playMelodySequence(activeNotes, bpm);
+      playMelodySequence(activeNotes, bpm, tracks);
       setIsPlaying(true);
 
       // Start beat counter
@@ -181,7 +181,8 @@ export default function MelodyComposer() {
     };
 
     setNotes([...notes, newNote]);
-    playNote(note, octave, gridSnapSize);
+    const currentTrack = tracks.find(t => t.id === selectedTrack);
+    playNote(note, octave, gridSnapSize, currentTrack?.instrument || 'piano');
   };
 
   const removeNote = (index: number) => {
@@ -294,7 +295,7 @@ export default function MelodyComposer() {
       stopMelody();
       setIsMelodyPlaying(false);
     } else if (notes.length > 0) {
-      playMelody(notes, bpm);
+      playMelody(notes, bpm, tracks);
       setIsMelodyPlaying(true);
       // Stop after melody duration
       setTimeout(() => {
@@ -328,22 +329,25 @@ export default function MelodyComposer() {
             </Button></div>
 
           <div className="flex items-center space-x-4">
-            <Select value={scale} onValueChange={setScale}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {scales.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-300">Musical Scale:</label>
+              <Select value={scale} onValueChange={setScale}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {scales.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <Button onClick={handlePlayMelody} className="bg-studio-success hover:bg-green-500">
               <i className={`fas ${isMelodyPlaying ? "fa-pause" : "fa-play"} mr-2`}></i>
-              {isMelodyPlaying ? "Stop" : "Play Melody"}
+              {isMelodyPlaying ? "Stop Playback" : "Play All Tracks"}
             </Button>
             <Button
               onClick={generateMelody}
@@ -364,12 +368,35 @@ export default function MelodyComposer() {
             </Button>
 
             <Button
+              onClick={clearAllNotes}
+              variant="outline"
+              className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+            >
+              <i className="fas fa-trash mr-2"></i>
+              Clear All
+            </Button>
+            
+            <Button
+              onClick={() => {
+                stopMelody();
+                setIsMelodyPlaying(false);
+                setIsPlaying(false);
+                setCurrentBeat(0);
+              }}
+              variant="outline"
+              className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
+            >
+              <i className="fas fa-stop mr-2"></i>
+              Stop All
+            </Button>
+
+            <Button
               onClick={handleSave}
               disabled={saveMelodyMutation.isPending}
               variant="secondary"
             >
               <i className="fas fa-save mr-2"></i>
-              Save
+              Save Project
             </Button>
           </div>
         </div>
@@ -380,7 +407,7 @@ export default function MelodyComposer() {
           {/* Track Controls */}
           <div className="w-64 bg-studio-panel border border-gray-600 rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium">Tracks</h3>
+              <h3 className="font-medium text-gray-200">Instrument Tracks</h3>
               <Button size="sm" onClick={addTrack} disabled={tracks.length >= 8}>
                 <i className="fas fa-plus mr-1"></i>
                 Add
@@ -398,12 +425,14 @@ export default function MelodyComposer() {
                     <button
                       onClick={() => toggleTrackVisibility(track.id)}
                       className={`w-6 h-6 rounded text-xs ${track.visible ? 'bg-green-600' : 'bg-gray-600'}`}
+                      title={track.visible ? 'Hide track' : 'Show track'}
                     >
                       <i className={`fas ${track.visible ? 'fa-eye' : 'fa-eye-slash'}`}></i>
                     </button>
                     <button
                       onClick={() => toggleTrackMute(track.id)}
                       className={`w-6 h-6 rounded text-xs ${track.muted ? 'bg-red-600' : 'bg-gray-600'}`}
+                      title={track.muted ? 'Unmute track' : 'Mute track'}
                     >
                       <i className={`fas ${track.muted ? 'fa-volume-mute' : 'fa-volume-up'}`}></i>
                     </button>
@@ -441,14 +470,21 @@ export default function MelodyComposer() {
           {/* Piano Roll */}
           <div className="flex-1 bg-studio-panel border border-gray-600 rounded-lg p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium">
-                Piano Roll - {tracks.find(t => t.id === selectedTrack)?.name} 
-                <span className="text-sm text-gray-400 ml-2">
-                  (Click to add notes)
-                </span>
-              </h3>
-              <div className="text-sm text-gray-400">
-                Beat: {currentBeat.toFixed(2)} / {8 * zoom}
+              <div>
+                <h3 className="font-medium text-gray-200">
+                  Piano Roll Editor - {tracks.find(t => t.id === selectedTrack)?.name} 
+                </h3>
+                <p className="text-sm text-gray-400 mt-1">
+                  Click on the grid to add notes • Click existing notes to delete them
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-sm text-gray-400">
+                  Playback Position: Beat {currentBeat.toFixed(2)} / {8 * zoom}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Grid Snap: {snapSizes.find(s => s.value === gridSnapSize)?.label || gridSnapSize}
+                </div>
               </div>
             </div>
 
@@ -542,7 +578,10 @@ export default function MelodyComposer() {
 
           {/* Virtual Piano */}
           <div className="w-80 bg-studio-panel border border-gray-600 rounded-lg p-4">
-            <h3 className="font-medium mb-4">Virtual Piano</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium text-gray-200">Virtual Piano</h3>
+              <span className="text-sm text-gray-400">Click keys to play notes</span>
+            </div>
 
             <div className="relative mb-4">
               {/* White Keys */}
@@ -550,8 +589,12 @@ export default function MelodyComposer() {
                 {pianoKeys.filter(key => key.type === "white").map((key, index) => (
                   <button
                     key={`white-${index}`}
-                    onClick={() => playNote(key.note, currentOctave, gridSnapSize)}
+                    onClick={() => {
+                      const currentTrack = tracks.find(t => t.id === selectedTrack);
+                      playNote(key.note, currentOctave, gridSnapSize, currentTrack?.instrument || 'piano');
+                    }}
                     className={`piano-key w-8 h-32 border border-gray-400 rounded-b ${key.color} text-black text-xs flex items-end justify-center pb-2 hover:bg-gray-200`}
+                    title={`Play ${key.note}${currentOctave}`}
                   >
                     {key.note}
                   </button>
@@ -564,10 +607,14 @@ export default function MelodyComposer() {
                 {pianoKeys.filter(key => key.type === "black").map((key, index) => (
                   <button
                     key={`black-${index}`}
-                    onClick={() => playNote(key.note, currentOctave, gridSnapSize)}
+                    onClick={() => {
+                      const currentTrack = tracks.find(t => t.id === selectedTrack);
+                      playNote(key.note, currentOctave, gridSnapSize, currentTrack?.instrument || 'piano');
+                    }}
                     className={`piano-key w-4 h-20 border border-gray-700 rounded-b ${key.color} text-white text-xs flex items-end justify-center pb-1 hover:bg-gray-600 ${
                       index === 1 || index === 4 ? "mr-6" : "mr-4"
                     }`}
+                    title={`Play ${key.note}${currentOctave}`}
                   >
                     {key.note}
                   </button>
@@ -576,27 +623,32 @@ export default function MelodyComposer() {
             </div>
 
             {/* Octave Controls */}
-            <div className="flex items-center justify-between mb-6">
-              <Button 
-                variant="secondary" 
-                size="sm"
-                onClick={() => setCurrentOctave(Math.max(1, currentOctave - 1))}
-              >
-                <i className="fas fa-minus mr-1"></i>Octave
-              </Button>
-              <span className="text-sm font-mono">C{currentOctave}</span>
-              <Button 
-                variant="secondary" 
-                size="sm"
-                onClick={() => setCurrentOctave(Math.min(7, currentOctave + 1))}
-              >
-                <i className="fas fa-plus mr-1"></i>Octave
-              </Button>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-3">Piano Octave Range</label>
+              <div className="flex items-center justify-between">
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => setCurrentOctave(Math.max(1, currentOctave - 1))}
+                  title="Lower octave"
+                >
+                  <i className="fas fa-minus mr-1"></i>Lower
+                </Button>
+                <span className="text-lg font-mono font-bold text-studio-accent">Octave {currentOctave}</span>
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => setCurrentOctave(Math.min(7, currentOctave + 1))}
+                  title="Higher octave"
+                >
+                  <i className="fas fa-plus mr-1"></i>Higher
+                </Button>
+              </div>
             </div>
 
             {/* Current Track Info */}
             <div className="bg-gray-800 rounded p-3 space-y-3">
-              <h4 className="font-medium text-sm">Selected Track</h4>
+              <h4 className="font-medium text-sm text-gray-200">Currently Editing Track</h4>
               <div className="flex items-center space-x-2">
                 <div className={`w-4 h-4 rounded ${tracks.find(t => t.id === selectedTrack)?.color}`}></div>
                 <span className="text-sm">{tracks.find(t => t.id === selectedTrack)?.name}</span>

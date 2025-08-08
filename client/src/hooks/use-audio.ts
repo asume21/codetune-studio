@@ -7,7 +7,7 @@ let globalAudioInitialized = false;
 const audioInitCallbacks: (() => void)[] = [];
 
 interface UseAudioReturn {
-  playNote: (note: string, octave?: number, duration?: number) => void;
+  playNote: (note: string, octave?: number, duration?: number, instrument?: string) => void;
   playDrumSound: (type: string, volume?: number) => void;
   setMasterVolume: (volume: number) => void;
   isInitialized: boolean;
@@ -177,7 +177,7 @@ export function useMelodyPlayer() {
   const timeoutRefs = useRef<NodeJS.Timeout[]>([]);
   const { playNote } = useAudio();
 
-  const playMelody = useCallback((notes: any[], bpm: number = 120) => {
+  const playMelody = useCallback((notes: any[], bpm: number = 120, tracks: any[] = []) => {
     // Clear any existing timeouts
     timeoutRefs.current.forEach(timeout => clearTimeout(timeout));
     timeoutRefs.current = [];
@@ -188,8 +188,12 @@ export function useMelodyPlayer() {
       const delay = note.start * beatDuration;
       const duration = note.duration * beatDuration / 1000; // Convert to seconds
       
+      // Find the track to get the instrument
+      const track = tracks.find(t => t.id === note.track);
+      const instrument = track?.instrument || 'piano';
+      
       const timeout = setTimeout(() => {
-        playNote(note.note, note.octave, duration);
+        playNote(note.note, note.octave, duration, instrument);
       }, delay);
       
       timeoutRefs.current.push(timeout);
