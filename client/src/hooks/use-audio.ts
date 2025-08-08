@@ -1,6 +1,10 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { audioEngine, AudioEngine } from "@/lib/audio";
 import { useToast } from "@/hooks/use-toast";
+
+// Global audio state
+let globalAudioInitialized = false;
+const audioInitCallbacks: (() => void)[] = [];
 
 interface UseAudioReturn {
   playNote: (note: string, octave?: number, duration?: number) => void;
@@ -11,15 +15,24 @@ interface UseAudioReturn {
 }
 
 export function useAudio(): UseAudioReturn {
-  const isInitializedRef = useRef(false);
+  const [isInitialized, setIsInitialized] = useState(globalAudioInitialized);
   const { toast } = useToast();
 
   const initialize = useCallback(async () => {
-    if (isInitializedRef.current) return;
+    if (globalAudioInitialized) return;
 
     try {
       await audioEngine.initialize();
-      isInitializedRef.current = true;
+      globalAudioInitialized = true;
+      setIsInitialized(true);
+      
+      // Notify all components
+      audioInitCallbacks.forEach(callback => callback());
+      
+      toast({
+        title: "Audio System Ready",
+        description: "Audio engine initialized successfully.",
+      });
     } catch (error) {
       console.error("Failed to initialize audio:", error);
       toast({
@@ -30,9 +43,22 @@ export function useAudio(): UseAudioReturn {
     }
   }, [toast]);
 
+  // Listen for global audio initialization
+  useEffect(() => {
+    const callback = () => setIsInitialized(true);
+    audioInitCallbacks.push(callback);
+    
+    return () => {
+      const index = audioInitCallbacks.indexOf(callback);
+      if (index > -1) {
+        audioInitCallbacks.splice(index, 1);
+      }
+    };
+  }, []);
+
   const playNote = useCallback(async (note: string, octave: number = 4, duration: number = 0.5, instrument: string = 'piano', velocity: number = 0.7) => {
     try {
-      if (!isInitializedRef.current) {
+      if (!globalAudioInitialized) {
         await initialize();
       }
       
@@ -46,7 +72,7 @@ export function useAudio(): UseAudioReturn {
 
   const playDrumSound = useCallback(async (type: string, volume: number = 0.5) => {
     try {
-      if (!isInitializedRef.current) {
+      if (!globalAudioInitialized) {
         await initialize();
       }
       
@@ -68,7 +94,7 @@ export function useAudio(): UseAudioReturn {
   // Initialize audio on first user interaction
   useEffect(() => {
     const handleFirstInteraction = () => {
-      if (!isInitializedRef.current) {
+      if (!globalAudioInitialized) {
         initialize();
       }
       document.removeEventListener("click", handleFirstInteraction);
@@ -84,19 +110,11 @@ export function useAudio(): UseAudioReturn {
     };
   }, [initialize]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      audioEngine.destroy();
-      isInitializedRef.current = false;
-    };
-  }, []);
-
   return {
     playNote,
     playDrumSound,
     setMasterVolume,
-    isInitialized: isInitializedRef.current,
+    isInitialized,
     initialize,
   };
 }

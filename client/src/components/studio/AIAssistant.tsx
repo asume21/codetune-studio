@@ -60,7 +60,7 @@ export default function AIAssistant() {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    
+
     chatMutation.mutate({
       message: inputMessage,
       context: "CodeTune Studio",
@@ -84,136 +84,143 @@ export default function AIAssistant() {
   ];
 
   return (
-    <div className="h-full p-6 flex flex-col space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-heading font-bold">AI Music & Code Assistant</h2>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 text-sm text-gray-400">
-            <div className="w-2 h-2 bg-studio-success rounded-full animate-pulse"></div>
-            <span>AI Assistant Online</span>
-          </div>
-          <Button
-            variant="secondary"
-            onClick={() => setMessages(messages.slice(0, 1))}
-            className="bg-gray-700 hover:bg-gray-600"
-          >
-            <i className="fas fa-trash mr-2"></i>Clear History
-          </Button>
-        </div>
-      </div>
-      
-      <div className="flex-1 flex space-x-6">
-        {/* Chat Interface */}
-        <div className="flex-1 flex flex-col">
-          <ScrollArea className="flex-1 bg-studio-panel border border-gray-600 rounded-lg p-4 mb-4">
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div key={message.id} className={`flex space-x-3 ${message.type === "user" ? "justify-end" : ""}`}>
-                  {message.type === "ai" && (
-                    <div className="w-8 h-8 bg-gradient-to-br from-studio-accent to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <i className="fas fa-robot text-white text-sm"></i>
-                    </div>
-                  )}
-                  
-                  <div className={`flex-1 ${message.type === "user" ? "max-w-md" : ""}`}>
-                    <div className={`rounded-lg p-3 ${
-                      message.type === "user" 
-                        ? "bg-studio-accent text-white" 
-                        : "bg-gray-700"
-                    }`}>
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    </div>
-                    <div className={`text-xs text-gray-400 mt-1 ${message.type === "user" ? "text-right" : ""}`}>
-                      {message.type === "ai" ? "AI Assistant" : "You"} • {message.timestamp.toLocaleTimeString()}
-                    </div>
-                  </div>
-                  
-                  {message.type === "user" && (
-                    <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-white">CT</span>
-                    </div>
-                  )}
-                </div>
-              ))}
-              
-              {chatMutation.isPending && (
-                <div className="flex space-x-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-studio-accent to-blue-500 rounded-full flex items-center justify-center">
-                    <i className="fas fa-robot text-white text-sm"></i>
-                  </div>
-                  <div className="bg-gray-700 rounded-lg p-3">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-          
-          {/* Input Area */}
-          <div className="flex space-x-3">
-            <div className="flex-1 relative">
-              <Input
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="Ask me anything about music production or coding..."
-                className="bg-studio-panel border-gray-600 pr-12"
-                disabled={chatMutation.isPending}
-              />
-              <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-studio-accent">
-                <i className="fas fa-microphone"></i>
-              </button>
-            </div>
+    <div className="h-full flex flex-col">
+      <div className="p-6 border-b border-gray-600">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-heading font-bold">AI Music & Code Assistant</h2>
+          <div className="flex items-center space-x-4">
             <Button
-              onClick={handleSendMessage}
-              disabled={chatMutation.isPending || !inputMessage.trim()}
+              onClick={() => {}}
               className="bg-studio-accent hover:bg-blue-500"
             >
-              <i className="fas fa-paper-plane"></i>
+              <i className="fas fa-power-off mr-2"></i>
+              Start Audio
+            </Button>
+            <Button
+              onClick={() => {}}
+              className="bg-studio-success hover:bg-green-500"
+            >
+              <i className="fas fa-play mr-2"></i>
+              Play
             </Button>
           </div>
         </div>
-        
-        {/* Quick Actions & Suggestions */}
-        <div className="w-80 space-y-4">
-          <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
-            <h3 className="font-medium mb-3">Quick Actions</h3>
-            <div className="space-y-2">
-              {quickActions.map((action, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setInputMessage(action.action);
-                    // Auto-send the message
-                    setTimeout(() => handleSendMessage(), 100);
-                  }}
-                  className="w-full bg-gray-700 hover:bg-gray-600 p-3 rounded-lg text-sm text-left transition-colors"
-                >
-                  <i className={`${action.icon} mr-2 text-studio-accent`}></i>
-                  {action.label}
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex space-x-6">
+          {/* Chat Interface */}
+          <div className="flex-1 flex flex-col">
+            <ScrollArea className="flex-1 bg-studio-panel border border-gray-600 rounded-lg p-4 mb-4">
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div key={message.id} className={`flex space-x-3 ${message.type === "user" ? "justify-end" : ""}`}>
+                    {message.type === "ai" && (
+                      <div className="w-8 h-8 bg-gradient-to-br from-studio-accent to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i className="fas fa-robot text-white text-sm"></i>
+                      </div>
+                    )}
+
+                    <div className={`flex-1 ${message.type === "user" ? "max-w-md" : ""}`}>
+                      <div className={`rounded-lg p-3 ${
+                        message.type === "user"
+                          ? "bg-studio-accent text-white"
+                          : "bg-gray-700"
+                      }`}>
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      </div>
+                      <div className={`text-xs text-gray-400 mt-1 ${message.type === "user" ? "text-right" : ""}`}>
+                        {message.type === "ai" ? "AI Assistant" : "You"} • {message.timestamp.toLocaleTimeString()}
+                      </div>
+                    </div>
+
+                    {message.type === "user" && (
+                      <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-bold text-white">CT</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {chatMutation.isPending && (
+                  <div className="flex space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-studio-accent to-blue-500 rounded-full flex items-center justify-center">
+                      <i className="fas fa-robot text-white text-sm"></i>
+                    </div>
+                    <div className="bg-gray-700 rounded-lg p-3">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+
+            {/* Input Area */}
+            <div className="flex space-x-3">
+              <div className="flex-1 relative">
+                <Input
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  placeholder="Ask me anything about music production or coding..."
+                  className="bg-studio-panel border-gray-600 pr-12"
+                  disabled={chatMutation.isPending}
+                />
+                <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-studio-accent">
+                  <i className="fas fa-microphone"></i>
                 </button>
-              ))}
+              </div>
+              <Button
+                onClick={handleSendMessage}
+                disabled={chatMutation.isPending || !inputMessage.trim()}
+                className="bg-studio-accent hover:bg-blue-500"
+              >
+                <i className="fas fa-paper-plane"></i>
+              </Button>
             </div>
           </div>
-          
-          <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
-            <h3 className="font-medium mb-3">Recent Suggestions</h3>
-            <div className="space-y-3 text-sm">
-              <div className="p-2 bg-gray-700 rounded">
-                <div className="font-medium text-studio-accent">Jazz Chord Progression</div>
-                <div className="text-gray-400">Cmaj7 - Am7 - Dm7 - G7</div>
+
+          {/* Quick Actions & Suggestions */}
+          <div className="w-80 space-y-4">
+            <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
+              <h3 className="font-medium mb-3">Quick Actions</h3>
+              <div className="space-y-2">
+                {quickActions.map((action, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setInputMessage(action.action);
+                      // Auto-send the message
+                      setTimeout(() => handleSendMessage(), 100);
+                    }}
+                    className="w-full bg-gray-700 hover:bg-gray-600 p-3 rounded-lg text-sm text-left transition-colors"
+                  >
+                    <i className={`${action.icon} mr-2 text-studio-accent`}></i>
+                    {action.label}
+                  </button>
+                ))}
               </div>
-              <div className="p-2 bg-gray-700 rounded">
-                <div className="font-medium text-studio-accent">Code Refactor</div>
-                <div className="text-gray-400">Use array.map() instead of for loop</div>
-              </div>
-              <div className="p-2 bg-gray-700 rounded">
-                <div className="font-medium text-studio-accent">Drum Fill</div>
-                <div className="text-gray-400">32nd note snare roll at bar end</div>
+            </div>
+
+            <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
+              <h3 className="font-medium mb-3">Recent Suggestions</h3>
+              <div className="space-y-3 text-sm">
+                <div className="p-2 bg-gray-700 rounded">
+                  <div className="font-medium text-studio-accent">Jazz Chord Progression</div>
+                  <div className="text-gray-400">Cmaj7 - Am7 - Dm7 - G7</div>
+                </div>
+                <div className="p-2 bg-gray-700 rounded">
+                  <div className="font-medium text-studio-accent">Code Refactor</div>
+                  <div className="text-gray-400">Use array.map() instead of for loop</div>
+                </div>
+                <div className="p-2 bg-gray-700 rounded">
+                  <div className="font-medium text-studio-accent">Drum Fill</div>
+                  <div className="text-gray-400">32nd note snare roll at bar end</div>
+                </div>
               </div>
             </div>
           </div>

@@ -164,7 +164,7 @@ Type here or use AI generation...`);
       const end = textarea.selectionEnd;
       const newContent = content.substring(0, start) + rhyme + content.substring(end);
       setContent(newContent);
-      
+
       // Restore cursor position
       setTimeout(() => {
         textarea.focus();
@@ -213,298 +213,252 @@ Type here or use AI generation...`);
   ];
 
   return (
-    <div className="h-full p-6 flex flex-col space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-heading font-bold">Lyric Lab</h2>
-        <div className="flex items-center space-x-4">
-          <Select value={genre} onValueChange={setGenre}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {genres.map((g) => (
-                <SelectItem key={g.value} value={g.value}>
-                  {g.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          <Button
-            onClick={handleGenerateAI}
-            disabled={generateLyricsMutation.isPending}
-            className="bg-studio-accent hover:bg-blue-500"
-          >
-            {generateLyricsMutation.isPending ? (
-              <>
-                <i className="fas fa-spinner animate-spin mr-2"></i>
-                Generating...
-              </>
-            ) : (
-              <>
-                <i className="fas fa-magic mr-2"></i>
-                AI Generate
-              </>
-            )}
-          </Button>
-          
-          <Button
-            onClick={handleSave}
-            disabled={saveLyricsMutation.isPending}
-            className="bg-studio-success hover:bg-green-500"
-          >
-            <i className="fas fa-save mr-2"></i>
-            Save
-          </Button>
-          
-          <Button
-            onClick={() => generateBeatFromLyricsMutation.mutate({ lyrics: content, genre })}
-            disabled={generateBeatFromLyricsMutation.isPending || !content.trim()}
-            className="bg-green-600 hover:bg-green-500"
-          >
-            {generateBeatFromLyricsMutation.isPending ? (
-              <>
-                <i className="fas fa-spinner animate-spin mr-2"></i>
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <i className="fas fa-drum mr-2"></i>
-                Generate Beat
-              </>
-            )}
-          </Button>
+    <div className="h-full flex flex-col">
+      <div className="p-6 border-b border-gray-600">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-heading font-bold">Lyric Lab</h2>
+          <div className="flex items-center space-x-4">
+            <Button
+              onClick={() => {}}
+              className="bg-studio-accent hover:bg-blue-500"
+            >
+              <i className="fas fa-power-off mr-2"></i>
+              Start Audio
+            </Button>
+          </div>
         </div>
       </div>
-      
-      <div className="flex-1 grid grid-cols-3 gap-6">
-        {/* Lyric Editor */}
-        <div className="col-span-2 bg-studio-panel border border-gray-600 rounded-lg overflow-hidden">
-          <div className="bg-gray-700 px-4 py-2 border-b border-gray-600 flex items-center justify-between">
-            <h3 className="font-medium">Lyric Editor</h3>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-400">
-                <span>Words: {wordCount}</span>
-                <span>Lines: {lineCount}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                  <i className="fas fa-undo"></i>
-                </Button>
-                <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                  <i className="fas fa-redo"></i>
-                </Button>
-                <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                  <i className="fas fa-spell-check"></i>
-                </Button>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-4">
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Song Title"
-              className="mb-4 bg-gray-700 border-gray-600 font-semibold text-lg"
-            />
-            
-            <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="h-96 bg-transparent border-none resize-none font-mono text-sm leading-relaxed focus:outline-none"
-              placeholder="Start writing your lyrics here..."
-            />
-          </div>
-          
-          {/* Rhyme Suggestions */}
-          {rhymeSuggestions.length > 0 && (
-            <div className="p-4 bg-gray-800 border-t border-gray-600">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Rhyme Suggestions</span>
-                <span className="text-xs text-gray-400">For: "{currentWord}"</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {rhymeSuggestions.slice(0, 8).map((suggestion, index) => (
-                  <button
-                    key={index}
-                    onClick={() => insertRhyme(suggestion.word)}
-                    className="px-2 py-1 bg-studio-accent bg-opacity-20 text-studio-accent rounded text-xs hover:bg-opacity-30 transition-colors"
-                  >
-                    {suggestion.word}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Lyric Tools */}
-        <div className="space-y-6">
-          {/* Song Structure */}
-          <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
-            <h3 className="font-medium mb-3">Song Structure</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600" onClick={() => goToSection("intro")}>
-                <span>Intro</span>
-                <span className="text-gray-400">8 bars</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-studio-accent bg-opacity-20 rounded cursor-pointer" onClick={() => goToSection("verse 1")}>
-                <span>Verse 1</span>
-                <span className="text-gray-400">16 bars</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600" onClick={() => goToSection("pre-chorus")}>
-                <span>Pre-Chorus</span>
-                <span className="text-gray-400">8 bars</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600" onClick={() => goToSection("chorus")}>
-                <span>Chorus</span>
-                <span className="text-gray-400">16 bars</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-gray-600 rounded cursor-pointer hover:bg-gray-500">
-                <span className="text-gray-400">+ Add Section</span>
-                <i className="fas fa-plus text-gray-400"></i>
-              </div>
-            </div>
-          </div>
-          
-          {/* Rhyme Scheme */}
-          <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
-            <h3 className="font-medium mb-3">Rhyme Scheme</h3>
-            <div className="space-y-3">
-              {rhymeSchemes.map((scheme) => (
-                <div key={scheme.value} className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="rhyme"
-                    value={scheme.value}
-                    checked={rhymeScheme === scheme.value}
-                    onChange={(e) => setRhymeScheme(e.target.value)}
-                    className="text-studio-accent"
-                  />
-                  <label className="text-sm cursor-pointer" onClick={() => setRhymeScheme(scheme.value)}>
-                    {scheme.label}
-                  </label>
+
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="grid grid-cols-3 gap-6">
+          {/* Lyric Editor */}
+          <div className="col-span-2 bg-studio-panel border border-gray-600 rounded-lg overflow-hidden">
+            <div className="bg-gray-700 px-4 py-2 border-b border-gray-600 flex items-center justify-between">
+              <h3 className="font-medium">Lyric Editor</h3>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 text-sm text-gray-400">
+                  <span>Words: {wordCount}</span>
+                  <span>Lines: {lineCount}</span>
                 </div>
-              ))}
+                <div className="flex items-center space-x-2">
+                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+                    <i className="fas fa-undo"></i>
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+                    <i className="fas fa-redo"></i>
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+                    <i className="fas fa-spell-check"></i>
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-          
-          {/* AI Generation */}
-          <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
-            <h3 className="font-medium mb-3">AI Generation</h3>
-            <div className="space-y-3">
+
+            <div className="p-4">
               <Input
-                value={theme}
-                onChange={(e) => setTheme(e.target.value)}
-                placeholder="Theme or concept..."
-                className="bg-gray-700 border-gray-600"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Song Title"
+                className="mb-4 bg-gray-700 border-gray-600 font-semibold text-lg"
               />
-              <Select value={mood} onValueChange={setMood}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select mood..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {moods.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>
-                      {m.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={handleGenerateAI}
-                disabled={generateLyricsMutation.isPending}
-                className="w-full bg-studio-accent hover:bg-blue-500"
-              >
-                Generate Lyrics
-              </Button>
+
+              <Textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="h-96 bg-transparent border-none resize-none font-mono text-sm leading-relaxed focus:outline-none"
+                placeholder="Start writing your lyrics here..."
+              />
             </div>
+
+            {/* Rhyme Suggestions */}
+            {rhymeSuggestions.length > 0 && (
+              <div className="p-4 bg-gray-800 border-t border-gray-600">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Rhyme Suggestions</span>
+                  <span className="text-xs text-gray-400">For: "{currentWord}"</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {rhymeSuggestions.slice(0, 8).map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => insertRhyme(suggestion.word)}
+                      className="px-2 py-1 bg-studio-accent bg-opacity-20 text-studio-accent rounded text-xs hover:bg-opacity-30 transition-colors"
+                    >
+                      {suggestion.word}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-          
-          {/* Rhyme Dictionary */}
-          <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
-            <h3 className="font-medium mb-3">Rhyme Dictionary</h3>
-            <div className="space-y-3">
-              <div className="flex space-x-2">
+
+          {/* Lyric Tools */}
+          <div className="space-y-6">
+            {/* Song Structure */}
+            <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
+              <h3 className="font-medium mb-3">Song Structure</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600" onClick={() => goToSection("intro")}>
+                  <span>Intro</span>
+                  <span className="text-gray-400">8 bars</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-studio-accent bg-opacity-20 rounded cursor-pointer" onClick={() => goToSection("verse 1")}>
+                  <span>Verse 1</span>
+                  <span className="text-gray-400">16 bars</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600" onClick={() => goToSection("pre-chorus")}>
+                  <span>Pre-Chorus</span>
+                  <span className="text-gray-400">8 bars</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600" onClick={() => goToSection("chorus")}>
+                  <span>Chorus</span>
+                  <span className="text-gray-400">16 bars</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-gray-600 rounded cursor-pointer hover:bg-gray-500">
+                  <span className="text-gray-400">+ Add Section</span>
+                  <i className="fas fa-plus text-gray-400"></i>
+                </div>
+              </div>
+            </div>
+
+            {/* Rhyme Scheme */}
+            <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
+              <h3 className="font-medium mb-3">Rhyme Scheme</h3>
+              <div className="space-y-3">
+                {rhymeSchemes.map((scheme) => (
+                  <div key={scheme.value} className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="rhyme"
+                      value={scheme.value}
+                      checked={rhymeScheme === scheme.value}
+                      onChange={(e) => setRhymeScheme(e.target.value)}
+                      className="text-studio-accent"
+                    />
+                    <label className="text-sm cursor-pointer" onClick={() => setRhymeScheme(scheme.value)}>
+                      {scheme.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* AI Generation */}
+            <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
+              <h3 className="font-medium mb-3">AI Generation</h3>
+              <div className="space-y-3">
                 <Input
-                  value={currentWord}
-                  onChange={(e) => setCurrentWord(e.target.value)}
-                  placeholder="Enter word to find rhymes..."
+                  value={theme}
+                  onChange={(e) => setTheme(e.target.value)}
+                  placeholder="Theme or concept..."
                   className="bg-gray-700 border-gray-600"
-                  onKeyDown={(e) => e.key === "Enter" && handleFindRhymes()}
                 />
+                <Select value={mood} onValueChange={setMood}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select mood..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {moods.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        {m.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Button
-                  onClick={handleFindRhymes}
-                  disabled={rhymeMutation.isPending}
-                  size="sm"
-                  className="bg-studio-accent hover:bg-blue-500"
+                  onClick={handleGenerateAI}
+                  disabled={generateLyricsMutation.isPending}
+                  className="w-full bg-studio-accent hover:bg-blue-500"
                 >
-                  <i className="fas fa-search"></i>
+                  Generate Lyrics
                 </Button>
               </div>
-              
-              {rhymeMutation.isPending && (
-                <div className="text-center py-4">
-                  <i className="fas fa-spinner animate-spin text-studio-accent"></i>
-                </div>
-              )}
             </div>
-          </div>
-          
-          {/* Lyric Analysis */}
-          <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
-            <h3 className="font-medium mb-3">Lyric Analysis</h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Tempo Suggestion:</span>
-                <span className="text-studio-accent">
-                  {genre === "hip-hop" ? "80-90 BPM" : 
-                   genre === "pop" ? "120-130 BPM" :
-                   genre === "rock" ? "110-140 BPM" :
-                   genre === "r&b" ? "70-100 BPM" :
-                   genre === "electronic" ? "128-140 BPM" : "90-120 BPM"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Syllable Density:</span>
-                <span className="text-studio-accent">
-                  {Math.round((content.split(/\s+/).length / lineCount) * 10) / 10} words/line
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Rhythm Style:</span>
-                <span className="text-studio-accent">
-                  {wordCount / lineCount > 8 ? "Fast Flow" : 
-                   wordCount / lineCount > 5 ? "Medium Flow" : "Slow Flow"}
-                </span>
-              </div>
-              <Button
-                onClick={() => generateBeatFromLyricsMutation.mutate({ lyrics: content, genre })}
-                disabled={generateBeatFromLyricsMutation.isPending || !content.trim()}
-                className="w-full bg-green-600 hover:bg-green-500"
-                size="sm"
-              >
-                <i className="fas fa-drum mr-2"></i>
-                Analyze & Generate Beat
-              </Button>
-            </div>
-          </div>
-          
-          {/* Word Bank */}
-          <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
-            <h3 className="font-medium mb-3">Word Bank</h3>
-            <div className="space-y-2 text-xs max-h-32 overflow-y-auto">
-              <div className="flex flex-wrap gap-1">
-                {["algorithm", "digital", "syntax", "binary", "electric", "function", "variable", "execute"].map((word) => (
-                  <button
-                    key={word}
-                    onClick={() => insertRhyme(word)}
-                    className="px-2 py-1 bg-gray-700 rounded hover:bg-gray-600 cursor-pointer transition-colors"
+
+            {/* Rhyme Dictionary */}
+            <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
+              <h3 className="font-medium mb-3">Rhyme Dictionary</h3>
+              <div className="space-y-3">
+                <div className="flex space-x-2">
+                  <Input
+                    value={currentWord}
+                    onChange={(e) => setCurrentWord(e.target.value)}
+                    placeholder="Enter word to find rhymes..."
+                    className="bg-gray-700 border-gray-600"
+                    onKeyDown={(e) => e.key === "Enter" && handleFindRhymes()}
+                  />
+                  <Button
+                    onClick={handleFindRhymes}
+                    disabled={rhymeMutation.isPending}
+                    size="sm"
+                    className="bg-studio-accent hover:bg-blue-500"
                   >
-                    {word}
-                  </button>
-                ))}
+                    <i className="fas fa-search"></i>
+                  </Button>
+                </div>
+
+                {rhymeMutation.isPending && (
+                  <div className="text-center py-4">
+                    <i className="fas fa-spinner animate-spin text-studio-accent"></i>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Lyric Analysis */}
+            <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
+              <h3 className="font-medium mb-3">Lyric Analysis</h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Tempo Suggestion:</span>
+                  <span className="text-studio-accent">
+                    {genre === "hip-hop" ? "80-90 BPM" :
+                     genre === "pop" ? "120-130 BPM" :
+                     genre === "rock" ? "110-140 BPM" :
+                     genre === "r&b" ? "70-100 BPM" :
+                     genre === "electronic" ? "128-140 BPM" : "90-120 BPM"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Syllable Density:</span>
+                  <span className="text-studio-accent">
+                    {Math.round((content.split(/\s+/).length / lineCount) * 10) / 10} words/line
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Rhythm Style:</span>
+                  <span className="text-studio-accent">
+                    {wordCount / lineCount > 8 ? "Fast Flow" :
+                     wordCount / lineCount > 5 ? "Medium Flow" : "Slow Flow"}
+                  </span>
+                </div>
+                <Button
+                  onClick={() => generateBeatFromLyricsMutation.mutate({ lyrics: content, genre })}
+                  disabled={generateBeatFromLyricsMutation.isPending || !content.trim()}
+                  className="w-full bg-green-600 hover:bg-green-500"
+                  size="sm"
+                >
+                  <i className="fas fa-drum mr-2"></i>
+                  Analyze & Generate Beat
+                </Button>
+              </div>
+            </div>
+
+            {/* Word Bank */}
+            <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
+              <h3 className="font-medium mb-3">Word Bank</h3>
+              <div className="space-y-2 text-xs max-h-32 overflow-y-auto">
+                <div className="flex flex-wrap gap-1">
+                  {["algorithm", "digital", "syntax", "binary", "electric", "function", "variable", "execute"].map((word) => (
+                    <button
+                      key={word}
+                      onClick={() => insertRhyme(word)}
+                      className="px-2 py-1 bg-gray-700 rounded hover:bg-gray-600 cursor-pointer transition-colors"
+                    >
+                      {word}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

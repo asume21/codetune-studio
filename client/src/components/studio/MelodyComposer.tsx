@@ -58,7 +58,7 @@ export default function MelodyComposer() {
   const [zoom, setZoom] = useState(1);
 
   const { toast } = useToast();
-  const { playNote } = useAudio();
+  const { playNote, initialize, isInitialized } = useAudio();
   const { playMelody: playMelodySequence, stopMelody: stopMelodySequence } = useMelodyPlayer();
   const [isMelodyPlaying, setIsMelodyPlaying] = useState(false);
   const { playMelody, stopMelody } = useMelodyPlayer();
@@ -310,352 +310,305 @@ export default function MelodyComposer() {
 
 
   return (
-    <div className="h-full p-6 flex flex-col space-y-4">
+    <div className="h-full flex flex-col">
       {/* Transport and Controls */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-2xl font-heading font-bold">Melody Composer</h2>
+      <div className="p-6 border-b border-gray-600">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <h2 className="text-2xl font-heading font-bold">Melody Composer</h2>
 
-          <Button
-            onClick={handlePlay}
-            className={`${isPlaying ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
-          >
-            <i className={`fas ${isPlaying ? 'fa-stop' : 'fa-play'} mr-2`}></i>
-            {isPlaying ? 'Stop' : 'Play'}
-          </Button>
+            <Button
+              onClick={initialize}
+              disabled={isInitialized}
+              className="bg-studio-accent hover:bg-blue-500"
+            >
+              <i className="fas fa-power-off mr-2"></i>
+              {isInitialized ? 'Audio Ready' : 'Start Audio'}
+            </Button></div>
 
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium">BPM:</label>
-            <input
-              type="number"
-              value={bpm}
-              onChange={(e) => setBpm(Math.max(60, Math.min(200, parseInt(e.target.value) || 120)))}
-              className="w-16 px-2 py-1 text-sm bg-gray-800 border border-gray-600 rounded"
-              min="60"
-              max="200"
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium">Snap:</label>
-            <Select value={gridSnapSize.toString()} onValueChange={(val) => setGridSnapSize(parseFloat(val))}>
-              <SelectTrigger className="w-20">
+          <div className="flex items-center space-x-4">
+            <Select value={scale} onValueChange={setScale}>
+              <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {snapSizes.map((snap) => (
-                  <SelectItem key={snap.value} value={snap.value.toString()}>
-                    {snap.label}
+                {scales.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+
+            <Button onClick={handlePlayMelody} className="bg-studio-success hover:bg-green-500">
+              <i className={`fas ${isMelodyPlaying ? "fa-pause" : "fa-play"} mr-2`}></i>
+              {isMelodyPlaying ? "Stop" : "Play Melody"}
+            </Button>
+            <Button
+              onClick={generateMelody}
+              disabled={generateMelodyMutation.isPending}
+              className="bg-studio-accent hover:bg-blue-500"
+            >
+              {generateMelodyMutation.isPending ? (
+                <>
+                  <i className="fas fa-spinner animate-spin mr-2"></i>
+                  Composing...
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-magic mr-2"></i>
+                  AI Compose
+                </>
+              )}
+            </Button>
+
+            <Button
+              onClick={handleSave}
+              disabled={saveMelodyMutation.isPending}
+              variant="secondary"
+            >
+              <i className="fas fa-save mr-2"></i>
+              Save
+            </Button>
           </div>
-
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium">Zoom:</label>
-            <input
-              type="range"
-              min="0.5"
-              max="4"
-              step="0.5"
-              value={zoom}
-              onChange={(e) => setZoom(parseFloat(e.target.value))}
-              className="w-20"
-            />
-            <span className="text-sm w-8">{zoom}x</span>
-          </div>
-
-          <Button
-            onClick={clearAllNotes}
-            variant="outline"
-            size="sm"
-          >
-            <i className="fas fa-trash mr-2"></i>
-            Clear
-          </Button>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <Select value={scale} onValueChange={setScale}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {scales.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button onClick={handlePlayMelody} className="bg-studio-success hover:bg-green-500">
-            <i className={`fas ${isMelodyPlaying ? "fa-pause" : "fa-play"} mr-2`}></i>
-            {isMelodyPlaying ? "Stop" : "Play Melody"}
-          </Button>
-          <Button
-            onClick={generateMelody}
-            disabled={generateMelodyMutation.isPending}
-            className="bg-studio-accent hover:bg-blue-500"
-          >
-            {generateMelodyMutation.isPending ? (
-              <>
-                <i className="fas fa-spinner animate-spin mr-2"></i>
-                Composing...
-              </>
-            ) : (
-              <>
-                <i className="fas fa-magic mr-2"></i>
-                AI Compose
-              </>
-            )}
-          </Button>
-
-          <Button
-            onClick={handleSave}
-            disabled={saveMelodyMutation.isPending}
-            variant="secondary"
-          >
-            <i className="fas fa-save mr-2"></i>
-            Save
-          </Button>
         </div>
       </div>
 
-      <div className="flex-1 flex space-x-4">
-        {/* Track Controls */}
-        <div className="w-64 bg-studio-panel border border-gray-600 rounded-lg p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium">Tracks</h3>
-            <Button size="sm" onClick={addTrack} disabled={tracks.length >= 8}>
-              <i className="fas fa-plus mr-1"></i>
-              Add
-            </Button>
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex space-x-4 h-full">
+          {/* Track Controls */}
+          <div className="w-64 bg-studio-panel border border-gray-600 rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium">Tracks</h3>
+              <Button size="sm" onClick={addTrack} disabled={tracks.length >= 8}>
+                <i className="fas fa-plus mr-1"></i>
+                Add
+              </Button>
+            </div>
+
+            {tracks.map((track) => (
+              <div key={track.id} className={`p-3 rounded border ${selectedTrack === track.id ? 'border-studio-accent' : 'border-gray-600'} bg-gray-800`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-3 h-3 rounded ${track.color}`}></div>
+                    <span className="text-sm font-medium">{track.name}</span>
+                  </div>
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={() => toggleTrackVisibility(track.id)}
+                      className={`w-6 h-6 rounded text-xs ${track.visible ? 'bg-green-600' : 'bg-gray-600'}`}
+                    >
+                      <i className={`fas ${track.visible ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+                    </button>
+                    <button
+                      onClick={() => toggleTrackMute(track.id)}
+                      className={`w-6 h-6 rounded text-xs ${track.muted ? 'bg-red-600' : 'bg-gray-600'}`}
+                    >
+                      <i className={`fas ${track.muted ? 'fa-volume-mute' : 'fa-volume-up'}`}></i>
+                    </button>
+                  </div>
+                </div>
+
+                <Select 
+                  value={track.instrument} 
+                  onValueChange={(val) => updateTrackInstrument(track.id, val)}
+                >
+                  <SelectTrigger className="w-full text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {instrumentsConfig.map((inst) => (
+                      <SelectItem key={inst.id} value={inst.id}>
+                        {inst.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <button
+                  onClick={() => setSelectedTrack(track.id)}
+                  className={`w-full mt-2 px-2 py-1 text-xs rounded ${
+                    selectedTrack === track.id ? 'bg-studio-accent' : 'bg-gray-700 hover:bg-gray-600'
+                  }`}
+                >
+                  Select for Edit
+                </button>
+              </div>
+            ))}
           </div>
 
-          {tracks.map((track) => (
-            <div key={track.id} className={`p-3 rounded border ${selectedTrack === track.id ? 'border-studio-accent' : 'border-gray-600'} bg-gray-800`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <div className={`w-3 h-3 rounded ${track.color}`}></div>
-                  <span className="text-sm font-medium">{track.name}</span>
-                </div>
-                <div className="flex space-x-1">
-                  <button
-                    onClick={() => toggleTrackVisibility(track.id)}
-                    className={`w-6 h-6 rounded text-xs ${track.visible ? 'bg-green-600' : 'bg-gray-600'}`}
-                  >
-                    <i className={`fas ${track.visible ? 'fa-eye' : 'fa-eye-slash'}`}></i>
-                  </button>
-                  <button
-                    onClick={() => toggleTrackMute(track.id)}
-                    className={`w-6 h-6 rounded text-xs ${track.muted ? 'bg-red-600' : 'bg-gray-600'}`}
-                  >
-                    <i className={`fas ${track.muted ? 'fa-volume-mute' : 'fa-volume-up'}`}></i>
-                  </button>
-                </div>
+          {/* Piano Roll */}
+          <div className="flex-1 bg-studio-panel border border-gray-600 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium">
+                Piano Roll - {tracks.find(t => t.id === selectedTrack)?.name} 
+                <span className="text-sm text-gray-400 ml-2">
+                  (Click to add notes)
+                </span>
+              </h3>
+              <div className="text-sm text-gray-400">
+                Beat: {currentBeat.toFixed(2)} / {8 * zoom}
+              </div>
+            </div>
+
+            {/* Multi-track Piano Roll Grid */}
+            <div 
+              className="h-80 bg-gray-900 rounded border border-gray-600 relative overflow-hidden cursor-crosshair"
+              onClick={handlePianoRollClick}
+            >
+              {/* Vertical grid lines (beats) */}
+              <div className="absolute inset-0 pointer-events-none">
+                {Array(Math.floor(32 * zoom)).fill(0).map((_, i) => (
+                  <div
+                    key={`beat-${i}`}
+                    className={`absolute top-0 bottom-0 ${i % (4 / gridSnapSize) === 0 ? 'border-gray-500' : 'border-gray-700'} border-l`}
+                    style={{ left: `${(i / (32 * zoom)) * 100}%` }}
+                  />
+                ))}
               </div>
 
-              <Select 
-                value={track.instrument} 
-                onValueChange={(val) => updateTrackInstrument(track.id, val)}
-              >
-                <SelectTrigger className="w-full text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {instrumentsConfig.map((inst) => (
-                    <SelectItem key={inst.id} value={inst.id}>
-                      {inst.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Horizontal grid lines (notes) */}
+              <div className="absolute inset-0 pointer-events-none">
+                {Array(48).fill(0).map((_, i) => {
+                  const isWhiteKey = ![1, 3, 6, 8, 10].includes(i % 12);
+                  return (
+                    <div 
+                      key={`note-${i}`} 
+                      className={`border-b ${isWhiteKey ? 'bg-gray-800' : 'bg-gray-850'} ${i % 12 === 0 ? 'border-gray-500' : 'border-gray-700'}`}
+                      style={{ 
+                        height: `${100 / 48}%`,
+                        top: `${(47 - i) * (100 / 48)}%`,
+                        position: 'absolute',
+                        left: 0,
+                        right: 0
+                      }}
+                    />
+                  );
+                })}
+              </div>
 
-              <button
-                onClick={() => setSelectedTrack(track.id)}
-                className={`w-full mt-2 px-2 py-1 text-xs rounded ${
-                  selectedTrack === track.id ? 'bg-studio-accent' : 'bg-gray-700 hover:bg-gray-600'
-                }`}
-              >
-                Select for Edit
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {/* Piano Roll */}
-        <div className="flex-1 bg-studio-panel border border-gray-600 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium">
-              Piano Roll - {tracks.find(t => t.id === selectedTrack)?.name} 
-              <span className="text-sm text-gray-400 ml-2">
-                (Click to add notes)
-              </span>
-            </h3>
-            <div className="text-sm text-gray-400">
-              Beat: {currentBeat.toFixed(2)} / {8 * zoom}
-            </div>
-          </div>
-
-          {/* Multi-track Piano Roll Grid */}
-          <div 
-            className="h-80 bg-gray-900 rounded border border-gray-600 relative overflow-hidden cursor-crosshair"
-            onClick={handlePianoRollClick}
-          >
-            {/* Vertical grid lines (beats) */}
-            <div className="absolute inset-0 pointer-events-none">
-              {Array(Math.floor(32 * zoom)).fill(0).map((_, i) => (
+              {/* Playback cursor */}
+              {isPlaying && (
                 <div
-                  key={`beat-${i}`}
-                  className={`absolute top-0 bottom-0 ${i % (4 / gridSnapSize) === 0 ? 'border-gray-500' : 'border-gray-700'} border-l`}
-                  style={{ left: `${(i / (32 * zoom)) * 100}%` }}
+                  className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 pointer-events-none"
+                  style={{
+                    left: `${(currentBeat / (8 * zoom)) * 100}%`,
+                  }}
                 />
-              ))}
-            </div>
+              )}
 
-            {/* Horizontal grid lines (notes) */}
-            <div className="absolute inset-0 pointer-events-none">
-              {Array(48).fill(0).map((_, i) => {
-                const isWhiteKey = ![1, 3, 6, 8, 10].includes(i % 12);
+              {/* Notes for all tracks */}
+              {notes.map((note, index) => {
+                const track = tracks.find(t => t.id === note.track);
+                if (!track || !track.visible) return null;
+
+                const noteIndex = pianoKeys.findIndex(k => k.note === note.note);
+                const yPosition = (47 - (noteIndex + (note.octave - 2) * 12)) * (100 / 48);
+
                 return (
-                  <div 
-                    key={`note-${i}`} 
-                    className={`border-b ${isWhiteKey ? 'bg-gray-800' : 'bg-gray-850'} ${i % 12 === 0 ? 'border-gray-500' : 'border-gray-700'}`}
-                    style={{ 
+                  <div
+                    key={index}
+                    className={`absolute rounded h-4 cursor-pointer hover:opacity-80 group z-10 ${track.color} ${track.muted ? 'opacity-50' : 'opacity-90'}`}
+                    style={{
+                      left: `${(note.start / (8 * zoom)) * 100}%`,
+                      width: `${Math.max((note.duration / (8 * zoom)) * 100, 1)}%`,
+                      top: `${Math.max(0, Math.min(yPosition, 95))}%`,
                       height: `${100 / 48}%`,
-                      top: `${(47 - i) * (100 / 48)}%`,
-                      position: 'absolute',
-                      left: 0,
-                      right: 0
                     }}
-                  />
+                    title={`${note.note}${note.octave} - ${track.name} - Start: ${note.start}, Duration: ${note.duration}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeNote(index);
+                    }}
+                  >
+                    <div className="hidden group-hover:block absolute -top-8 left-0 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap z-30">
+                      {track.name}: {note.note}{note.octave} - Click to delete
+                    </div>
+                  </div>
                 );
               })}
             </div>
 
-            {/* Playback cursor */}
-            {isPlaying && (
-              <div
-                className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 pointer-events-none"
-                style={{
-                  left: `${(currentBeat / (8 * zoom)) * 100}%`,
-                }}
-              />
-            )}
-
-            {/* Notes for all tracks */}
-            {notes.map((note, index) => {
-              const track = tracks.find(t => t.id === note.track);
-              if (!track || !track.visible) return null;
-
-              const noteIndex = pianoKeys.findIndex(k => k.note === note.note);
-              const yPosition = (47 - (noteIndex + (note.octave - 2) * 12)) * (100 / 48);
-
-              return (
-                <div
-                  key={index}
-                  className={`absolute rounded h-4 cursor-pointer hover:opacity-80 group z-10 ${track.color} ${track.muted ? 'opacity-50' : 'opacity-90'}`}
-                  style={{
-                    left: `${(note.start / (8 * zoom)) * 100}%`,
-                    width: `${Math.max((note.duration / (8 * zoom)) * 100, 1)}%`,
-                    top: `${Math.max(0, Math.min(yPosition, 95))}%`,
-                    height: `${100 / 48}%`,
-                  }}
-                  title={`${note.note}${note.octave} - ${track.name} - Start: ${note.start}, Duration: ${note.duration}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeNote(index);
-                  }}
-                >
-                  <div className="hidden group-hover:block absolute -top-8 left-0 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap z-30">
-                    {track.name}: {note.note}{note.octave} - Click to delete
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Beat markers */}
-          <div className="mt-2 text-xs text-gray-400">
-            <div className="grid gap-8 text-center" style={{ gridTemplateColumns: `repeat(${Math.ceil(8 * zoom)}, 1fr)` }}>
-              {Array(Math.ceil(8 * zoom)).fill(0).map((_, i) => (
-                <div key={i}>Beat {i + 1}</div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Virtual Piano */}
-        <div className="w-80 bg-studio-panel border border-gray-600 rounded-lg p-4">
-          <h3 className="font-medium mb-4">Virtual Piano</h3>
-
-          <div className="relative mb-4">
-            {/* White Keys */}
-            <div className="flex">
-              {pianoKeys.filter(key => key.type === "white").map((key, index) => (
-                <button
-                  key={`white-${index}`}
-                  onClick={() => playNote(key.note, currentOctave, gridSnapSize)}
-                  className={`piano-key w-8 h-32 border border-gray-400 rounded-b ${key.color} text-black text-xs flex items-end justify-center pb-2 hover:bg-gray-200`}
-                >
-                  {key.note}
-                </button>
-              ))}
-            </div>
-
-            {/* Black Keys */}
-            <div className="absolute top-0 flex">
-              <div className="w-6"></div>
-              {pianoKeys.filter(key => key.type === "black").map((key, index) => (
-                <button
-                  key={`black-${index}`}
-                  onClick={() => playNote(key.note, currentOctave, gridSnapSize)}
-                  className={`piano-key w-4 h-20 border border-gray-700 rounded-b ${key.color} text-white text-xs flex items-end justify-center pb-1 hover:bg-gray-600 ${
-                    index === 1 || index === 4 ? "mr-6" : "mr-4"
-                  }`}
-                >
-                  {key.note}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Octave Controls */}
-          <div className="flex items-center justify-between mb-6">
-            <Button 
-              variant="secondary" 
-              size="sm"
-              onClick={() => setCurrentOctave(Math.max(1, currentOctave - 1))}
-            >
-              <i className="fas fa-minus mr-1"></i>Octave
-            </Button>
-            <span className="text-sm font-mono">C{currentOctave}</span>
-            <Button 
-              variant="secondary" 
-              size="sm"
-              onClick={() => setCurrentOctave(Math.min(7, currentOctave + 1))}
-            >
-              <i className="fas fa-plus mr-1"></i>Octave
-            </Button>
-          </div>
-
-          {/* Current Track Info */}
-          <div className="bg-gray-800 rounded p-3 space-y-3">
-            <h4 className="font-medium text-sm">Selected Track</h4>
-            <div className="flex items-center space-x-2">
-              <div className={`w-4 h-4 rounded ${tracks.find(t => t.id === selectedTrack)?.color}`}></div>
-              <span className="text-sm">{tracks.find(t => t.id === selectedTrack)?.name}</span>
-            </div>
-            <div className="space-y-2">
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Note Count</label>
-                <span className="text-sm">{notes.filter(n => n.track === selectedTrack).length} notes</span>
+            {/* Beat markers */}
+            <div className="mt-2 text-xs text-gray-400">
+              <div className="grid gap-8 text-center" style={{ gridTemplateColumns: `repeat(${Math.ceil(8 * zoom)}, 1fr)` }}>
+                {Array(Math.ceil(8 * zoom)).fill(0).map((_, i) => (
+                  <div key={i}>Beat {i + 1}</div>
+                ))}
               </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Instrument</label>
-                <span className="text-sm capitalize">{tracks.find(t => t.id === selectedTrack)?.instrument}</span>
+            </div>
+          </div>
+
+          {/* Virtual Piano */}
+          <div className="w-80 bg-studio-panel border border-gray-600 rounded-lg p-4">
+            <h3 className="font-medium mb-4">Virtual Piano</h3>
+
+            <div className="relative mb-4">
+              {/* White Keys */}
+              <div className="flex">
+                {pianoKeys.filter(key => key.type === "white").map((key, index) => (
+                  <button
+                    key={`white-${index}`}
+                    onClick={() => playNote(key.note, currentOctave, gridSnapSize)}
+                    className={`piano-key w-8 h-32 border border-gray-400 rounded-b ${key.color} text-black text-xs flex items-end justify-center pb-2 hover:bg-gray-200`}
+                  >
+                    {key.note}
+                  </button>
+                ))}
+              </div>
+
+              {/* Black Keys */}
+              <div className="absolute top-0 flex">
+                <div className="w-6"></div>
+                {pianoKeys.filter(key => key.type === "black").map((key, index) => (
+                  <button
+                    key={`black-${index}`}
+                    onClick={() => playNote(key.note, currentOctave, gridSnapSize)}
+                    className={`piano-key w-4 h-20 border border-gray-700 rounded-b ${key.color} text-white text-xs flex items-end justify-center pb-1 hover:bg-gray-600 ${
+                      index === 1 || index === 4 ? "mr-6" : "mr-4"
+                    }`}
+                  >
+                    {key.note}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Octave Controls */}
+            <div className="flex items-center justify-between mb-6">
+              <Button 
+                variant="secondary" 
+                size="sm"
+                onClick={() => setCurrentOctave(Math.max(1, currentOctave - 1))}
+              >
+                <i className="fas fa-minus mr-1"></i>Octave
+              </Button>
+              <span className="text-sm font-mono">C{currentOctave}</span>
+              <Button 
+                variant="secondary" 
+                size="sm"
+                onClick={() => setCurrentOctave(Math.min(7, currentOctave + 1))}
+              >
+                <i className="fas fa-plus mr-1"></i>Octave
+              </Button>
+            </div>
+
+            {/* Current Track Info */}
+            <div className="bg-gray-800 rounded p-3 space-y-3">
+              <h4 className="font-medium text-sm">Selected Track</h4>
+              <div className="flex items-center space-x-2">
+                <div className={`w-4 h-4 rounded ${tracks.find(t => t.id === selectedTrack)?.color}`}></div>
+                <span className="text-sm">{tracks.find(t => t.id === selectedTrack)?.name}</span>
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Note Count</label>
+                  <span className="text-sm">{notes.filter(n => n.track === selectedTrack).length} notes</span>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Instrument</label>
+                  <span className="text-sm capitalize">{tracks.find(t => t.id === selectedTrack)?.instrument}</span>
+                </div>
               </div>
             </div>
           </div>

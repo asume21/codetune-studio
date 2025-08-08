@@ -164,151 +164,241 @@ export default function Mixer() {
   };
 
   return (
-    <div className="h-full p-6 flex flex-col space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-heading font-bold">Professional Mixer</h2>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 text-sm">
-            <span>Master Volume:</span>
-            <span className="font-mono text-studio-accent">-{100 - masterVolume} dB</span>
+    <div className="h-full flex flex-col">
+      <div className="p-6 border-b border-gray-600">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-heading font-bold">Professional Mixer</h2>
+          <div className="flex items-center space-x-4">
+            <Button
+              onClick={() => {}}
+              className="bg-studio-accent hover:bg-blue-500"
+            >
+              <i className="fas fa-power-off mr-2"></i>
+              Start Audio
+            </Button>
+            <Button onClick={handleAIMix} className="bg-studio-accent hover:bg-blue-500">
+              <i className="fas fa-magic mr-2"></i>AI Auto-Mix
+            </Button>
+            <Button onClick={resetMix} variant="secondary" className="bg-gray-700 hover:bg-gray-600">
+              <i className="fas fa-undo mr-2"></i>Reset
+            </Button>
+            <Button onClick={handleLinkStudio} className={isLinked ? "bg-green-500 hover:bg-green-400" : "bg-gray-700 hover:bg-gray-600"}>
+              {isLinked ? "Studio Linked" : "Link Studio"}
+            </Button>
           </div>
-          <Button onClick={handleAIMix} className="bg-studio-accent hover:bg-blue-500">
-            <i className="fas fa-magic mr-2"></i>AI Auto-Mix
-          </Button>
-          <Button onClick={resetMix} variant="secondary" className="bg-gray-700 hover:bg-gray-600">
-            <i className="fas fa-undo mr-2"></i>Reset
-          </Button>
-          <Button onClick={handleLinkStudio} className={isLinked ? "bg-green-500 hover:bg-green-400" : "bg-gray-700 hover:bg-gray-600"}>
-            {isLinked ? "Studio Linked" : "Link Studio"}
-          </Button>
         </div>
       </div>
 
-      <div className="flex-1 flex space-x-4 overflow-x-auto">
-        {/* Mixer Channels */}
-        {channels.map((channel) => (
-          <div key={channel.id} className="bg-studio-panel border border-gray-600 rounded-lg p-3 w-24 flex flex-col flex-shrink-0">
-            <div className="text-xs font-medium mb-2 text-center">{channel.name}</div>
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex space-x-4 overflow-x-auto">
+          {/* Mixer Channels */}
+          {channels.map((channel) => (
+            <div key={channel.id} className="bg-studio-panel border border-gray-600 rounded-lg p-3 w-24 flex flex-col flex-shrink-0">
+              <div className="text-xs font-medium mb-2 text-center">{channel.name}</div>
 
-            {/* EQ Section */}
-            <div className="space-y-2 mb-4">
-              <div className="text-xs text-gray-400 text-center">EQ</div>
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs">HI</span>
-                  <div className="w-12">
-                    <Slider
-                      value={[channel.eq.high]}
-                      onValueChange={([value]) => updateChannelEQ(channel.id, "high", value)}
-                      min={-12}
-                      max={12}
-                      step={1}
-                      className="h-1"
-                    />
+              {/* EQ Section */}
+              <div className="space-y-2 mb-4">
+                <div className="text-xs text-gray-400 text-center">EQ</div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs">HI</span>
+                    <div className="w-12">
+                      <Slider
+                        value={[channel.eq.high]}
+                        onValueChange={([value]) => updateChannelEQ(channel.id, "high", value)}
+                        min={-12}
+                        max={12}
+                        step={1}
+                        className="h-1"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs">MD</span>
-                  <div className="w-12">
-                    <Slider
-                      value={[channel.eq.mid]}
-                      onValueChange={([value]) => updateChannelEQ(channel.id, "mid", value)}
-                      min={-12}
-                      max={12}
-                      step={1}
-                      className="h-1"
-                    />
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs">MD</span>
+                    <div className="w-12">
+                      <Slider
+                        value={[channel.eq.mid]}
+                        onValueChange={([value]) => updateChannelEQ(channel.id, "mid", value)}
+                        min={-12}
+                        max={12}
+                        step={1}
+                        className="h-1"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs">LO</span>
-                  <div className="w-12">
-                    <Slider
-                      value={[channel.eq.low]}
-                      onValueChange={([value]) => updateChannelEQ(channel.id, "low", value)}
-                      min={-12}
-                      max={12}
-                      step={1}
-                      className="h-1"
-                    />
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs">LO</span>
+                    <div className="w-12">
+                      <Slider
+                        value={[channel.eq.low]}
+                        onValueChange={([value]) => updateChannelEQ(channel.id, "low", value)}
+                        min={-12}
+                        max={12}
+                        step={1}
+                        className="h-1"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Send Effects */}
-            <div className="space-y-2 mb-4">
-              <div className="text-xs text-gray-400 text-center">SEND</div>
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs">RV</span>
-                  <div className="w-12">
-                    <Slider
-                      value={[channel.sends.reverb]}
-                      onValueChange={([value]) => updateChannelSend(channel.id, "reverb", value)}
-                      min={0}
-                      max={100}
-                      step={1}
-                      className="h-1"
-                    />
+              {/* Send Effects */}
+              <div className="space-y-2 mb-4">
+                <div className="text-xs text-gray-400 text-center">SEND</div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs">RV</span>
+                    <div className="w-12">
+                      <Slider
+                        value={[channel.sends.reverb]}
+                        onValueChange={([value]) => updateChannelSend(channel.id, "reverb", value)}
+                        min={0}
+                        max={100}
+                        step={1}
+                        className="h-1"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs">DL</span>
-                  <div className="w-12">
-                    <Slider
-                      value={[channel.sends.delay]}
-                      onValueChange={([value]) => updateChannelSend(channel.id, "delay", value)}
-                      min={0}
-                      max={100}
-                      step={1}
-                      className="h-1"
-                    />
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs">DL</span>
+                    <div className="w-12">
+                      <Slider
+                        value={[channel.sends.delay]}
+                        onValueChange={([value]) => updateChannelSend(channel.id, "delay", value)}
+                        min={0}
+                        max={100}
+                        step={1}
+                        className="h-1"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Pan */}
-            <div className="mb-4">
-              <div className="text-xs text-gray-400 text-center mb-1">PAN</div>
-              <Slider
-                value={[channel.pan]}
-                onValueChange={([value]) => updateChannel(channel.id, { pan: value })}
-                min={-50}
-                max={50}
-                step={1}
-                className="w-full h-1"
-              />
-              <div className="text-xs text-center mt-1">
-                {channel.pan === 0 ? "CENTER" : channel.pan > 0 ? `R+${channel.pan}` : `L${channel.pan}`}
-              </div>
-            </div>
-
-            {/* Level Meter */}
-            <div className="flex-1 flex justify-center mb-4">
-              <div className="w-6 bg-gray-700 rounded-full relative overflow-hidden">
-                <div 
-                  className="meter-bar absolute bottom-0 w-full rounded-full transition-all duration-200"
-                  style={{ height: `${channel.level}%` }}
+              {/* Pan */}
+              <div className="mb-4">
+                <div className="text-xs text-gray-400 text-center mb-1">PAN</div>
+                <Slider
+                  value={[channel.pan]}
+                  onValueChange={([value]) => updateChannel(channel.id, { pan: value })}
+                  min={-50}
+                  max={50}
+                  step={1}
+                  className="w-full h-1"
                 />
+                <div className="text-xs text-center mt-1">
+                  {channel.pan === 0 ? "CENTER" : channel.pan > 0 ? `R+${channel.pan}` : `L${channel.pan}`}
+                </div>
+              </div>
+
+              {/* Level Meter */}
+              <div className="flex-1 flex justify-center mb-4">
+                <div className="w-6 bg-gray-700 rounded-full relative overflow-hidden">
+                  <div 
+                    className="meter-bar absolute bottom-0 w-full rounded-full transition-all duration-200"
+                    style={{ height: `${channel.level}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Volume Fader */}
+              <div className="text-center mb-4">
+                <div className="text-xs text-gray-400 mb-2">VOL</div>
+                <div className="relative h-32 w-6 bg-gray-700 rounded-full mx-auto">
+                  <div 
+                    className="absolute w-6 h-3 bg-studio-accent rounded-full cursor-pointer transition-all"
+                    style={{ bottom: `${channel.volume}%`, transform: 'translateY(50%)' }}
+                    onMouseDown={(e) => {
+                      const slider = e.currentTarget.parentElement!;
+                      const rect = slider.getBoundingClientRect();
+                      const handleMouseMove = (e: MouseEvent) => {
+                        const y = e.clientY - rect.top;
+                        const percentage = Math.max(0, Math.min(100, 100 - (y / rect.height) * 100));
+                        updateChannel(channel.id, { volume: percentage });
+                      };
+                      const handleMouseUp = () => {
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', handleMouseUp);
+                      };
+                      document.addEventListener('mousemove', handleMouseMove);
+                      document.addEventListener('mouseup', handleMouseUp);
+                    }}
+                  />
+                </div>
+                <div className="text-xs font-mono mt-2">
+                  {channel.volume > 75 ? `+${Math.round((channel.volume - 75) / 3)}` : `-${Math.round((75 - channel.volume) / 3)}`}dB
+                </div>
+              </div>
+
+              {/* Mute/Solo */}
+              <div className="space-y-1">
+                <Button
+                  onClick={() => toggleSolo(channel.id)}
+                  className={`w-full text-xs py-1 font-bold ${
+                    channel.solo 
+                      ? "bg-yellow-600 hover:bg-yellow-500 text-black" 
+                      : "bg-gray-700 hover:bg-yellow-500 hover:text-black"
+                  }`}
+                >
+                  SOLO
+                </Button>
+                <Button
+                  onClick={() => toggleMute(channel.id)}
+                  className={`w-full text-xs py-1 ${
+                    channel.muted 
+                      ? "bg-red-600 hover:bg-red-500" 
+                      : "bg-gray-700 hover:bg-red-600"
+                  }`}
+                >
+                  MUTE
+                </Button>
+              </div>
+            </div>
+          ))}
+
+          {/* Master Section */}
+          <div className="bg-studio-panel border-2 border-studio-accent rounded-lg p-4 w-32 flex flex-col flex-shrink-0">
+            <div className="text-sm font-bold mb-4 text-center text-studio-accent">MASTER</div>
+
+            {/* Master EQ */}
+            <div className="space-y-2 mb-6">
+              <div className="text-xs text-gray-400 text-center">MASTER EQ</div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">HIGH</span>
+                  <div className="w-16">
+                    <Slider value={[1]} min={-12} max={12} step={1} className="h-1" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">MID</span>
+                  <div className="w-16">
+                    <Slider value={[0]} min={-12} max={12} step={1} className="h-1" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">LOW</span>
+                  <div className="w-16">
+                    <Slider value={[2]} min={-12} max={12} step={1} className="h-1" />
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Volume Fader */}
-            <div className="text-center mb-4">
-              <div className="text-xs text-gray-400 mb-2">VOL</div>
-              <div className="relative h-32 w-6 bg-gray-700 rounded-full mx-auto">
+            {/* Master Volume */}
+            <div className="flex-1 flex flex-col items-center">
+              <div className="text-sm text-gray-400 mb-4">VOLUME</div>
+              <div className="relative h-40 w-8 bg-gray-700 rounded-full">
                 <div 
-                  className="absolute w-6 h-3 bg-studio-accent rounded-full cursor-pointer transition-all"
-                  style={{ bottom: `${channel.volume}%`, transform: 'translateY(50%)' }}
+                  className="absolute w-8 h-4 bg-studio-accent rounded-full cursor-pointer transition-all"
+                  style={{ bottom: `${masterVolume}%`, transform: 'translateY(50%)' }}
                   onMouseDown={(e) => {
                     const slider = e.currentTarget.parentElement!;
                     const rect = slider.getBoundingClientRect();
                     const handleMouseMove = (e: MouseEvent) => {
                       const y = e.clientY - rect.top;
                       const percentage = Math.max(0, Math.min(100, 100 - (y / rect.height) * 100));
-                      updateChannel(channel.id, { volume: percentage });
+                      setMasterVolume(percentage);
                     };
                     const handleMouseUp = () => {
                       document.removeEventListener('mousemove', handleMouseMove);
@@ -319,278 +409,195 @@ export default function Mixer() {
                   }}
                 />
               </div>
-              <div className="text-xs font-mono mt-2">
-                {channel.volume > 75 ? `+${Math.round((channel.volume - 75) / 3)}` : `-${Math.round((75 - channel.volume) / 3)}`}dB
+              <div className="text-sm font-mono mt-4 text-studio-accent">
+                {masterVolume > 75 ? `+${Math.round((masterVolume - 75) / 3)}` : `-${Math.round((75 - masterVolume) / 3)}`}dB
               </div>
             </div>
 
-            {/* Mute/Solo */}
-            <div className="space-y-1">
-              <Button
-                onClick={() => toggleSolo(channel.id)}
-                className={`w-full text-xs py-1 font-bold ${
-                  channel.solo 
-                    ? "bg-yellow-600 hover:bg-yellow-500 text-black" 
-                    : "bg-gray-700 hover:bg-yellow-500 hover:text-black"
-                }`}
-              >
-                SOLO
-              </Button>
-              <Button
-                onClick={() => toggleMute(channel.id)}
-                className={`w-full text-xs py-1 ${
-                  channel.muted 
-                    ? "bg-red-600 hover:bg-red-500" 
-                    : "bg-gray-700 hover:bg-red-600"
-                }`}
-              >
-                MUTE
-              </Button>
-            </div>
-          </div>
-        ))}
-
-        {/* Master Section */}
-        <div className="bg-studio-panel border-2 border-studio-accent rounded-lg p-4 w-32 flex flex-col flex-shrink-0">
-          <div className="text-sm font-bold mb-4 text-center text-studio-accent">MASTER</div>
-
-          {/* Master EQ */}
-          <div className="space-y-2 mb-6">
-            <div className="text-xs text-gray-400 text-center">MASTER EQ</div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs">HIGH</span>
-                <div className="w-16">
-                  <Slider value={[1]} min={-12} max={12} step={1} className="h-1" />
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs">MID</span>
-                <div className="w-16">
-                  <Slider value={[0]} min={-12} max={12} step={1} className="h-1" />
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs">LOW</span>
-                <div className="w-16">
-                  <Slider value={[2]} min={-12} max={12} step={1} className="h-1" />
-                </div>
+            {/* VU Meter */}
+            <div className="mt-4">
+              <div className="text-xs text-gray-400 text-center mb-2">VU METER</div>
+              <div className="flex justify-center space-x-1">
+                {[1, 1, 0.8, 0.6, 0.6, 0.4, 0, 0].map((opacity, index) => (
+                  <div
+                    key={index}
+                    className={`w-1 h-8 rounded ${
+                      index < 2 ? "bg-green-500" : 
+                      index < 4 ? "bg-yellow-400" : 
+                      index < 6 ? "bg-orange-500" : "bg-red-500"
+                    }`}
+                    style={{ opacity }}
+                  />
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Master Volume */}
-          <div className="flex-1 flex flex-col items-center">
-            <div className="text-sm text-gray-400 mb-4">VOLUME</div>
-            <div className="relative h-40 w-8 bg-gray-700 rounded-full">
-              <div 
-                className="absolute w-8 h-4 bg-studio-accent rounded-full cursor-pointer transition-all"
-                style={{ bottom: `${masterVolume}%`, transform: 'translateY(50%)' }}
-                onMouseDown={(e) => {
-                  const slider = e.currentTarget.parentElement!;
-                  const rect = slider.getBoundingClientRect();
-                  const handleMouseMove = (e: MouseEvent) => {
-                    const y = e.clientY - rect.top;
-                    const percentage = Math.max(0, Math.min(100, 100 - (y / rect.height) * 100));
-                    setMasterVolume(percentage);
-                  };
-                  const handleMouseUp = () => {
-                    document.removeEventListener('mousemove', handleMouseMove);
-                    document.removeEventListener('mouseup', handleMouseUp);
-                  };
-                  document.addEventListener('mousemove', handleMouseMove);
-                  document.addEventListener('mouseup', handleMouseUp);
-                }}
-              />
-            </div>
-            <div className="text-sm font-mono mt-4 text-studio-accent">
-              {masterVolume > 75 ? `+${Math.round((masterVolume - 75) / 3)}` : `-${Math.round((75 - masterVolume) / 3)}`}dB
-            </div>
-          </div>
+          {/* Effects Rack */}
+          <div className="bg-studio-panel border border-gray-600 rounded-lg p-4 w-64 flex flex-col flex-shrink-0">
+            <div className="text-sm font-medium mb-4 text-center">Effects Rack</div>
 
-          {/* VU Meter */}
-          <div className="mt-4">
-            <div className="text-xs text-gray-400 text-center mb-2">VU METER</div>
-            <div className="flex justify-center space-x-1">
-              {[1, 1, 0.8, 0.6, 0.6, 0.4, 0, 0].map((opacity, index) => (
-                <div
-                  key={index}
-                  className={`w-1 h-8 rounded ${
-                    index < 2 ? "bg-green-500" : 
-                    index < 4 ? "bg-yellow-400" : 
-                    index < 6 ? "bg-orange-500" : "bg-red-500"
-                  }`}
-                  style={{ opacity }}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Effects Rack */}
-        <div className="bg-studio-panel border border-gray-600 rounded-lg p-4 w-64 flex flex-col flex-shrink-0">
-          <div className="text-sm font-medium mb-4 text-center">Effects Rack</div>
-
-          {/* Reverb */}
-          <div className="mb-6 p-3 bg-gray-800 rounded">
-            <div className="text-xs font-medium mb-2 text-studio-accent">REVERB</div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs">Room Size</span>
-                <div className="w-20">
-                  <Slider
-                    value={[effects.reverb.roomSize]}
-                    onValueChange={([value]) => setEffects(prev => ({
-                      ...prev,
-                      reverb: { ...prev.reverb, roomSize: value }
-                    }))}
-                    min={0}
-                    max={100}
-                    step={1}
-                    className="h-1"
-                  />
+            {/* Reverb */}
+            <div className="mb-6 p-3 bg-gray-800 rounded">
+              <div className="text-xs font-medium mb-2 text-studio-accent">REVERB</div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Room Size</span>
+                  <div className="w-20">
+                    <Slider
+                      value={[effects.reverb.roomSize]}
+                      onValueChange={([value]) => setEffects(prev => ({
+                        ...prev,
+                        reverb: { ...prev.reverb, roomSize: value }
+                      }))}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="h-1"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs">Damping</span>
-                <div className="w-20">
-                  <Slider
-                    value={[effects.reverb.damping]}
-                    onValueChange={([value]) => setEffects(prev => ({
-                      ...prev,
-                      reverb: { ...prev.reverb, damping: value }
-                    }))}
-                    min={0}
-                    max={100}
-                    step={1}
-                    className="h-1"
-                  />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Damping</span>
+                  <div className="w-20">
+                    <Slider
+                      value={[effects.reverb.damping]}
+                      onValueChange={([value]) => setEffects(prev => ({
+                        ...prev,
+                        reverb: { ...prev.reverb, damping: value }
+                      }))}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="h-1"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs">Wet/Dry</span>
-                <div className="w-20">
-                  <Slider
-                    value={[effects.reverb.wetDry]}
-                    onValueChange={([value]) => setEffects(prev => ({
-                      ...prev,
-                      reverb: { ...prev.reverb, wetDry: value }
-                    }))}
-                    min={0}
-                    max={100}
-                    step={1}
-                    className="h-1"
-                  />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Wet/Dry</span>
+                  <div className="w-20">
+                    <Slider
+                      value={[effects.reverb.wetDry]}
+                      onValueChange={([value]) => setEffects(prev => ({
+                        ...prev,
+                        reverb: { ...prev.reverb, wetDry: value }
+                      }))}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="h-1"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Delay */}
-          <div className="mb-6 p-3 bg-gray-800 rounded">
-            <div className="text-xs font-medium mb-2 text-studio-accent">DELAY</div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs">Time</span>
-                <div className="w-20">
-                  <Slider
-                    value={[effects.delay.time]}
-                    onValueChange={([value]) => setEffects(prev => ({
-                      ...prev,
-                      delay: { ...prev.delay, time: value }
-                    }))}
-                    min={0}
-                    max={100}
-                    step={1}
-                    className="h-1"
-                  />
+            {/* Delay */}
+            <div className="mb-6 p-3 bg-gray-800 rounded">
+              <div className="text-xs font-medium mb-2 text-studio-accent">DELAY</div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Time</span>
+                  <div className="w-20">
+                    <Slider
+                      value={[effects.delay.time]}
+                      onValueChange={([value]) => setEffects(prev => ({
+                        ...prev,
+                        delay: { ...prev.delay, time: value }
+                      }))}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="h-1"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs">Feedback</span>
-                <div className="w-20">
-                  <Slider
-                    value={[effects.delay.feedback]}
-                    onValueChange={([value]) => setEffects(prev => ({
-                      ...prev,
-                      delay: { ...prev.delay, feedback: value }
-                    }))}
-                    min={0}
-                    max={100}
-                    step={1}
-                    className="h-1"
-                  />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Feedback</span>
+                  <div className="w-20">
+                    <Slider
+                      value={[effects.delay.feedback]}
+                      onValueChange={([value]) => setEffects(prev => ({
+                        ...prev,
+                        delay: { ...prev.delay, feedback: value }
+                      }))}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="h-1"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs">Mix</span>
-                <div className="w-20">
-                  <Slider
-                    value={[effects.delay.mix]}
-                    onValueChange={([value]) => setEffects(prev => ({
-                      ...prev,
-                      delay: { ...prev.delay, mix: value }
-                    }))}
-                    min={0}
-                    max={100}
-                    step={1}
-                    className="h-1"
-                  />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Mix</span>
+                  <div className="w-20">
+                    <Slider
+                      value={[effects.delay.mix]}
+                      onValueChange={([value]) => setEffects(prev => ({
+                        ...prev,
+                        delay: { ...prev.delay, mix: value }
+                      }))}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="h-1"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Compressor */}
-          <div className="p-3 bg-gray-800 rounded">
-            <div className="text-xs font-medium mb-2 text-studio-accent">COMPRESSOR</div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs">Threshold</span>
-                <div className="w-20">
-                  <Slider
-                    value={[effects.compressor.threshold]}
-                    onValueChange={([value]) => setEffects(prev => ({
-                      ...prev,
-                      compressor: { ...prev.compressor, threshold: value }
-                    }))}
-                    min={0}
-                    max={100}
-                    step={1}
-                    className="h-1"
-                  />
+            {/* Compressor */}
+            <div className="p-3 bg-gray-800 rounded">
+              <div className="text-xs font-medium mb-2 text-studio-accent">COMPRESSOR</div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Threshold</span>
+                  <div className="w-20">
+                    <Slider
+                      value={[effects.compressor.threshold]}
+                      onValueChange={([value]) => setEffects(prev => ({
+                        ...prev,
+                        compressor: { ...prev.compressor, threshold: value }
+                      }))}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="h-1"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs">Ratio</span>
-                <div className="w-20">
-                  <Slider
-                    value={[effects.compressor.ratio]}
-                    onValueChange={([value]) => setEffects(prev => ({
-                      ...prev,
-                      compressor: { ...prev.compressor, ratio: value }
-                    }))}
-                    min={0}
-                    max={100}
-                    step={1}
-                    className="h-1"
-                  />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Ratio</span>
+                  <div className="w-20">
+                    <Slider
+                      value={[effects.compressor.ratio]}
+                      onValueChange={([value]) => setEffects(prev => ({
+                        ...prev,
+                        compressor: { ...prev.compressor, ratio: value }
+                      }))}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="h-1"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs">Attack</span>
-                <div className="w-20">
-                  <Slider
-                    value={[effects.compressor.attack]}
-                    onValueChange={([value]) => setEffects(prev => ({
-                      ...prev,
-                      compressor: { ...prev.compressor, attack: value }
-                    }))}
-                    min={0}
-                    max={100}
-                    step={1}
-                    className="h-1"
-                  />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Attack</span>
+                  <div className="w-20">
+                    <Slider
+                      value={[effects.compressor.attack]}
+                      onValueChange={([value]) => setEffects(prev => ({
+                        ...prev,
+                        compressor: { ...prev.compressor, attack: value }
+                      }))}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="h-1"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
