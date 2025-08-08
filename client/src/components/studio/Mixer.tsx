@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
+import { useAudio } from "@/hooks/use-audio";
 
 interface MixerChannel {
   id: string;
@@ -24,7 +27,6 @@ interface MixerChannel {
 
 export default function Mixer() {
   const [masterVolume, setMasterVolume] = useState(75);
-  const [isLinked, setIsLinked] = useState(false);
   const [channels, setChannels] = useState<MixerChannel[]>([
     {
       id: "kick",
@@ -105,6 +107,9 @@ export default function Mixer() {
     },
   });
 
+  const { toast } = useToast();
+  const { initialize, isInitialized } = useAudio();
+
   const updateChannel = (channelId: string, updates: Partial<MixerChannel>) => {
     setChannels(prev => prev.map(channel => 
       channel.id === channelId ? { ...channel, ...updates } : channel
@@ -170,8 +175,12 @@ export default function Mixer() {
           <h2 className="text-2xl font-heading font-bold">Professional Mixer</h2>
           <div className="flex items-center space-x-4">
             <Button
-              onClick={() => {}}
+              onClick={() => {
+                initialize();
+                toast({ title: "Audio Initialized", description: "The audio engine has started." });
+              }}
               className="bg-studio-accent hover:bg-blue-500"
+              disabled={isInitialized}
             >
               <i className="fas fa-power-off mr-2"></i>
               Start Audio

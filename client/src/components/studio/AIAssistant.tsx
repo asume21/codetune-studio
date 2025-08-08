@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAudio } from "@/hooks/use-audio";
 
 interface Message {
   id: string;
@@ -25,6 +26,7 @@ export default function AIAssistant() {
   const [inputMessage, setInputMessage] = useState("");
 
   const { toast } = useToast();
+  const { initialize, isInitialized } = useAudio();
 
   const chatMutation = useMutation({
     mutationFn: async (data: { message: string; context?: string }) => {
@@ -90,8 +92,9 @@ export default function AIAssistant() {
           <h2 className="text-2xl font-heading font-bold">AI Music & Code Assistant</h2>
           <div className="flex items-center space-x-4">
             <Button
-              onClick={() => {}}
+              onClick={() => initialize()}
               className="bg-studio-accent hover:bg-blue-500"
+              disabled={isInitialized}
             >
               <i className="fas fa-power-off mr-2"></i>
               Start Audio
@@ -108,7 +111,7 @@ export default function AIAssistant() {
       </div>
 
       <ScrollArea className="flex-1 p-6">
-        <div className="flex space-x-6">
+        <div className="flex flex-col space-y-6">
           {/* Chat Interface */}
           <div className="flex-1 flex flex-col">
             <ScrollArea className="flex-1 bg-studio-panel border border-gray-600 rounded-lg p-4 mb-4">

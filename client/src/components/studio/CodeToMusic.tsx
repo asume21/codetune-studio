@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAudio } from "@/hooks/use-audio";
 
 export default function CodeToMusic() {
   const [language, setLanguage] = useState("javascript");
@@ -38,6 +39,7 @@ export default function CodeToMusic() {
   const [musicData, setMusicData] = useState<any>(null);
 
   const { toast } = useToast();
+  const { initialize, isInitialized } = useAudio();
 
   const compileMutation = useMutation({
     mutationFn: async (data: { code: string; language: string }) => {
@@ -87,11 +89,12 @@ export default function CodeToMusic() {
           <h2 className="text-2xl font-heading font-bold">Code to Music Compiler</h2>
           <div className="flex items-center space-x-4">
             <Button
-              onClick={() => {}}
+              onClick={initialize}
+              disabled={isInitialized}
               className="bg-studio-accent hover:bg-blue-500"
             >
               <i className="fas fa-power-off mr-2"></i>
-              Start Audio
+              {isInitialized ? 'Audio Ready' : 'Start Audio'}
             </Button>
             <Button
               onClick={handleCompile}
