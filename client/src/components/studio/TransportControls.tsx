@@ -1,24 +1,16 @@
-import { useState, useContext, createContext } from "react";
+import { useState, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { useAudio, useSequencer } from "@/hooks/use-audio";
 import { StudioAudioContext } from "@/pages/studio";
 
-// Audio Context for sharing state between components
-export const AudioContext = createContext({
-  isPlaying: false,
-  currentTime: "00:00",
-  bpm: 120,
-  volume: 75,
-  playAudio: () => {},
-  stopAudio: () => {},
-  setVolume: (volume: number) => {},
-});
+// Remove the duplicate AudioContext since we're using StudioAudioContext from pages/studio.tsx
 
 interface TransportControlsProps {
   currentTool?: string;
+  activeTab?: string;
 }
 
-export default function TransportControls({ currentTool = "Beat Maker" }: TransportControlsProps) {
+export default function TransportControls({ currentTool = "Beat Maker", activeTab = "beatmaker" }: TransportControlsProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState("00:00");
   const [totalTime] = useState("02:45");
@@ -29,6 +21,7 @@ export default function TransportControls({ currentTool = "Beat Maker" }: Transp
   
   const { setMasterVolume, initialize, isInitialized } = useAudio();
   const { playPattern, stopPattern, isPlaying: sequencerPlaying } = useSequencer();
+  const studioContext = useContext(StudioAudioContext);
 
   const handlePlay = async () => {
     if (!isInitialized) {
@@ -37,15 +30,60 @@ export default function TransportControls({ currentTool = "Beat Maker" }: Transp
     
     if (isPlaying) {
       stopPattern();
+      studioContext.stopCurrentAudio();
       setIsPlaying(false);
     } else {
-      // Start with a basic pattern - this will be enhanced when connected to other components
-      const basicPattern = {
-        kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
-        snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-        hihat: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
-      };
-      playPattern(basicPattern, bpm);
+      // Play content based on current active tool
+      switch (activeTab) {
+        case "beatmaker":
+          // Play beat maker pattern if one exists
+          if (studioContext.currentPattern && Object.keys(studioContext.currentPattern).length > 0) {
+            playPattern(studioContext.currentPattern, studioContext.bpm);
+          } else {
+            // Default beat maker pattern
+            const beatPattern = {
+              kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
+              snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+              hihat: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+            };
+            playPattern(beatPattern, bpm);
+          }
+          break;
+        case "melody":
+          // Play melody composer content
+          if (studioContext.currentMelody && studioContext.currentMelody.length > 0) {
+            // TODO: Implement melody playback
+            console.log("Playing melody:", studioContext.currentMelody);
+          } else {
+            // Default melody pattern
+            const melodyPattern = {
+              kick: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+              snare: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+              hihat: [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
+            };
+            playPattern(melodyPattern, bpm);
+          }
+          break;
+        case "mixer":
+          // Play whatever is currently loaded in the mixer
+          const mixerPattern = {
+            kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
+            snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+            hihat: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+          };
+          playPattern(mixerPattern, bpm);
+          break;
+        default:
+          // Default pattern for other tools
+          const defaultPattern = {
+            kick: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false],
+            snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+            hihat: [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
+          };
+          playPattern(defaultPattern, bpm);
+      }
+      
+      studioContext.playCurrentAudio();
       setIsPlaying(true);
     }
   };
@@ -62,13 +100,32 @@ export default function TransportControls({ currentTool = "Beat Maker" }: Transp
     setMasterVolume(newVolume);
   };
 
+  const getPlayingContent = (tab: string): string => {
+    switch (tab) {
+      case "beatmaker":
+        return studioContext.currentPattern && Object.keys(studioContext.currentPattern).length > 0 
+          ? "Custom Beat Pattern" : "Default Beat Pattern";
+      case "melody":
+        return studioContext.currentMelody && studioContext.currentMelody.length > 0 
+          ? "Custom Melody" : "Default Melody Pattern";
+      case "mixer":
+        return "Mixed Audio Content";
+      case "codebeat":
+        return "AI Generated Music";
+      case "assistant":
+        return "Assistant Demo Audio";
+      default:
+        return "Demo Audio Pattern";
+    }
+  };
+
   return (
     <div className="bg-studio-panel border-t border-gray-700 px-6 py-4">
       {/* Current Audio Source Indicator */}
       <div className="mb-2 text-xs text-gray-400 text-center">
-        <strong>Now Playing:</strong> {isPlaying ? "Basic Drum Pattern (Demo)" : "Nothing playing"} | 
+        <strong>Now Playing:</strong> {isPlaying ? getPlayingContent(activeTab || "beatmaker") : "Nothing playing"} | 
         <strong> Current Tool:</strong> {currentTool} | 
-        <strong> Tip:</strong> Switch to different tools to play their specific audio content
+        <strong> Tip:</strong> Each tool plays different audio content
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">

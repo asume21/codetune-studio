@@ -109,7 +109,7 @@ export default function Studio() {
               </div>
             </div>
             
-            <TransportControls currentTool={getActiveToolName(activeTab)} />
+            <TransportControls currentTool={getActiveToolName(activeTab)} activeTab={activeTab} />
           </div>
         </div>
       </div>
