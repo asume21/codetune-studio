@@ -52,27 +52,106 @@ export async function translateCode(sourceCode: string, sourceLanguage: string, 
 
 export async function generateBeatPattern(style: string, bpm: number): Promise<any> {
   try {
+    const variations = [
+      "energetic and driving",
+      "laid-back and groovy", 
+      "syncopated and complex",
+      "minimal and spacious",
+      "heavy and aggressive",
+      "bouncy and playful",
+      "dark and moody",
+      "uplifting and bright"
+    ];
+    
+    const randomVariation = variations[Math.floor(Math.random() * variations.length)];
+    const timestamp = Date.now();
+    const randomSeed = Math.floor(Math.random() * 10000);
+    
     const response = await openai.chat.completions.create({
       model: "grok-2-1212",
       messages: [
         {
           role: "system",
-          content: `You are a music producer. Generate a 16-step drum pattern for a ${style} beat at ${bpm} BPM. 
-          Return JSON with tracks: kick, snare, hihat, openhat. Each track has 16 boolean values for steps.`
+          content: `You are a creative AI beat producer. Generate unique, varied ${style} patterns that are ${randomVariation}. 
+          Each pattern must be COMPLETELY DIFFERENT from previous ones. Use creativity and musical knowledge.
+          Return JSON with kick, bass, tom, snare, hihat, openhat, clap, crash arrays (16 boolean values each).
+          Make patterns musically interesting with proper spacing, fills, and groove. Variation is KEY.`
         },
         {
           role: "user",
-          content: `Generate a ${style} beat pattern at ${bpm} BPM`
+          content: `Create a fresh ${randomVariation} ${style} beat at ${bpm} BPM. 
+          Unique session: ${timestamp}-${randomSeed}
+          
+          Requirements:
+          - Must be different from generic patterns
+          - Use creative drum placement
+          - Consider syncopation and musical fills
+          - Vary the kick and snare patterns
+          - Make it ${randomVariation} in feel`
         }
       ],
       response_format: { type: "json_object" },
-      temperature: 0.7,
+      temperature: 0.95, // Very high temperature for maximum creativity
     });
 
-    return JSON.parse(response.choices[0].message.content || "{}");
+    const result = JSON.parse(response.choices[0].message.content || "{}");
+    
+    // Add fallback with randomization if JSON parsing fails
+    if (!result.kick) {
+      return generateRandomFallbackPattern(style, randomVariation);
+    }
+    
+    return result;
   } catch (error) {
-    throw new Error("Failed to generate beat pattern: " + (error as Error).message);
+    console.error("AI generation failed, using randomized fallback:", error);
+    return generateRandomFallbackPattern(style, "creative");
   }
+}
+
+function generateRandomFallbackPattern(style: string, variation: string): any {
+  const patterns = {
+    kick: Array(16).fill(false),
+    bass: Array(16).fill(false),
+    tom: Array(16).fill(false),
+    snare: Array(16).fill(false),
+    hihat: Array(16).fill(false),
+    openhat: Array(16).fill(false),
+    clap: Array(16).fill(false),
+    crash: Array(16).fill(false)
+  };
+  
+  // Generate truly random patterns with musical logic
+  const kickProbability = Math.random() * 0.4 + 0.2; // 20-60% chance per step
+  const snareProbability = Math.random() * 0.3 + 0.15; // 15-45% chance
+  const hihatProbability = Math.random() * 0.6 + 0.3; // 30-90% chance
+  
+  for (let i = 0; i < 16; i++) {
+    // Kick pattern - often on 1 and 9, sometimes others
+    if (i === 0 || i === 8) patterns.kick[i] = Math.random() < 0.9;
+    else patterns.kick[i] = Math.random() < kickProbability;
+    
+    // Bass drum - complement kick with lower probability
+    patterns.bass[i] = Math.random() < (kickProbability * 0.3);
+    
+    // Snare - often on 4 and 12, sometimes others  
+    if (i === 4 || i === 12) patterns.snare[i] = Math.random() < 0.8;
+    else patterns.snare[i] = Math.random() < snareProbability;
+    
+    // Hi-hat - more frequent, create groove
+    patterns.hihat[i] = Math.random() < hihatProbability;
+    
+    // Other elements - sparse and random
+    patterns.tom[i] = Math.random() < 0.1;
+    patterns.openhat[i] = Math.random() < 0.15;
+    patterns.clap[i] = Math.random() < 0.12;
+    patterns.crash[i] = i === 0 ? Math.random() < 0.3 : Math.random() < 0.05;
+  }
+  
+  return {
+    ...patterns,
+    name: `${variation} ${style} Beat`,
+    explanation: `Randomized ${variation} ${style} pattern with unique groove`
+  };
 }
 
 export async function generateMelody(scale: string, style: string, complexity: number): Promise<any> {

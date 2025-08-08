@@ -157,8 +157,11 @@ export default function BeatMaker() {
   }, [pattern, studioContext]);
 
   const handleGenerateAI = () => {
+    const styles = ["hip-hop", "trap", "boom-bap", "lo-fi", "drill", "house", "techno", "reggaeton", "afrobeat", "rock"];
+    const randomStyle = styles[Math.floor(Math.random() * styles.length)];
+    
     generateBeatMutation.mutate({
-      style: "hip-hop",
+      style: randomStyle,
       bpm,
     });
   };
