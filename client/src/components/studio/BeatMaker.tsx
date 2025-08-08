@@ -49,9 +49,35 @@ const defaultTracks = [
 export default function BeatMaker() {
   const studioContext = useContext(StudioAudioContext);
   const [bpm, setBpm] = useState(120);
+  
+  // Update playback speed in real-time when BPM changes during playback
+  useEffect(() => {
+    if (isPlaying && intervalRef.current) {
+      // Clear current interval
+      clearInterval(intervalRef.current);
+      
+      // Restart with new BPM immediately
+      const stepDuration = (60 / bpm / 4) * 1000;
+      intervalRef.current = setInterval(() => {
+        setCurrentStep(prev => {
+          const step = prev % 16;
+          
+          // Play sounds for active steps
+          Object.entries(pattern).forEach(([track, steps]) => {
+            if (steps && steps[step]) {
+              playDrumSound(track);
+            }
+          });
+          
+          return prev + 1;
+        });
+      }, stepDuration);
+    }
+  }, [bpm]);
   const [selectedDrumKit, setSelectedDrumKit] = useState('acoustic');
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [playbackInterval, setPlaybackInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Initialize pattern with default structure
   const [pattern, setPattern] = useState<BeatPattern>({
@@ -238,17 +264,17 @@ export default function BeatMaker() {
             </div>
             <Button
               onClick={playPattern}
-              className={`${isPlaying ? 'bg-red-600 hover:bg-red-500' : 'bg-studio-success hover:bg-green-500'}`}
+              className={`${isPlaying ? 'bg-red-600 hover:bg-red-500 animate-pulse' : 'bg-studio-success hover:bg-green-500'}`}
             >
               <i className={`fas ${isPlaying ? 'fa-stop' : 'fa-play'} mr-2`}></i>
-              {isPlaying ? 'Stop Beat' : 'Play Beat Only'}
+              {isPlaying ? 'Stop (Real-time Edit Mode)' : 'Play Beat Only'}
             </Button>
             <Button onClick={stopPattern} className="bg-red-600 hover:bg-red-500">
               <i className="fas fa-stop mr-2"></i>
               Stop
             </Button>
             <div className="text-xs text-gray-400 px-2">
-              <div>Individual beat preview</div>
+              <div>{isPlaying ? '🎵 LIVE EDITING: Click steps to hear changes instantly!' : 'Individual beat preview'}</div>
               <div>Use master controls for full song</div>
             </div>
             <Button
