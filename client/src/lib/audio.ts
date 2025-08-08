@@ -757,8 +757,7 @@ export class AudioEngine {
           this.playCrash(volume, currentTime);
           break;
         case 'bass':
-          // Handle legacy bass as tom
-          this.playTom(volume, currentTime);
+          this.playBassDrum(volume, currentTime);
           break;
         default:
           this.playGenericDrum(volume, currentTime);
@@ -766,6 +765,51 @@ export class AudioEngine {
     } catch (error) {
       console.error("Failed to play drum sound:", error);
     }
+  }
+
+  private playBassDrum(volume: number, currentTime: number) {
+    if (!this.audioContext || !this.masterGain) return;
+
+    const duration = 1.8; // Longer sustain for bass drum
+    
+    // Deep bass oscillator (40Hz fundamental) 
+    const osc1 = this.audioContext.createOscillator();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(40, currentTime);
+    osc1.frequency.exponentialRampToValueAtTime(20, currentTime + 0.1);
+    
+    // Sub-bass layer (20Hz)
+    const osc2 = this.audioContext.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(20, currentTime);
+    osc2.frequency.exponentialRampToValueAtTime(15, currentTime + 0.15);
+    
+    // Harmonic layer for punch
+    const osc3 = this.audioContext.createOscillator();
+    osc3.type = 'triangle';
+    osc3.frequency.setValueAtTime(80, currentTime);
+    osc3.frequency.exponentialRampToValueAtTime(40, currentTime + 0.05);
+
+    // Bass drum envelope (longer sustain)
+    const envelope = this.audioContext.createGain();
+    envelope.gain.setValueAtTime(0, currentTime);
+    envelope.gain.setValueAtTime(volume * 0.9, currentTime + 0.001);
+    envelope.gain.exponentialRampToValueAtTime(volume * 0.5, currentTime + 0.1);
+    envelope.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+
+    // EQ for bass drum
+    const lowpass = this.audioContext.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.setValueAtTime(200, currentTime);
+
+    // Connect bass drum
+    [osc1, osc2, osc3].forEach(osc => {
+      osc.connect(envelope);
+      osc.start(currentTime);
+      osc.stop(currentTime + duration);
+    });
+    envelope.connect(lowpass);
+    lowpass.connect(this.masterGain);
   }
 
   private playKickDrum(volume: number, currentTime: number) {

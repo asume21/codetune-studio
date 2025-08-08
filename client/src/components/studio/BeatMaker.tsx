@@ -10,6 +10,7 @@ import { StudioAudioContext } from "@/pages/studio";
 
 interface BeatPattern {
   kick: boolean[];
+  bass: boolean[];
   tom: boolean[];
   snare: boolean[];
   hihat: boolean[];
@@ -23,6 +24,7 @@ const drumKits = {
     name: 'Acoustic',
     sounds: [
       { id: 'kick', name: 'Kick', color: 'bg-red-500' },
+      { id: 'bass', name: 'Bass Drum', color: 'bg-red-700' },
       { id: 'tom', name: 'Tom', color: 'bg-purple-600' },
       { id: 'snare', name: 'Snare', color: 'bg-blue-500' },
       { id: 'hihat', name: 'Hi-Hat', color: 'bg-yellow-500' },
@@ -35,6 +37,7 @@ const drumKits = {
 
 const defaultTracks = [
   { id: "kick", name: "Kick", color: "bg-red-500" },
+  { id: "bass", name: "Bass Drum", color: "bg-red-700" },
   { id: "tom", name: "Tom", color: "bg-purple-600" },
   { id: "snare", name: "Snare", color: "bg-blue-500" },
   { id: "hihat", name: "Hi-Hat", color: "bg-yellow-500" },
@@ -53,6 +56,7 @@ export default function BeatMaker() {
   // Initialize pattern with default structure
   const [pattern, setPattern] = useState<BeatPattern>({
     kick: Array(16).fill(false),
+    bass: Array(16).fill(false),
     tom: Array(16).fill(false),
     snare: Array(16).fill(false),
     hihat: Array(16).fill(false),
@@ -144,6 +148,7 @@ export default function BeatMaker() {
   const clearPattern = () => {
     setPattern({
       kick: Array(16).fill(false),
+      bass: Array(16).fill(false),
       tom: Array(16).fill(false),
       snare: Array(16).fill(false),
       hihat: Array(16).fill(false),
