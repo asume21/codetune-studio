@@ -17,22 +17,51 @@ interface BeatPattern {
   crash: boolean[];
 }
 
+// Placeholder for drum kits, assuming they would be defined elsewhere
+// and imported or passed as props. For this fix, we'll assume a default.
+const drumKits = {
+  acoustic: {
+    name: 'Acoustic',
+    sounds: [
+      { id: 'kick', name: 'Kick', color: 'bg-red-500' },
+      { id: 'bass', name: 'Bass', color: 'bg-purple-600' },
+      { id: 'snare', name: 'Snare', color: 'bg-blue-500' },
+      { id: 'hihat', name: 'Hi-Hat', color: 'bg-yellow-500' },
+      { id: 'openhat', name: 'Open Hat', color: 'bg-green-500' },
+      { id: 'clap', name: 'Clap', color: 'bg-pink-500' },
+      { id: 'crash', name: 'Crash', color: 'bg-orange-500' },
+    ]
+  }
+};
+
+
 export default function BeatMaker() {
   const [bpm, setBpm] = useState(120);
-  const [pattern, setPattern] = useState<BeatPattern>({
-    kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
-    bass: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false],
-    snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-    hihat: [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
-    openhat: [false, false, false, false, false, false, true, false, false, false, false, false, false, false, true, false],
-    clap: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-    crash: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-  });
+  const [selectedDrumKit, setSelectedDrumKit] = useState('acoustic');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+
+  // Ensure drumKits is properly defined
+  const currentDrumKit = drumKits[selectedDrumKit] || drumKits['acoustic'] || { sounds: [] };
+
+  const [pattern, setPattern] = useState(
+    currentDrumKit.sounds?.reduce((acc: any, sound: any) => {
+      acc[sound.id] = Array(16).fill(false);
+      return acc;
+    }, {} as BeatPattern) || {
+      kick: Array(16).fill(false),
+      bass: Array(16).fill(false),
+      snare: Array(16).fill(false),
+      hihat: Array(16).fill(false),
+      openhat: Array(16).fill(false),
+      clap: Array(16).fill(false),
+      crash: Array(16).fill(false),
+    }
+  );
+
 
   const { toast } = useToast();
   const { playDrumSound, initialize, isInitialized } = useAudio();
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize audio on first interaction
@@ -164,7 +193,7 @@ export default function BeatMaker() {
     };
   }, []);
 
-  const tracks = [
+  const tracks = currentDrumKit.sounds || [
     { id: "kick", name: "Kick", color: "bg-red-500" },
     { id: "bass", name: "Bass", color: "bg-purple-600" },
     { id: "snare", name: "Snare", color: "bg-blue-500" },
