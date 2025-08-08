@@ -154,7 +154,7 @@ export class AudioEngine {
     this.addReverb(masterGain, 0.15);
     masterGain.connect(this.masterGain);
 
-    this.trackOscillators(oscillators, instrument, frequency);
+    this.trackOscillators(oscillators, 'piano', frequency);
   }
 
   private playStringNote(frequency: number, duration: number, preset: any, velocity: number, currentTime: number) {
@@ -657,6 +657,9 @@ export class AudioEngine {
         case 'kick':
           this.playKickDrum(volume, currentTime);
           break;
+        case 'tom':
+          this.playTom(volume, currentTime);
+          break;
         case 'snare':
           this.playSnare(volume, currentTime);
           break;
@@ -669,6 +672,10 @@ export class AudioEngine {
           break;
         case 'crash':
           this.playCrash(volume, currentTime);
+          break;
+        case 'bass':
+          // Handle legacy bass as tom
+          this.playTom(volume, currentTime);
           break;
         default:
           this.playGenericDrum(volume, currentTime);
@@ -848,6 +855,40 @@ export class AudioEngine {
     gain.connect(this.masterGain);
 
     source.start(currentTime);
+  }
+
+  private playTom(volume: number, currentTime: number) {
+    if (!this.audioContext || !this.masterGain) return;
+
+    const tomOsc1 = this.audioContext.createOscillator();
+    const tomOsc2 = this.audioContext.createOscillator();
+    const tomGain = this.audioContext.createGain();
+    const tomFilter = this.audioContext.createBiquadFilter();
+
+    tomOsc1.type = 'sine';
+    tomOsc1.frequency.setValueAtTime(120, currentTime);
+    tomOsc1.frequency.exponentialRampToValueAtTime(80, currentTime + 0.2);
+
+    tomOsc2.type = 'triangle';
+    tomOsc2.frequency.setValueAtTime(90, currentTime);
+    tomOsc2.frequency.exponentialRampToValueAtTime(60, currentTime + 0.25);
+
+    tomGain.gain.setValueAtTime(Math.max(0.001, volume * 0.6), currentTime);
+    tomGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.4);
+
+    tomFilter.type = 'lowpass';
+    tomFilter.frequency.setValueAtTime(400, currentTime);
+    tomFilter.Q.setValueAtTime(3, currentTime);
+
+    tomOsc1.connect(tomFilter);
+    tomOsc2.connect(tomFilter);
+    tomFilter.connect(tomGain);
+    tomGain.connect(this.masterGain);
+
+    tomOsc1.start(currentTime);
+    tomOsc1.stop(currentTime + 0.5);
+    tomOsc2.start(currentTime);
+    tomOsc2.stop(currentTime + 0.5);
   }
 
   private playGenericDrum(volume: number, currentTime: number) {

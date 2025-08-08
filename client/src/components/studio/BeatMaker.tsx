@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface BeatPattern {
   kick: boolean[];
-  bass: boolean[];
+  tom: boolean[];
   snare: boolean[];
   hihat: boolean[];
   openhat: boolean[];
@@ -22,7 +22,7 @@ const drumKits = {
     name: 'Acoustic',
     sounds: [
       { id: 'kick', name: 'Kick', color: 'bg-red-500' },
-      { id: 'bass', name: 'Bass', color: 'bg-purple-600' },
+      { id: 'tom', name: 'Tom', color: 'bg-purple-600' },
       { id: 'snare', name: 'Snare', color: 'bg-blue-500' },
       { id: 'hihat', name: 'Hi-Hat', color: 'bg-yellow-500' },
       { id: 'openhat', name: 'Open Hat', color: 'bg-green-500' },
@@ -34,7 +34,7 @@ const drumKits = {
 
 const defaultTracks = [
   { id: "kick", name: "Kick", color: "bg-red-500" },
-  { id: "bass", name: "Bass", color: "bg-purple-600" },
+  { id: "tom", name: "Tom", color: "bg-purple-600" },
   { id: "snare", name: "Snare", color: "bg-blue-500" },
   { id: "hihat", name: "Hi-Hat", color: "bg-yellow-500" },
   { id: "openhat", name: "Open Hat", color: "bg-green-500" },
@@ -51,7 +51,7 @@ export default function BeatMaker() {
   // Initialize pattern with default structure
   const [pattern, setPattern] = useState<BeatPattern>({
     kick: Array(16).fill(false),
-    bass: Array(16).fill(false),
+    tom: Array(16).fill(false),
     snare: Array(16).fill(false),
     hihat: Array(16).fill(false),
     openhat: Array(16).fill(false),
@@ -135,7 +135,7 @@ export default function BeatMaker() {
   const clearPattern = () => {
     setPattern({
       kick: Array(16).fill(false),
-      bass: Array(16).fill(false),
+      tom: Array(16).fill(false),
       snare: Array(16).fill(false),
       hihat: Array(16).fill(false),
       openhat: Array(16).fill(false),
@@ -278,7 +278,7 @@ export default function BeatMaker() {
                   </div>
 
                   <div className="flex space-x-2">
-                    {pattern[track.id as keyof BeatPattern]?.map((active, index) => (
+                    {(pattern[track.id as keyof BeatPattern] || Array(16).fill(false)).map((active, index) => (
                       <button
                         key={index}
                         onClick={() => {
@@ -296,23 +296,6 @@ export default function BeatMaker() {
                             ? "ring-2 ring-white ring-opacity-75" 
                             : ""
                         }`}
-                      >
-                        {index % 4 === 0 && (
-                          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
-                            {(index / 4) + 1}
-                          </div>
-                        )}
-                      </button>
-                    )) || Array(16).fill(false).map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          toggleStep(track.id as keyof BeatPattern, index);
-                          if (isInitialized) {
-                            playDrumSound(track.id);
-                          }
-                        }}
-                        className="beat-pad w-8 h-8 rounded border bg-gray-700 hover:bg-gray-600 border-gray-600 transition-all relative"
                       >
                         {index % 4 === 0 && (
                           <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
