@@ -199,7 +199,7 @@ export default function BeatMaker() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-6 border-b border-gray-600">
+      <div className="p-6 border-b border-gray-600 flex-shrink-0">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-heading font-bold">Beat Sequencer</h2>
           <div className="flex items-center space-x-4">
@@ -266,7 +266,7 @@ export default function BeatMaker() {
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-6">
+      <div className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
           {/* Instructions */}
           <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
@@ -398,7 +398,7 @@ export default function BeatMaker() {
             </div>
           </div>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

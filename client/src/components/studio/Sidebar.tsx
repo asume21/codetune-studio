@@ -18,7 +18,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   ];
 
   return (
-    <div className="w-48 bg-studio-panel border-r border-gray-700 flex flex-col py-4 space-y-2">
+    <div className="w-48 bg-studio-panel border-r border-gray-700 flex flex-col py-4 space-y-2 overflow-y-auto max-h-screen">
       <div className="px-4 mb-4">
         <h3 className="text-sm font-medium text-gray-300 mb-2">Studio Tools</h3>
         <p className="text-xs text-gray-500">Click any tool to switch</p>
