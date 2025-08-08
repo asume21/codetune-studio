@@ -99,32 +99,296 @@ export class AudioEngine {
 
   private getInstrumentPreset(instrument: string) {
     const presets: { [key: string]: any } = {
-      piano: {
-        waveforms: ['sine', 'triangle'],
-        detuning: [1, 1.001],
+      // PIANO CATEGORY
+      'piano-keyboard': {
+        waveforms: ['triangle', 'sine'],
+        detuning: [1, 1.002],
         volume: 1.0,
+        attack: 0.005,
+        decay: 0.2,
+        sustain: 0.4,
+        release: 1.2,
+        filterType: 'lowpass',
+        cutoff: 3000,
+        resonance: 1,
+        harmonics: [1, 0.3, 0.1]
+      },
+      'piano-grand': {
+        waveforms: ['sine', 'triangle', 'sawtooth'],
+        detuning: [1, 1.001, 0.999],
+        volume: 1.1,
         attack: 0.01,
+        decay: 0.4,
+        sustain: 0.6,
+        release: 2.5,
+        filterType: 'lowpass',
+        cutoff: 4000,
+        resonance: 0.8,
+        harmonics: [1, 0.5, 0.2, 0.1]
+      },
+      'piano-organ': {
+        waveforms: ['sine', 'square'],
+        detuning: [1, 2, 3],
+        volume: 0.9,
+        attack: 0.02,
+        decay: 0.1,
+        sustain: 0.9,
+        release: 0.8,
+        filterType: 'lowpass',
+        cutoff: 2500,
+        resonance: 2,
+        harmonics: [1, 0.8, 0.4, 0.3]
+      },
+
+      // STRINGS CATEGORY
+      'strings-guitar': {
+        waveforms: ['sawtooth', 'triangle'],
+        detuning: [1, 1.003],
+        volume: 0.8,
+        attack: 0.05,
         decay: 0.3,
         sustain: 0.7,
+        release: 1.8,
+        filterType: 'lowpass',
+        cutoff: 2800,
+        resonance: 3,
+        harmonics: [1, 0.6, 0.3, 0.15]
+      },
+      'strings-violin': {
+        waveforms: ['sawtooth', 'triangle'],
+        detuning: [1, 1.001],
+        volume: 0.7,
+        attack: 0.15,
+        decay: 0.2,
+        sustain: 0.85,
+        release: 1.5,
+        filterType: 'lowpass',
+        cutoff: 3500,
+        resonance: 4,
+        harmonics: [1, 0.7, 0.4, 0.2, 0.1]
+      },
+      'strings-ukulele': {
+        waveforms: ['triangle', 'sine'],
+        detuning: [1, 1.005],
+        volume: 0.6,
+        attack: 0.02,
+        decay: 0.4,
+        sustain: 0.5,
         release: 1.0,
         filterType: 'lowpass',
-        cutoff: 2000,
-        resonance: 1
+        cutoff: 3200,
+        resonance: 2,
+        harmonics: [1, 0.4, 0.2]
       },
-      bass: {
+
+      // FLUTE CATEGORY
+      'flute-recorder': {
+        waveforms: ['sine', 'triangle'],
+        detuning: [1, 2],
+        volume: 0.6,
+        attack: 0.08,
+        decay: 0.1,
+        sustain: 0.8,
+        release: 0.6,
+        filterType: 'highpass',
+        cutoff: 600,
+        resonance: 1,
+        harmonics: [1, 0.3, 0.1]
+      },
+      'flute-indian': {
+        waveforms: ['sine'],
+        detuning: [1, 1.5],
+        volume: 0.7,
+        attack: 0.12,
+        decay: 0.15,
+        sustain: 0.9,
+        release: 1.2,
+        filterType: 'bandpass',
+        cutoff: 1200,
+        resonance: 3,
+        harmonics: [1, 0.5, 0.2]
+      },
+      'flute-concert': {
+        waveforms: ['sine', 'triangle'],
+        detuning: [1, 1.001],
+        volume: 0.8,
+        attack: 0.1,
+        decay: 0.2,
+        sustain: 0.85,
+        release: 1.0,
+        filterType: 'highpass',
+        cutoff: 800,
+        resonance: 1.5,
+        harmonics: [1, 0.4, 0.15, 0.05]
+      },
+
+      // HORNS CATEGORY
+      'horns-trumpet': {
+        waveforms: ['sawtooth', 'square'],
+        detuning: [1, 1.01],
+        volume: 0.9,
+        attack: 0.1,
+        decay: 0.15,
+        sustain: 0.8,
+        release: 1.2,
+        filterType: 'bandpass',
+        cutoff: 1800,
+        resonance: 5,
+        harmonics: [1, 0.8, 0.5, 0.3]
+      },
+      'horns-trombone': {
+        waveforms: ['sawtooth', 'triangle'],
+        detuning: [1, 1.005],
+        volume: 1.0,
+        attack: 0.15,
+        decay: 0.2,
+        sustain: 0.9,
+        release: 1.8,
+        filterType: 'bandpass',
+        cutoff: 1200,
+        resonance: 4,
+        harmonics: [1, 0.7, 0.4, 0.2]
+      },
+      'horns-french': {
+        waveforms: ['triangle', 'sine'],
+        detuning: [1, 1.002],
+        volume: 0.8,
+        attack: 0.12,
+        decay: 0.18,
+        sustain: 0.85,
+        release: 1.5,
+        filterType: 'bandpass',
+        cutoff: 1500,
+        resonance: 3,
+        harmonics: [1, 0.6, 0.3, 0.15]
+      },
+
+      // SYNTH CATEGORY
+      'synth-analog': {
+        waveforms: ['sawtooth', 'square'],
+        detuning: [1, 0.995],
+        volume: 0.8,
+        attack: 0.05,
+        decay: 0.3,
+        sustain: 0.5,
+        release: 0.4,
+        filterType: 'lowpass',
+        cutoff: 1800,
+        resonance: 8,
+        harmonics: [1, 0.6, 0.3]
+      },
+      'synth-digital': {
+        waveforms: ['square', 'triangle'],
+        detuning: [1, 1.01, 0.99],
+        volume: 0.7,
+        attack: 0.01,
+        decay: 0.2,
+        sustain: 0.4,
+        release: 0.3,
+        filterType: 'lowpass',
+        cutoff: 2200,
+        resonance: 12,
+        harmonics: [1, 0.8, 0.4, 0.2]
+      },
+      'synth-fm': {
+        waveforms: ['sine', 'triangle'],
+        detuning: [1, 3.14, 7.1],
+        volume: 0.6,
+        attack: 0.02,
+        decay: 0.25,
+        sustain: 0.3,
+        release: 0.5,
+        filterType: 'lowpass',
+        cutoff: 2000,
+        resonance: 6,
+        harmonics: [1, 0.5, 0.8, 0.3, 0.1]
+      },
+
+      // BASS CATEGORY
+      'bass-electric': {
         waveforms: ['sawtooth', 'square'],
         detuning: [0.5, 0.501],
-        volume: 1.2,
+        volume: 1.3,
         attack: 0.01,
         decay: 0.1,
         sustain: 0.8,
         release: 0.3,
         filterType: 'lowpass',
         cutoff: 400,
-        resonance: 4
+        resonance: 6,
+        harmonics: [1, 0.7, 0.3]
       },
-      lead: {
-        waveforms: ['sawtooth'],
+      'bass-upright': {
+        waveforms: ['triangle', 'sine'],
+        detuning: [0.5, 0.502],
+        volume: 1.1,
+        attack: 0.03,
+        decay: 0.2,
+        sustain: 0.6,
+        release: 0.8,
+        filterType: 'lowpass',
+        cutoff: 350,
+        resonance: 3,
+        harmonics: [1, 0.5, 0.2]
+      },
+      'bass-synth': {
+        waveforms: ['square', 'sawtooth'],
+        detuning: [0.5, 0.499],
+        volume: 1.4,
+        attack: 0.005,
+        decay: 0.05,
+        sustain: 0.9,
+        release: 0.2,
+        filterType: 'lowpass',
+        cutoff: 500,
+        resonance: 10,
+        harmonics: [1, 0.8, 0.4]
+      },
+
+      // PADS CATEGORY
+      'pads-warm': {
+        waveforms: ['sine', 'triangle', 'sawtooth'],
+        detuning: [1, 1.003, 0.997],
+        volume: 0.5,
+        attack: 0.8,
+        decay: 0.5,
+        sustain: 0.9,
+        release: 3.0,
+        filterType: 'lowpass',
+        cutoff: 1500,
+        resonance: 2,
+        harmonics: [1, 0.6, 0.3, 0.1]
+      },
+      'pads-strings': {
+        waveforms: ['sawtooth', 'triangle'],
+        detuning: [1, 1.002, 1.005],
+        volume: 0.6,
+        attack: 1.0,
+        decay: 0.3,
+        sustain: 0.85,
+        release: 2.5,
+        filterType: 'lowpass',
+        cutoff: 2000,
+        resonance: 3,
+        harmonics: [1, 0.7, 0.4, 0.2]
+      },
+      'pads-choir': {
+        waveforms: ['sine', 'triangle'],
+        detuning: [1, 1.001, 0.999, 1.004],
+        volume: 0.4,
+        attack: 1.2,
+        decay: 0.4,
+        sustain: 0.9,
+        release: 2.8,
+        filterType: 'bandpass',
+        cutoff: 1800,
+        resonance: 4,
+        harmonics: [1, 0.8, 0.5, 0.3, 0.1]
+      },
+
+      // LEADS CATEGORY
+      'leads-square': {
+        waveforms: ['square'],
         detuning: [1],
         volume: 0.8,
         attack: 0.02,
@@ -133,59 +397,38 @@ export class AudioEngine {
         release: 0.5,
         filterType: 'lowpass',
         cutoff: 2500,
-        resonance: 6
+        resonance: 8,
+        harmonics: [1, 0.3, 0.1]
       },
-      strings: {
-        waveforms: ['sawtooth', 'triangle'],
+      'leads-saw': {
+        waveforms: ['sawtooth'],
         detuning: [1, 1.002],
-        volume: 0.6,
-        attack: 0.2,
-        decay: 0.1,
-        sustain: 0.9,
-        release: 2.0,
-        filterType: 'lowpass',
-        cutoff: 3000,
-        resonance: 2
-      },
-      flute: {
-        waveforms: ['sine'],
-        detuning: [1],
         volume: 0.7,
-        attack: 0.1,
-        decay: 0.2,
-        sustain: 0.8,
-        release: 0.8,
-        filterType: 'highpass',
-        cutoff: 800,
-        resonance: 1
-      },
-      synth: {
-        waveforms: ['square', 'sawtooth'],
-        detuning: [1, 0.99],
-        volume: 0.8,
-        attack: 0.05,
-        decay: 0.3,
+        attack: 0.01,
+        decay: 0.15,
         sustain: 0.5,
         release: 0.4,
         filterType: 'lowpass',
-        cutoff: 1800,
-        resonance: 8
+        cutoff: 2800,
+        resonance: 10,
+        harmonics: [1, 0.6, 0.3, 0.1]
       },
-      horn: {
-        waveforms: ['triangle', 'sawtooth'],
-        detuning: [1, 1.01],
+      'leads-pluck': {
+        waveforms: ['sawtooth', 'triangle'],
+        detuning: [1, 1.001],
         volume: 0.9,
-        attack: 0.1,
-        decay: 0.2,
-        sustain: 0.7,
-        release: 1.5,
-        filterType: 'bandpass',
-        cutoff: 1500,
-        resonance: 3
+        attack: 0.005,
+        decay: 0.1,
+        sustain: 0.3,
+        release: 0.3,
+        filterType: 'lowpass',
+        cutoff: 3000,
+        resonance: 6,
+        harmonics: [1, 0.4, 0.2]
       }
     };
 
-    return presets[instrument] || presets.piano;
+    return presets[instrument] || presets['piano-keyboard'];
   }
 
   playDrumSound(type: string, volume: number = 0.5) {

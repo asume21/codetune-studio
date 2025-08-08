@@ -26,23 +26,87 @@ interface Track {
   volume: number;
 }
 
-const instrumentsConfig = [
-  { id: 'piano', name: 'Piano', color: 'bg-blue-500' },
-  { id: 'strings', name: 'Strings', color: 'bg-green-500' },
-  { id: 'flute', name: 'Flute', color: 'bg-purple-500' },
-  { id: 'synth', name: 'Synthesizer', color: 'bg-red-500' },
-  { id: 'horns', name: 'Horns', color: 'bg-yellow-500' },
-  { id: 'bass', name: 'Bass', color: 'bg-orange-500' },
-  { id: 'lead', name: 'Lead', color: 'bg-pink-500' },
-  { id: 'pad', name: 'Pad', color: 'bg-cyan-500' },
-];
+const instrumentCategories = {
+  piano: {
+    name: 'Piano',
+    color: 'bg-blue-500',
+    instruments: [
+      { id: 'piano-keyboard', name: 'Keyboard' },
+      { id: 'piano-grand', name: 'Grand Piano' },
+      { id: 'piano-organ', name: 'Organ' }
+    ]
+  },
+  strings: {
+    name: 'Strings',
+    color: 'bg-green-500',
+    instruments: [
+      { id: 'strings-guitar', name: 'Guitar' },
+      { id: 'strings-violin', name: 'Violin' },
+      { id: 'strings-ukulele', name: 'Ukulele' }
+    ]
+  },
+  flute: {
+    name: 'Flute',
+    color: 'bg-purple-500',
+    instruments: [
+      { id: 'flute-recorder', name: 'Recorder' },
+      { id: 'flute-indian', name: 'Indian Flute' },
+      { id: 'flute-concert', name: 'Concert Flute' }
+    ]
+  },
+  horns: {
+    name: 'Horns',
+    color: 'bg-yellow-500',
+    instruments: [
+      { id: 'horns-trumpet', name: 'Trumpet' },
+      { id: 'horns-trombone', name: 'Trombone' },
+      { id: 'horns-french', name: 'French Horn' }
+    ]
+  },
+  synth: {
+    name: 'Synthesizer',
+    color: 'bg-red-500',
+    instruments: [
+      { id: 'synth-analog', name: 'Analog Synth' },
+      { id: 'synth-digital', name: 'Digital Synth' },
+      { id: 'synth-fm', name: 'FM Synth' }
+    ]
+  },
+  bass: {
+    name: 'Bass',
+    color: 'bg-orange-500',
+    instruments: [
+      { id: 'bass-electric', name: 'Electric Bass' },
+      { id: 'bass-upright', name: 'Upright Bass' },
+      { id: 'bass-synth', name: 'Synth Bass' }
+    ]
+  },
+  pads: {
+    name: 'Pads',
+    color: 'bg-cyan-500',
+    instruments: [
+      { id: 'pads-warm', name: 'Warm Pad' },
+      { id: 'pads-strings', name: 'String Pad' },
+      { id: 'pads-choir', name: 'Choir Pad' }
+    ]
+  },
+  leads: {
+    name: 'Leads',
+    color: 'bg-pink-500',
+    instruments: [
+      { id: 'leads-square', name: 'Square Lead' },
+      { id: 'leads-saw', name: 'Saw Lead' },
+      { id: 'leads-pluck', name: 'Pluck Lead' }
+    ]
+  }
+};
 
 export default function MelodyComposer() {
   const [scale, setScale] = useState("C Major");
   const [tracks, setTracks] = useState<Track[]>([
-    { id: 'track1', name: 'Piano', color: 'bg-blue-500', instrument: 'piano', visible: true, muted: false, volume: 80 },
-    { id: 'track2', name: 'Strings', color: 'bg-green-500', instrument: 'strings', visible: true, muted: false, volume: 70 },
-    { id: 'track3', name: 'Flute', color: 'bg-purple-500', instrument: 'flute', visible: true, muted: false, volume: 60 },
+    { id: 'track1', name: 'Keyboard', color: 'bg-blue-500', instrument: 'piano-keyboard', visible: true, muted: false, volume: 80 },
+    { id: 'track2', name: 'Guitar', color: 'bg-green-500', instrument: 'strings-guitar', visible: true, muted: false, volume: 70 },
+    { id: 'track3', name: 'Recorder', color: 'bg-purple-500', instrument: 'flute-recorder', visible: true, muted: false, volume: 60 },
   ]);
   const [selectedTrack, setSelectedTrack] = useState('track1');
   const [notes, setNotes] = useState<Note[]>([
@@ -190,17 +254,21 @@ export default function MelodyComposer() {
   };
 
   const addTrack = () => {
-    const availableInstruments = instrumentsConfig.filter(
-      inst => !tracks.some(track => track.instrument === inst.id)
-    );
+    // Get all available instruments from all categories
+    const allInstruments = Object.values(instrumentCategories)
+      .flatMap(category => category.instruments)
+      .filter(inst => !tracks.some(track => track.instrument === inst.id));
 
-    if (availableInstruments.length === 0) return;
+    if (allInstruments.length === 0) return;
 
-    const newInstrument = availableInstruments[0];
+    const newInstrument = allInstruments[0];
+    const category = Object.values(instrumentCategories)
+      .find(cat => cat.instruments.some(i => i.id === newInstrument.id));
+    
     const newTrack: Track = {
       id: `track${tracks.length + 1}`,
       name: newInstrument.name,
-      color: newInstrument.color,
+      color: category?.color || 'bg-gray-500',
       instrument: newInstrument.id,
       visible: true,
       muted: false,
@@ -223,15 +291,27 @@ export default function MelodyComposer() {
   };
 
   const updateTrackInstrument = (trackId: string, instrumentId: string) => {
-    const instrument = instrumentsConfig.find(inst => inst.id === instrumentId);
-    if (!instrument) return;
+    // Find the instrument and its category
+    let foundInstrument = null;
+    let foundCategory = null;
+    
+    for (const [categoryKey, category] of Object.entries(instrumentCategories)) {
+      const instrument = category.instruments.find(inst => inst.id === instrumentId);
+      if (instrument) {
+        foundInstrument = instrument;
+        foundCategory = category;
+        break;
+      }
+    }
+    
+    if (!foundInstrument || !foundCategory) return;
 
     setTracks(tracks.map(track => 
       track.id === trackId ? { 
         ...track, 
         instrument: instrumentId, 
-        name: instrument.name,
-        color: instrument.color 
+        name: foundInstrument.name,
+        color: foundCategory.color 
       } : track
     ));
   };
@@ -447,10 +527,17 @@ export default function MelodyComposer() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {instrumentsConfig.map((inst) => (
-                      <SelectItem key={inst.id} value={inst.id}>
-                        {inst.name}
-                      </SelectItem>
+                    {Object.entries(instrumentCategories).map(([categoryKey, category]) => (
+                      <div key={categoryKey}>
+                        <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">
+                          {category.name}
+                        </div>
+                        {category.instruments.map((inst) => (
+                          <SelectItem key={inst.id} value={inst.id}>
+                            {inst.name}
+                          </SelectItem>
+                        ))}
+                      </div>
                     ))}
                   </SelectContent>
                 </Select>
