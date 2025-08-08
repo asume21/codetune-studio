@@ -374,7 +374,7 @@ export default function MelodyComposer() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <ScrollArea className="flex-1 p-6">
         <div className="flex space-x-4 h-full">
           {/* Track Controls */}
           <div className="w-64 bg-studio-panel border border-gray-600 rounded-lg p-4 space-y-3">
@@ -613,7 +613,7 @@ export default function MelodyComposer() {
             </div>
           </div>
         </div>
-      </div>
+      </ScrollArea>
     </div>
   );
 }

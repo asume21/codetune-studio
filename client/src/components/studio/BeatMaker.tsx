@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/hooks/use-audio";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface BeatPattern {
   kick: boolean[];
@@ -242,95 +243,97 @@ export default function BeatMaker() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        <div className="bg-studio-panel border border-gray-600 rounded-lg p-6">
-          <div className="space-y-4">
-            {tracks.map((track) => (
-              <div key={track.id} className="flex items-center space-x-4">
-                <div className="w-20 text-sm font-medium flex items-center space-x-2">
-                  <div className={`w-3 h-3 rounded ${track.color}`}></div>
-                  <span>{track.name}</span>
-                </div>
+      <ScrollArea className="flex-1 p-6">
+        <div className="space-y-6">
+          <div className="bg-studio-panel border border-gray-600 rounded-lg p-6">
+            <div className="space-y-4">
+              {tracks.map((track) => (
+                <div key={track.id} className="flex items-center space-x-4">
+                  <div className="w-20 text-sm font-medium flex items-center space-x-2">
+                    <div className={`w-3 h-3 rounded ${track.color}`}></div>
+                    <span>{track.name}</span>
+                  </div>
 
-                <div className="flex space-x-2">
-                  {pattern[track.id as keyof BeatPattern]?.map((active, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        toggleStep(track.id as keyof BeatPattern, index);
-                        if (!active && isInitialized) {
-                          playDrumSound(track.id);
-                        }
-                      }}
-                      className={`beat-pad w-8 h-8 rounded border transition-all relative ${
-                        active 
-                          ? `${track.color} shadow-lg transform scale-105 border-gray-400` 
-                          : "bg-gray-700 hover:bg-gray-600 border-gray-600"
-                      } ${
-                        isPlaying && (currentStep % 16) === index 
-                          ? "ring-2 ring-white ring-opacity-75" 
-                          : ""
-                      }`}
-                    >
-                      {index % 4 === 0 && (
-                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
-                          {(index / 4) + 1}
-                        </div>
-                      )}
-                    </button>
-                  )) || Array(16).fill(false).map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        toggleStep(track.id as keyof BeatPattern, index);
-                        if (isInitialized) {
-                          playDrumSound(track.id);
-                        }
-                      }}
-                      className="beat-pad w-8 h-8 rounded border bg-gray-700 hover:bg-gray-600 border-gray-600 transition-all relative"
-                    >
-                      {index % 4 === 0 && (
-                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
-                          {(index / 4) + 1}
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
+                  <div className="flex space-x-2">
+                    {pattern[track.id as keyof BeatPattern]?.map((active, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          toggleStep(track.id as keyof BeatPattern, index);
+                          if (!active && isInitialized) {
+                            playDrumSound(track.id);
+                          }
+                        }}
+                        className={`beat-pad w-8 h-8 rounded border transition-all relative ${
+                          active 
+                            ? `${track.color} shadow-lg transform scale-105 border-gray-400` 
+                            : "bg-gray-700 hover:bg-gray-600 border-gray-600"
+                        } ${
+                          isPlaying && (currentStep % 16) === index 
+                            ? "ring-2 ring-white ring-opacity-75" 
+                            : ""
+                        }`}
+                      >
+                        {index % 4 === 0 && (
+                          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
+                            {(index / 4) + 1}
+                          </div>
+                        )}
+                      </button>
+                    )) || Array(16).fill(false).map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          toggleStep(track.id as keyof BeatPattern, index);
+                          if (isInitialized) {
+                            playDrumSound(track.id);
+                          }
+                        }}
+                        className="beat-pad w-8 h-8 rounded border bg-gray-700 hover:bg-gray-600 border-gray-600 transition-all relative"
+                      >
+                        {index % 4 === 0 && (
+                          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
+                            {(index / 4) + 1}
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
 
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    defaultValue="80"
-                    className="w-16"
-                  />
-                  <span className="text-xs text-gray-400 w-8">80%</span>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      defaultValue="80"
+                      className="w-16"
+                    />
+                    <span className="text-xs text-gray-400 w-8">80%</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Waveform Visualization */}
-        <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium">Waveform</h3>
-            <div className="flex items-center space-x-2 text-sm text-gray-400">
-              <span>4/4 Time</span>
-              <span>•</span>
-              <span>{bpm} BPM</span>
+              ))}
             </div>
           </div>
-          <svg className="w-full h-20" viewBox="0 0 800 80">
-            <path 
-              className="waveform-line" 
-              d="M0,40 Q50,20 100,40 T200,40 Q250,60 300,40 T400,40 Q450,20 500,40 T600,40 Q650,60 700,40 T800,40"
-            />
-          </svg>
+
+          {/* Waveform Visualization */}
+          <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium">Waveform</h3>
+              <div className="flex items-center space-x-2 text-sm text-gray-400">
+                <span>4/4 Time</span>
+                <span>•</span>
+                <span>{bpm} BPM</span>
+              </div>
+            </div>
+            <svg className="w-full h-20" viewBox="0 0 800 80">
+              <path 
+                className="waveform-line" 
+                d="M0,40 Q50,20 100,40 T200,40 Q250,60 300,40 T400,40 Q450,20 500,40 T600,40 Q650,60 700,40 T800,40"
+              />
+            </svg>
+          </div>
         </div>
-      </div>
+      </ScrollArea>
     </div>
   );
 }

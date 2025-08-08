@@ -229,7 +229,7 @@ Type here or use AI generation...`);
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <ScrollArea className="flex-1 p-6">
         <div className="grid grid-cols-3 gap-6">
           {/* Lyric Editor */}
           <div className="col-span-2 bg-studio-panel border border-gray-600 rounded-lg overflow-hidden">
@@ -353,6 +353,18 @@ Type here or use AI generation...`);
                   placeholder="Theme or concept..."
                   className="bg-gray-700 border-gray-600"
                 />
+                <Select value={genre} onValueChange={setGenre}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select genre..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {genres.map((g) => (
+                      <SelectItem key={g.value} value={g.value}>
+                        {g.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Select value={mood} onValueChange={setMood}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select mood..." />
@@ -370,7 +382,17 @@ Type here or use AI generation...`);
                   disabled={generateLyricsMutation.isPending}
                   className="w-full bg-studio-accent hover:bg-blue-500"
                 >
-                  Generate Lyrics
+                  {generateLyricsMutation.isPending ? (
+                    <>
+                      <i className="fas fa-spinner animate-spin mr-2"></i>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-magic mr-2"></i>
+                      AI Generate
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -463,7 +485,7 @@ Type here or use AI generation...`);
             </div>
           </div>
         </div>
-      </div>
+      </ScrollArea>
     </div>
   );
 }

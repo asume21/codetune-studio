@@ -189,7 +189,7 @@ export default function Mixer() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <ScrollArea className="flex-1 p-6">
         <div className="flex space-x-4 overflow-x-auto">
           {/* Mixer Channels */}
           {channels.map((channel) => (
@@ -603,7 +603,7 @@ export default function Mixer() {
             </div>
           </div>
         </div>
-      </div>
+      </ScrollArea>
     </div>
   );
 }

@@ -116,7 +116,7 @@ export default function CodeToMusic() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <ScrollArea className="flex-1 p-6">
         <div className="grid grid-cols-2 gap-6">
           {/* Code Input */}
           <div className="flex flex-col space-y-4">
@@ -224,7 +224,7 @@ export default function CodeToMusic() {
             </div>
           </div>
         </div>
-      </div>
+      </ScrollArea>
     </div>
   );
 }
