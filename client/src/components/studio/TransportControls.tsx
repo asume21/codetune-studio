@@ -59,46 +59,58 @@ export default function TransportControls() {
 
   return (
     <div className="bg-studio-panel border-t border-gray-700 px-6 py-4">
+      {/* Playback Controls Help */}
+      <div className="mb-2 text-xs text-gray-500 text-center">
+        <strong>Playback Controls:</strong> Use the round buttons below to play, pause, and control your music
+      </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button
-            variant="secondary"
-            className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-          >
-            <i className="fas fa-step-backward"></i>
-          </Button>
+          {/* Transport Control Buttons - Round circles for playback */}
+          <div className="flex items-center space-x-4 bg-gray-800/50 rounded-full px-4 py-2">
+            <Button
+              variant="secondary"
+              className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+              title="Previous Track - Go to previous song or beat pattern"
+            >
+              <i className="fas fa-step-backward"></i>
+            </Button>
 
-          <Button
-            onClick={handlePlay}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-              isPlaying 
-                ? "bg-red-600 hover:bg-red-500" 
-                : "bg-studio-success hover:bg-green-500"
-            }`}
-          >
-            <i className={`fas ${isPlaying ? "fa-pause" : "fa-play"} text-lg`}></i>
-          </Button>
+            <Button
+              onClick={handlePlay}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+                isPlaying 
+                  ? "bg-red-600 hover:bg-red-500" 
+                  : "bg-studio-success hover:bg-green-500"
+              }`}
+              title={isPlaying ? "Pause - Stop playing current beat" : "Play - Start playing your beat pattern"}
+            >
+              <i className={`fas ${isPlaying ? "fa-pause" : "fa-play"} text-lg`}></i>
+            </Button>
 
-          <Button
-            onClick={handleStop}
-            className="bg-red-600 hover:bg-red-500 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-          >
-            <i className="fas fa-stop"></i>
-          </Button>
+            <Button
+              onClick={handleStop}
+              className="bg-red-600 hover:bg-red-500 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+              title="Stop - Stop playback and reset to beginning"
+            >
+              <i className="fas fa-stop"></i>
+            </Button>
 
-          <Button
-            variant="secondary"
-            className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-          >
-            <i className="fas fa-step-forward"></i>
-          </Button>
+            <Button
+              variant="secondary"
+              className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+              title="Next Track - Go to next song or beat pattern"
+            >
+              <i className="fas fa-step-forward"></i>
+            </Button>
 
-          <Button
-            variant="secondary"
-            className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-          >
-            <i className="fas fa-redo"></i>
-          </Button>
+            <Button
+              variant="secondary"
+              className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+              title="Loop - Repeat current pattern continuously"
+            >
+              <i className="fas fa-redo"></i>
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center space-x-6">
