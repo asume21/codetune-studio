@@ -48,17 +48,30 @@ Type here or use AI generation...`);
 
   const generateLyricsMutation = useMutation({
     mutationFn: async (data: { theme: string; genre: string; mood: string }) => {
-      const response = await apiRequest("POST", "/api/lyrics/generate", data);
+      // Add randomization to prevent repetitive results
+      const genres = ["hip-hop", "pop", "rock", "country", "R&B", "folk", "reggae", "electronic", "jazz", "blues"];
+      const moods = ["upbeat", "melancholic", "energetic", "romantic", "rebellious", "peaceful", "intense", "nostalgic"];
+      const themes = ["love", "freedom", "success", "struggle", "dreams", "technology", "nature", "friendship"];
+      
+      const randomGenre = genres[Math.floor(Math.random() * genres.length)];
+      const randomMood = moods[Math.floor(Math.random() * moods.length)];
+      const randomTheme = themes[Math.floor(Math.random() * themes.length)];
+      
+      const response = await apiRequest("POST", "/api/lyrics/generate", {
+        theme: `${data.theme}, ${randomTheme}`,
+        genre: randomGenre,
+        mood: randomMood
+      });
       return response.json();
     },
     onSuccess: (data) => {
-      setContent(data.content);
-      setTitle(data.title);
+      setContent(data.content || data);
+      setTitle(`${genre} Song ${Date.now()}`);
       // Save lyrics to studio context for master playback
-      studioContext.setCurrentLyrics(data.content);
+      studioContext.setCurrentLyrics(data.content || data);
       toast({
         title: "Lyrics Generated",
-        description: "AI has created new lyrics for you.",
+        description: "AI has created unique lyrics for you.",
       });
     },
     onError: () => {

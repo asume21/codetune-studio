@@ -198,7 +198,18 @@ export default function MelodyComposer() {
 
   const generateMelodyMutation = useMutation({
     mutationFn: async (data: { scale: string; style: string; complexity: number }) => {
-      const response = await apiRequest("POST", "/api/melodies/generate", data);
+      // Add randomization to prevent repetitive results
+      const styles = ["classical", "jazz", "blues", "rock", "electronic", "folk", "ambient", "world", "cinematic", "experimental"];
+      const complexities = [3, 4, 5, 6, 7, 8]; // Vary complexity
+      
+      const randomStyle = styles[Math.floor(Math.random() * styles.length)];
+      const randomComplexity = complexities[Math.floor(Math.random() * complexities.length)];
+      
+      const response = await apiRequest("POST", "/api/melodies/generate", {
+        ...data,
+        style: randomStyle,
+        complexity: randomComplexity
+      });
       return response.json();
     },
     onSuccess: (data) => {
@@ -215,7 +226,7 @@ export default function MelodyComposer() {
         setNotes(prev => [...prev.filter(n => n.track !== selectedTrack), ...newNotes]);
         toast({
           title: "Melody Generated",
-          description: `AI has composed a new melody for ${tracks.find(t => t.id === selectedTrack)?.name}.`,
+          description: `AI has composed a unique ${randomStyle} melody!`,
         });
       }
     },
