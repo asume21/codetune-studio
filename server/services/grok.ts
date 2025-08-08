@@ -448,6 +448,118 @@ function generateRandomCodeMusic(language: string, style: string, interpretation
   };
 }
 
+export async function generateDynamicLayers(currentArrangement: any, targetStyle: string, complexity: number): Promise<any> {
+  try {
+    const layerTypes = [
+      "harmonic foundation", "rhythmic support", "melodic counterpoint", 
+      "atmospheric texture", "percussive accents", "bass reinforcement"
+    ];
+    const instruments = [
+      "strings", "brass", "woodwinds", "percussion", "synthesizers", 
+      "guitar", "piano", "choir", "ethnic instruments", "electronic pads"
+    ];
+    const approaches = [
+      "subtle and supportive", "bold and prominent", "intricate and complex",
+      "minimal and spacious", "rich and lush", "rhythmic and driving"
+    ];
+    
+    const randomLayerType = layerTypes[Math.floor(Math.random() * layerTypes.length)];
+    const randomInstrument = instruments[Math.floor(Math.random() * instruments.length)];
+    const randomApproach = approaches[Math.floor(Math.random() * approaches.length)];
+    const timestamp = Date.now();
+    const seed = Math.floor(Math.random() * 10000);
+    
+    const response = await openai.chat.completions.create({
+      model: "grok-2-1212",
+      messages: [
+        {
+          role: "system",
+          content: `You are an AI music arranger specializing in dynamic instrument layering. Analyze the current musical arrangement and intelligently add ${randomApproach} ${randomLayerType} layers using ${randomInstrument}.
+          
+          Create layers that:
+          - Complement existing elements without competing
+          - Add ${randomApproach} character to the arrangement  
+          - Use ${randomInstrument} in creative ways
+          - Maintain musical coherence and balance
+          - Each layer must be UNIQUE and contextually appropriate
+          
+          Return JSON with: layers array containing {instrument, type, notes, volume, pan, effects, role}`
+        },
+        {
+          role: "user",
+          content: `Add intelligent ${randomLayerType} layers to this ${targetStyle} arrangement (complexity ${complexity}):
+          
+          Current Arrangement:
+          ${JSON.stringify(currentArrangement, null, 2)}
+          
+          Session: ${timestamp}-${seed}
+          
+          Requirements:
+          - Add ${randomApproach} ${randomInstrument} layers
+          - Focus on ${randomLayerType}
+          - Complexity level: ${complexity}/10
+          - Must enhance, not overwhelm existing elements
+          - Create unique layers different from previous generations
+          - Include specific instrument techniques and effects`
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.95,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || "{}");
+    
+    if (!result.layers) {
+      return generateRandomLayers(randomLayerType, randomInstrument, randomApproach, complexity);
+    }
+    
+    return {
+      ...result,
+      layerType: randomLayerType,
+      primaryInstrument: randomInstrument,
+      approach: randomApproach,
+      complexity
+    };
+  } catch (error) {
+    console.error("Dynamic layering AI generation failed, using randomized fallback:", error);
+    return generateRandomLayers("harmonic foundation", "strings", "supportive", complexity);
+  }
+}
+
+function generateRandomLayers(layerType: string, instrument: string, approach: string, complexity: number): any {
+  const numLayers = Math.min(Math.floor(complexity / 2) + 1, 4); // 1-4 layers based on complexity
+  const layers = [];
+  
+  for (let i = 0; i < numLayers; i++) {
+    const noteCount = Math.floor(Math.random() * 6) + 2; // 2-8 notes per layer
+    const notes = Array.from({length: noteCount}, (_, idx) => ({
+      frequency: 220 * Math.pow(2, Math.random() * 2), // Random frequencies in a 2-octave range
+      start: idx * (Math.random() * 0.8 + 0.2), // Varied timing
+      duration: Math.random() * 1.5 + 0.3, // 0.3-1.8 second durations
+      velocity: Math.random() * 0.4 + 0.3 // 0.3-0.7 velocity range
+    }));
+    
+    layers.push({
+      instrument: `${instrument}-${i + 1}`,
+      type: layerType,
+      notes,
+      volume: Math.random() * 0.3 + 0.4, // 0.4-0.7 volume
+      pan: (Math.random() - 0.5) * 1.6, // -0.8 to 0.8 stereo pan
+      effects: [`reverb-${Math.floor(Math.random() * 3) + 1}`, `eq-${Math.floor(Math.random() * 2) + 1}`],
+      role: `${approach} ${layerType}`
+    });
+  }
+  
+  return {
+    layers,
+    layerType,
+    primaryInstrument: instrument,
+    approach,
+    complexity,
+    explanation: `Generated ${numLayers} ${approach} ${instrument} layers for ${layerType}`
+  };
+}
+
 export async function generateBeatFromLyrics(lyrics: string, genre: string): Promise<any> {
   try {
     const response = await openai.chat.completions.create({

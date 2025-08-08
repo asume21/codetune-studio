@@ -10,7 +10,8 @@ import {
   getRhymeSuggestions, 
   generateBeatFromLyrics,
   codeToMusic, 
-  chatAssistant 
+  chatAssistant,
+  generateDynamicLayers
 } from "./services/grok";
 import { 
   insertCodeTranslationSchema, 
@@ -231,6 +232,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Code to music error:", error);
       res.status(500).json({ error: "Failed to convert code to music" });
+    }
+  });
+
+  // Dynamic instrument layering
+  app.post("/api/layers/generate", async (req, res) => {
+    try {
+      const { arrangement, style = "electronic", complexity = 5 } = req.body;
+      const result = await generateDynamicLayers(arrangement, style, complexity);
+      res.json(result);
+    } catch (error) {
+      console.error("Dynamic layering error:", error);
+      res.status(500).json({ error: "Failed to generate dynamic layers" });
     }
   });
 

@@ -10,6 +10,7 @@ import AIAssistant from "@/components/studio/AIAssistant";
 import VulnerabilityScanner from "@/components/studio/VulnerabilityScanner";
 import LyricLab from "@/components/studio/LyricLab";
 import Mixer from "@/components/studio/Mixer";
+import DynamicLayering from "@/components/studio/DynamicLayering";
 import { useAudio } from "@/hooks/use-audio";
 
 // Global studio audio context for master playback
@@ -18,19 +19,21 @@ export const StudioAudioContext = createContext({
   currentMelody: [] as any[],
   currentLyrics: "" as string,
   currentCodeMusic: {} as any,
+  currentLayers: [] as any[],
   isPlaying: false,
   bpm: 120,
   setCurrentPattern: (pattern: any) => {},
   setCurrentMelody: (melody: any[]) => {},
   setCurrentLyrics: (lyrics: string) => {},
   setCurrentCodeMusic: (music: any) => {},
+  setCurrentLayers: (layers: any[]) => {},
   playCurrentAudio: () => Promise.resolve(),
   stopCurrentAudio: () => {},
   playFullSong: () => Promise.resolve(), // Master play function
   stopFullSong: () => {},
 });
 
-type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "assistant" | "security" | "lyrics" | "mixer";
+type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "assistant" | "security" | "lyrics" | "mixer" | "layers";
 
 export default function Studio() {
   const [activeTab, setActiveTab] = useState<Tab>("beatmaker");
@@ -38,6 +41,7 @@ export default function Studio() {
   const [currentMelody, setCurrentMelody] = useState([]);
   const [currentLyrics, setCurrentLyrics] = useState("");
   const [currentCodeMusic, setCurrentCodeMusic] = useState({});
+  const [currentLayers, setCurrentLayers] = useState([]);
   const [isStudioPlaying, setIsStudioPlaying] = useState(false);
   const [studioBpm, setStudioBpm] = useState(120);
   
@@ -63,7 +67,8 @@ export default function Studio() {
       "assistant": "AI Assistant",
       "security": "Security Scanner",
       "lyrics": "Lyric Lab",
-      "mixer": "Mixer"
+      "mixer": "Mixer",
+      "layers": "Dynamic Layering"
     };
     return toolNames[tab] || "Beat Maker";
   };
@@ -92,12 +97,14 @@ export default function Studio() {
     currentMelody,
     currentLyrics,
     currentCodeMusic,
+    currentLayers,
     isPlaying: isStudioPlaying,
     bpm: studioBpm,
     setCurrentPattern,
     setCurrentMelody,
     setCurrentLyrics,
     setCurrentCodeMusic,
+    setCurrentLayers,
     playCurrentAudio,
     stopCurrentAudio,
     playFullSong,
@@ -122,8 +129,10 @@ export default function Studio() {
         return <LyricLab />;
       case "mixer":
         return <Mixer />;
+      case "layers":
+        return <DynamicLayering />;
       default:
-        return <CodeTranslator />;
+        return <BeatMaker />;
     }
   };
 
