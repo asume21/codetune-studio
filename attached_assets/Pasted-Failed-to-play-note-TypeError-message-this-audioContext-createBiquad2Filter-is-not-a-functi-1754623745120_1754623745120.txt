@@ -1,0 +1,105 @@
+Failed to play note: 
+TypeError {}
+message: "this.audioContext.createBiquad2Filter is not a function"
+stack: "TypeError: this.audioContext.createBiquad2Filter is not a function↵ at AudioEngine.playNote (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/src/lib/audio.ts:42:42)↵ at https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/src/hooks/use-audio.ts:28:19"
+get stack: ƒ ()
+length: 0
+name: ""
+[[Prototype]]: ƒ ()
+set stack: ƒ ()
+length: 1
+name: ""
+[[Prototype]]: ƒ ()
+apply: ƒ apply()
+arguments: "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"
+get arguments: ƒ get arguments()
+set arguments: ƒ set arguments()
+bind: ƒ bind()
+call: ƒ call()
+caller: "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"
+get caller: ƒ get caller()
+set caller: ƒ set caller()
+constructor: ƒ Function()
+length: 0
+name: ""
+toString: ƒ toString()
+Symbol(Symbol.hasInstance): undefined
+[[Prototype]]: Object
+constructor: ƒ Function()
+hasOwnProperty: ƒ hasOwnProperty()
+isPrototypeOf: ƒ isPrototypeOf()
+propertyIsEnumerable: ƒ propertyIsEnumerable()
+toLocaleString: ƒ toLocaleString()
+toString: ƒ toString()
+valueOf: ƒ valueOf()
+__defineGetter__: ƒ __defineGetter__()
+__defineSetter__: ƒ __defineSetter__()
+__lookupGetter__: ƒ __lookupGetter__()
+__lookupSetter__: ƒ __lookupSetter__()
+__proto__: ƒ ()
+get __proto__: ƒ get __proto__()
+set __proto__: ƒ set __proto__()
+[[Prototype]]: Object
+constructor: ƒ TypeError()
+length: 1
+name: "TypeError"
+prototype: Object
+constructor: ƒ TypeError()
+length: 1
+name: "TypeError"
+prototype: Object
+[[Prototype]]: ƒ Error()
+message: "this.audioContext.createBiquad2Filter is not a function"
+name: "TypeError"
+[[Prototype]]: Object
+[[Prototype]]: ƒ Error()
+stackTraceLimit: 10
+captureStackTrace: ƒ captureStackTrace()
+length: 2
+name: "captureStackTrace"
+[[Prototype]]: ƒ ()
+isError: ƒ isError()
+length: 1
+name: "isError"
+[[Prototype]]: ƒ ()
+apply: ƒ apply()
+arguments: "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"
+get arguments: ƒ get arguments()
+set arguments: ƒ set arguments()
+bind: ƒ bind()
+call: ƒ call()
+caller: "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"
+get caller: ƒ get caller()
+set caller: ƒ set caller()
+constructor: ƒ Function()
+length: 0
+name: ""
+toString: ƒ toString()
+Symbol(Symbol.hasInstance): undefined
+[[Prototype]]: Object
+constructor: ƒ Function()
+hasOwnProperty: ƒ hasOwnProperty()
+isPrototypeOf: ƒ isPrototypeOf()
+propertyIsEnumerable: ƒ propertyIsEnumerable()
+toLocaleString: ƒ toLocaleString()
+toString: ƒ toString()
+valueOf: ƒ valueOf()
+__defineGetter__: ƒ __defineGetter__()
+__defineSetter__: ƒ __defineSetter__()
+__lookupGetter__: ƒ __lookupGetter__()
+__lookupSetter__: ƒ __lookupSetter__()
+__proto__: ƒ ()
+get __proto__: ƒ get __proto__()
+set __proto__: ƒ set __proto__()
+length: 1
+name: "TypeError"
+prototype: Object
+[[Prototype]]: ƒ ()
+message: "this.audioContext.createBiquad2Filter is not a function"
+name: "TypeError"
+[[Prototype]]: Object
+
+at t.value (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
