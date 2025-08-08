@@ -5,13 +5,13 @@ export class AudioEngine {
   private currentlyPlaying: Map<string, OscillatorNode[]> = new Map();
 
   async initialize(): Promise<void> {
-    if (this.isInitialized) return;
+    if (this.initialized) return;
 
     try {
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       this.masterGain = this.audioContext.createGain();
       this.masterGain.connect(this.audioContext.destination);
-      this.isInitialized = true;
+      this.initialized = true;
     } catch (error) {
       console.error("Failed to initialize audio context:", error);
       throw new Error("Audio initialization failed");
@@ -22,6 +22,10 @@ export class AudioEngine {
     if (this.audioContext?.state === "suspended") {
       await this.audioContext.resume();
     }
+  }
+
+  get isInitialized(): boolean {
+    return this.initialized;
   }
 
   createOscillator(frequency: number, type: OscillatorType = "sine"): OscillatorNode {
@@ -46,13 +50,13 @@ export class AudioEngine {
 
     const oscillators: OscillatorNode[] = [];
     const gainNode = this.audioContext.createGain();
-    const filterNode = this.audioContext.createBiquad2Filter();
+    const filterNode = this.audioContext.createBiquadFilter();
 
     // Configure instrument presets
     const presets = this.getInstrumentPreset(instrument);
 
     // Create oscillators based on instrument type
-    presets.waveforms.forEach((waveform, index) => {
+    presets.waveforms.forEach((waveform: OscillatorType, index: number) => {
       const osc = this.audioContext!.createOscillator();
       osc.type = waveform;
       osc.frequency.setValueAtTime(frequency * presets.detuning[index], this.audioContext!.currentTime);
@@ -67,10 +71,13 @@ export class AudioEngine {
 
     // ADSR Envelope
     const baseVolume = velocity * presets.volume * 0.3;
-    gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(baseVolume, this.audioContext.currentTime + presets.attack);
-    gainNode.gain.exponentialRampToValueAtTime(baseVolume * presets.sustain, this.audioContext.currentTime + presets.attack + presets.decay);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration - presets.release);
+    const currentTime = this.audioContext.currentTime;
+    const sustainTime = Math.max(0.01, duration - presets.release);
+    
+    gainNode.gain.setValueAtTime(0, currentTime);
+    gainNode.gain.linearRampToValueAtTime(baseVolume, currentTime + presets.attack);
+    gainNode.gain.exponentialRampToValueAtTime(Math.max(0.001, baseVolume * presets.sustain), currentTime + presets.attack + presets.decay);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + sustainTime);
 
     gainNode.connect(filterNode);
     filterNode.connect(this.masterGain);
@@ -348,7 +355,7 @@ export class AudioEngine {
       this.audioContext.close();
       this.audioContext = null;
       this.masterGain = null;
-      this.isInitialized = false;
+      this.initialized = false;
     }
   }
 }
