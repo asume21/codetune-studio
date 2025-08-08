@@ -117,18 +117,18 @@ export default function BeatMaker() {
   });
 
   const toggleStep = (track: keyof BeatPattern, step: number) => {
-    setPattern(prev => {
-      const newPattern = {
-        ...prev,
-        [track]: prev[track].map((active, index) => 
-          index === step ? !active : active
-        )
-      };
-      // Auto-save to studio context for master playback
-      studioContext.setCurrentPattern(newPattern);
-      return newPattern;
-    });
+    setPattern(prev => ({
+      ...prev,
+      [track]: prev[track].map((active, index) => 
+        index === step ? !active : active
+      )
+    }));
   };
+
+  // Auto-save to studio context whenever pattern changes
+  useEffect(() => {
+    studioContext.setCurrentPattern(pattern);
+  }, [pattern, studioContext]);
 
   const handleGenerateAI = () => {
     generateBeatMutation.mutate({
