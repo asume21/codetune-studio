@@ -14,20 +14,20 @@ import { useAudio } from "@/hooks/use-audio";
 
 // Global studio audio context
 export const StudioAudioContext = createContext({
-  currentPattern: {},
-  currentMelody: [],
+  currentPattern: {} as any,
+  currentMelody: [] as any[],
   isPlaying: false,
   bpm: 120,
   setCurrentPattern: (pattern: any) => {},
   setCurrentMelody: (melody: any[]) => {},
-  playCurrentAudio: () => {},
+  playCurrentAudio: () => Promise.resolve(),
   stopCurrentAudio: () => {},
 });
 
 type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "assistant" | "security" | "lyrics" | "mixer";
 
 export default function Studio() {
-  const [activeTab, setActiveTab] = useState<Tab>("translator");
+  const [activeTab, setActiveTab] = useState<Tab>("beatmaker");
   const [currentPattern, setCurrentPattern] = useState({});
   const [currentMelody, setCurrentMelody] = useState([]);
   const [isStudioPlaying, setIsStudioPlaying] = useState(false);

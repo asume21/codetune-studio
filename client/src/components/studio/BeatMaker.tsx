@@ -268,16 +268,36 @@ export default function BeatMaker() {
 
       <ScrollArea className="flex-1 p-6">
         <div className="space-y-6">
+          {/* Instructions */}
+          <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+            <h3 className="text-blue-300 font-medium mb-2">How to Use Beat Maker</h3>
+            <p className="text-sm text-gray-300">
+              Click the <strong>squares</strong> to turn drum sounds on/off for each beat. 
+              The <strong>round sliders</strong> control volume for each drum type.
+              Press <strong>Play</strong> to hear your beat pattern!
+            </p>
+          </div>
+
           <div className="bg-studio-panel border border-gray-600 rounded-lg p-6">
+            <div className="mb-4">
+              <h3 className="text-lg font-medium mb-2">Drum Pattern Sequencer</h3>
+              <div className="flex items-center justify-between text-sm text-gray-400">
+                <span>Click squares to add drum hits • 16 steps per pattern</span>
+                <span>BPM: {bpm}</span>
+              </div>
+            </div>
+            
             <div className="space-y-4">
               {tracks.map((track) => (
                 <div key={track.id} className="flex items-center space-x-4">
-                  <div className="w-20 text-sm font-medium flex items-center space-x-2">
-                    <div className={`w-3 h-3 rounded ${track.color}`}></div>
-                    <span>{track.name}</span>
+                  <div className="w-24 text-sm font-medium flex items-center space-x-2">
+                    <div className={`w-5 h-5 rounded ${track.color} flex items-center justify-center text-xs font-bold text-white shadow-lg`}>
+                      {track.name[0]}
+                    </div>
+                    <span className="text-gray-200">{track.name}</span>
                   </div>
 
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-1">
                     {(pattern[track.id as keyof BeatPattern] || Array(16).fill(false)).map((active, index) => (
                       <button
                         key={index}
@@ -287,32 +307,39 @@ export default function BeatMaker() {
                             playDrumSound(track.id);
                           }
                         }}
-                        className={`beat-pad w-8 h-8 rounded border transition-all relative ${
+                        className={`beat-pad w-10 h-10 rounded border-2 transition-all relative flex items-center justify-center text-xs font-bold ${
                           active 
-                            ? `${track.color} shadow-lg transform scale-105 border-gray-400` 
-                            : "bg-gray-700 hover:bg-gray-600 border-gray-600"
+                            ? `${track.color} shadow-lg transform scale-105 border-gray-300 text-white` 
+                            : "bg-gray-700 hover:bg-gray-600 border-gray-500 text-gray-400 hover:border-gray-400"
                         } ${
                           isPlaying && (currentStep % 16) === index 
-                            ? "ring-2 ring-white ring-opacity-75" 
+                            ? "ring-3 ring-yellow-400 ring-opacity-90 animate-pulse" 
                             : ""
                         }`}
+                        title={`${track.name} - Step ${index + 1} (Click to toggle)`}
                       >
+                        {/* Step number inside pad */}
+                        <span className="opacity-70">{index + 1}</span>
+                        
+                        {/* Beat markers above */}
                         {index % 4 === 0 && (
-                          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
-                            {(index / 4) + 1}
+                          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-xs text-yellow-400 font-bold bg-gray-800 px-1 rounded">
+                            Beat {(index / 4) + 1}
                           </div>
                         )}
                       </button>
                     ))}
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 ml-4">
+                    <span className="text-xs text-gray-400 w-12">Volume:</span>
                     <input
                       type="range"
                       min="0"
                       max="100"
                       defaultValue="80"
-                      className="w-16"
+                      className="w-20 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                      title={`${track.name} volume control`}
                     />
                     <span className="text-xs text-gray-400 w-8">80%</span>
                   </div>
@@ -321,22 +348,54 @@ export default function BeatMaker() {
             </div>
           </div>
 
-          {/* Waveform Visualization */}
+          {/* Pattern Legend */}
           <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium">Waveform</h3>
+              <h3 className="font-medium">Pattern Guide</h3>
               <div className="flex items-center space-x-2 text-sm text-gray-400">
                 <span>4/4 Time</span>
                 <span>•</span>
                 <span>{bpm} BPM</span>
               </div>
             </div>
-            <svg className="w-full h-20" viewBox="0 0 800 80">
-              <path 
-                className="waveform-line" 
-                d="M0,40 Q50,20 100,40 T200,40 Q250,60 300,40 T400,40 Q450,20 500,40 T600,40 Q650,60 700,40 T800,40"
-              />
-            </svg>
+            
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="space-y-2">
+                <h4 className="text-gray-300 font-medium">Controls:</h4>
+                <div className="space-y-1 text-xs text-gray-400">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-gray-700 border border-gray-500 rounded flex items-center justify-center text-xs">1</div>
+                    <span>Squares = Beat steps (click to toggle)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-2 bg-gray-700 rounded"></div>
+                    <span>Sliders = Volume controls</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-xs text-white">K</div>
+                    <span>Active beat (colored)</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="text-gray-300 font-medium">Drum Sounds:</h4>
+                <div className="space-y-1 text-xs text-gray-400">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-red-500 rounded flex items-center justify-center text-xs font-bold text-white">K</div>
+                    <span>Kick - Deep bass drum</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-blue-500 rounded flex items-center justify-center text-xs font-bold text-white">S</div>
+                    <span>Snare - Sharp snappy sound</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-yellow-500 rounded flex items-center justify-center text-xs font-bold text-white">H</div>
+                    <span>Hi-Hat - Metallic cymbals</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </ScrollArea>
