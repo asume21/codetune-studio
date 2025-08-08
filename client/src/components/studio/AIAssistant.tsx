@@ -92,15 +92,24 @@ export default function AIAssistant() {
           <h2 className="text-2xl font-heading font-bold">AI Music & Code Assistant</h2>
           <div className="flex items-center space-x-4">
             <Button
-              onClick={() => initialize()}
+              onClick={() => {
+                initialize();
+                toast({ title: "Audio Initialized", description: "The audio engine has started." });
+              }}
               className="bg-studio-accent hover:bg-blue-500"
               disabled={isInitialized}
             >
               <i className="fas fa-power-off mr-2"></i>
-              Start Audio
+              {isInitialized ? 'Audio Ready' : 'Start Audio'}
             </Button>
             <Button
-              onClick={() => {}}
+              onClick={() => {
+                if (isInitialized) {
+                  toast({ title: "Playing", description: "Starting AI generated content playback." });
+                } else {
+                  toast({ title: "Audio Not Ready", description: "Please start audio first.", variant: "destructive" });
+                }
+              }}
               className="bg-studio-success hover:bg-green-500"
             >
               <i className="fas fa-play mr-2"></i>

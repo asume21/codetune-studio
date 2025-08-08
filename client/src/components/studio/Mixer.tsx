@@ -109,6 +109,7 @@ export default function Mixer() {
 
   const { toast } = useToast();
   const { initialize, isInitialized } = useAudio();
+  const [isLinked, setIsLinked] = useState(false);
 
   const updateChannel = (channelId: string, updates: Partial<MixerChannel>) => {
     setChannels(prev => prev.map(channel => 

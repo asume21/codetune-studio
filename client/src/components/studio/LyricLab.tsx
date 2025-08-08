@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAudio } from "@/hooks/use-audio";
 
 interface RhymeSuggestion {
   word: string;
@@ -41,6 +42,7 @@ Type here or use AI generation...`);
   const [rhymeSuggestions, setRhymeSuggestions] = useState<RhymeSuggestion[]>([]);
 
   const { toast } = useToast();
+  const { initialize, isInitialized } = useAudio();
 
   const generateLyricsMutation = useMutation({
     mutationFn: async (data: { theme: string; genre: string; mood: string }) => {
@@ -219,11 +221,15 @@ Type here or use AI generation...`);
           <h2 className="text-2xl font-heading font-bold">Lyric Lab</h2>
           <div className="flex items-center space-x-4">
             <Button
-              onClick={() => {}}
+              onClick={() => {
+                initialize();
+                toast({ title: "Audio Initialized", description: "The audio engine has started." });
+              }}
+              disabled={isInitialized}
               className="bg-studio-accent hover:bg-blue-500"
             >
               <i className="fas fa-power-off mr-2"></i>
-              Start Audio
+              {isInitialized ? 'Audio Ready' : 'Start Audio'}
             </Button>
           </div>
         </div>

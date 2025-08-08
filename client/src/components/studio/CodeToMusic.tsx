@@ -37,6 +37,7 @@ export default function CodeToMusic() {
     }
 }`);
   const [musicData, setMusicData] = useState<any>(null);
+  const compiledMusic = musicData; // Assuming musicData is the compiled music
 
   const { toast } = useToast();
   const { initialize, isInitialized } = useAudio();
@@ -89,7 +90,10 @@ export default function CodeToMusic() {
           <h2 className="text-2xl font-heading font-bold">Code to Music Compiler</h2>
           <div className="flex items-center space-x-4">
             <Button
-              onClick={initialize}
+              onClick={() => {
+                initialize();
+                toast({ title: "Audio Initialized", description: "The audio engine has started." });
+              }}
               disabled={isInitialized}
               className="bg-studio-accent hover:bg-blue-500"
             >
@@ -113,8 +117,20 @@ export default function CodeToMusic() {
                 </>
               )}
             </Button>
-            <Button variant="secondary" className="bg-studio-success hover:bg-green-500">
-              <i className="fas fa-play mr-2"></i>Play Result
+            <Button
+              onClick={() => {
+                if (compiledMusic && isInitialized) {
+                  toast({ title: "Playing Code Music", description: "Playing your compiled code as music." });
+                } else if (!compiledMusic) {
+                  toast({ title: "No Music", description: "Please compile code first.", variant: "destructive" });
+                } else {
+                  toast({ title: "Audio Not Ready", description: "Please start audio first.", variant: "destructive" });
+                }
+              }}
+              className="bg-studio-success hover:bg-green-500"
+            >
+              <i className="fas fa-play mr-2"></i>
+              Play Result
             </Button>
           </div>
         </div>
