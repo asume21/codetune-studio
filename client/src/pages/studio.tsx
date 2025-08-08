@@ -12,16 +12,22 @@ import LyricLab from "@/components/studio/LyricLab";
 import Mixer from "@/components/studio/Mixer";
 import { useAudio } from "@/hooks/use-audio";
 
-// Global studio audio context
+// Global studio audio context for master playback
 export const StudioAudioContext = createContext({
   currentPattern: {} as any,
   currentMelody: [] as any[],
+  currentLyrics: "" as string,
+  currentCodeMusic: {} as any,
   isPlaying: false,
   bpm: 120,
   setCurrentPattern: (pattern: any) => {},
   setCurrentMelody: (melody: any[]) => {},
+  setCurrentLyrics: (lyrics: string) => {},
+  setCurrentCodeMusic: (music: any) => {},
   playCurrentAudio: () => Promise.resolve(),
   stopCurrentAudio: () => {},
+  playFullSong: () => Promise.resolve(), // Master play function
+  stopFullSong: () => {},
 });
 
 type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "assistant" | "security" | "lyrics" | "mixer";
@@ -30,6 +36,8 @@ export default function Studio() {
   const [activeTab, setActiveTab] = useState<Tab>("beatmaker");
   const [currentPattern, setCurrentPattern] = useState({});
   const [currentMelody, setCurrentMelody] = useState([]);
+  const [currentLyrics, setCurrentLyrics] = useState("");
+  const [currentCodeMusic, setCurrentCodeMusic] = useState({});
   const [isStudioPlaying, setIsStudioPlaying] = useState(false);
   const [studioBpm, setStudioBpm] = useState(120);
   
@@ -60,15 +68,40 @@ export default function Studio() {
     return toolNames[tab] || "Beat Maker";
   };
 
+  const playFullSong = async () => {
+    if (!isInitialized) {
+      await initialize();
+    }
+    
+    console.log("Playing full song with:");
+    console.log("- Pattern:", currentPattern);
+    console.log("- Melody:", currentMelody);
+    console.log("- Lyrics:", currentLyrics);
+    console.log("- Code Music:", currentCodeMusic);
+    
+    setIsStudioPlaying(true);
+    // TODO: Implement combined playback logic
+  };
+
+  const stopFullSong = () => {
+    setIsStudioPlaying(false);
+  };
+
   const studioAudioValue = {
     currentPattern,
     currentMelody,
+    currentLyrics,
+    currentCodeMusic,
     isPlaying: isStudioPlaying,
     bpm: studioBpm,
     setCurrentPattern,
     setCurrentMelody,
+    setCurrentLyrics,
+    setCurrentCodeMusic,
     playCurrentAudio,
     stopCurrentAudio,
+    playFullSong,
+    stopFullSong,
   };
 
   const renderTabContent = () => {

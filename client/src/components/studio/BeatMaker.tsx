@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMutation } from "@tanstack/react-query";
@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/hooks/use-audio";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { StudioAudioContext } from "@/pages/studio";
 
 interface BeatPattern {
   kick: boolean[];
@@ -43,6 +44,7 @@ const defaultTracks = [
 ];
 
 export default function BeatMaker() {
+  const studioContext = useContext(StudioAudioContext);
   const [bpm, setBpm] = useState(120);
   const [selectedDrumKit, setSelectedDrumKit] = useState('acoustic');
   const [isPlaying, setIsPlaying] = useState(false);
@@ -80,6 +82,8 @@ export default function BeatMaker() {
       if (data.pattern) {
         setPattern(data.pattern);
         setBpm(data.bpm);
+        // Save to studio context for master playback
+        studioContext.setCurrentPattern(data.pattern);
         toast({
           title: "Beat Generated",
           description: "AI has generated a new beat pattern.",
@@ -227,12 +231,16 @@ export default function BeatMaker() {
               className={`${isPlaying ? 'bg-red-600 hover:bg-red-500' : 'bg-studio-success hover:bg-green-500'}`}
             >
               <i className={`fas ${isPlaying ? 'fa-stop' : 'fa-play'} mr-2`}></i>
-              {isPlaying ? 'Stop' : 'Play Beat'}
+              {isPlaying ? 'Stop Beat' : 'Play Beat Only'}
             </Button>
             <Button onClick={stopPattern} className="bg-red-600 hover:bg-red-500">
               <i className="fas fa-stop mr-2"></i>
               Stop
             </Button>
+            <div className="text-xs text-gray-400 px-2">
+              <div>Individual beat preview</div>
+              <div>Use master controls for full song</div>
+            </div>
             <Button
               onClick={handleGenerateAI}
               disabled={generateBeatMutation.isPending}

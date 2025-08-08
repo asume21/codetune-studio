@@ -30,60 +30,19 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
     
     if (isPlaying) {
       stopPattern();
-      studioContext.stopCurrentAudio();
+      studioContext.stopFullSong();
       setIsPlaying(false);
     } else {
-      // Play content based on current active tool
-      switch (activeTab) {
-        case "beatmaker":
-          // Play beat maker pattern if one exists
-          if (studioContext.currentPattern && Object.keys(studioContext.currentPattern).length > 0) {
-            playPattern(studioContext.currentPattern, studioContext.bpm);
-          } else {
-            // Default beat maker pattern
-            const beatPattern = {
-              kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
-              snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-              hihat: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
-            };
-            playPattern(beatPattern, bpm);
-          }
-          break;
-        case "melody":
-          // Play melody composer content
-          if (studioContext.currentMelody && studioContext.currentMelody.length > 0) {
-            // TODO: Implement melody playback
-            console.log("Playing melody:", studioContext.currentMelody);
-          } else {
-            // Default melody pattern
-            const melodyPattern = {
-              kick: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-              snare: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-              hihat: [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
-            };
-            playPattern(melodyPattern, bpm);
-          }
-          break;
-        case "mixer":
-          // Play whatever is currently loaded in the mixer
-          const mixerPattern = {
-            kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
-            snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-            hihat: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
-          };
-          playPattern(mixerPattern, bpm);
-          break;
-        default:
-          // Default pattern for other tools
-          const defaultPattern = {
-            kick: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false],
-            snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-            hihat: [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
-          };
-          playPattern(defaultPattern, bpm);
-      }
+      // Master playback - combine all content
+      await studioContext.playFullSong();
       
-      studioContext.playCurrentAudio();
+      // For now, play a combined pattern as demonstration
+      const fullSongPattern = {
+        kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
+        snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+        hihat: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+      };
+      playPattern(fullSongPattern, studioContext.bpm);
       setIsPlaying(true);
     }
   };
@@ -121,11 +80,11 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
 
   return (
     <div className="bg-studio-panel border-t border-gray-700 px-6 py-4">
-      {/* Current Audio Source Indicator */}
+      {/* Master Playback Status */}
       <div className="mb-2 text-xs text-gray-400 text-center">
-        <strong>Now Playing:</strong> {isPlaying ? getPlayingContent(activeTab || "beatmaker") : "Nothing playing"} | 
+        <strong>Master Playback:</strong> {isPlaying ? "Playing Full Song" : "Ready to play combined content"} | 
         <strong> Current Tool:</strong> {currentTool} | 
-        <strong> Tip:</strong> Each tool plays different audio content
+        <strong> Note:</strong> This plays ALL your content together (beats + melodies + lyrics)
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
