@@ -77,8 +77,8 @@ export class AudioEngine {
       const currentTime = this.audioContext.currentTime;
 
       // Use specialized synthesis based on instrument type
-      if (instrument.includes('piano')) {
-        this.playPianoNote(frequency, duration, preset, velocity, currentTime);
+      if (instrument.includes('piano') || instrument.includes('grand') || instrument.includes('keyboard') || instrument.includes('organ')) {
+        this.playPianoNote(frequency, duration, preset, velocity, currentTime, instrument);
       } else if (instrument.includes('strings')) {
         this.playStringNote(frequency, duration, preset, velocity, currentTime);
       } else if (instrument.includes('flute')) {
@@ -97,21 +97,65 @@ export class AudioEngine {
     }
   }
 
-  private playPianoNote(frequency: number, duration: number, preset: any, velocity: number, currentTime: number) {
+  private playPianoNote(frequency: number, duration: number, preset: any, velocity: number, currentTime: number, instrument: string = 'piano') {
     if (!this.audioContext || !this.masterGain) return;
 
     const oscillators: OscillatorNode[] = [];
     const masterGain = this.audioContext.createGain();
     
-    // Piano has complex harmonic structure - simulate with multiple oscillators
-    const harmonics = [
-      { freq: frequency, amp: 1.0, wave: 'triangle' as OscillatorType },
-      { freq: frequency * 2, amp: 0.4, wave: 'sine' as OscillatorType },
-      { freq: frequency * 3, amp: 0.3, wave: 'sine' as OscillatorType },
-      { freq: frequency * 4, amp: 0.2, wave: 'triangle' as OscillatorType },
-      { freq: frequency * 5, amp: 0.15, wave: 'sine' as OscillatorType },
-      { freq: frequency * 6, amp: 0.1, wave: 'sine' as OscillatorType },
-    ];
+    // Different piano types with unique harmonic structures
+    let harmonics;
+    let reverbAmount = 0.15;
+    let filterCutoff = frequency * 8;
+    
+    if (instrument.includes('grand')) {
+      // Grand Piano: Rich harmonics, long sustain, warm tone
+      harmonics = [
+        { freq: frequency, amp: 1.0, wave: 'triangle' as OscillatorType },
+        { freq: frequency * 2, amp: 0.5, wave: 'sine' as OscillatorType },
+        { freq: frequency * 3, amp: 0.4, wave: 'sine' as OscillatorType },
+        { freq: frequency * 4, amp: 0.3, wave: 'triangle' as OscillatorType },
+        { freq: frequency * 5, amp: 0.2, wave: 'sine' as OscillatorType },
+        { freq: frequency * 6, amp: 0.15, wave: 'sine' as OscillatorType },
+        { freq: frequency * 7, amp: 0.1, wave: 'sine' as OscillatorType },
+      ];
+      reverbAmount = 0.25; // More reverb for concert hall feel
+      filterCutoff = frequency * 10;
+    } else if (instrument.includes('keyboard') || instrument.includes('electric')) {
+      // Electric Keyboard: Brighter, more digital sound
+      harmonics = [
+        { freq: frequency, amp: 1.0, wave: 'sawtooth' as OscillatorType },
+        { freq: frequency * 2, amp: 0.3, wave: 'square' as OscillatorType },
+        { freq: frequency * 3, amp: 0.2, wave: 'sine' as OscillatorType },
+        { freq: frequency * 4, amp: 0.15, wave: 'triangle' as OscillatorType },
+        { freq: frequency * 0.5, amp: 0.1, wave: 'sine' as OscillatorType }, // Sub-harmonic
+      ];
+      reverbAmount = 0.05; // Less reverb for electric sound
+      filterCutoff = frequency * 12; // Brighter
+    } else if (instrument.includes('organ')) {
+      // Organ: Sustained, church-like sound with drawbar harmonics
+      harmonics = [
+        { freq: frequency, amp: 1.0, wave: 'sine' as OscillatorType },
+        { freq: frequency * 2, amp: 0.8, wave: 'sine' as OscillatorType },
+        { freq: frequency * 3, amp: 0.6, wave: 'sine' as OscillatorType },
+        { freq: frequency * 4, amp: 0.5, wave: 'sine' as OscillatorType },
+        { freq: frequency * 5, amp: 0.4, wave: 'sine' as OscillatorType },
+        { freq: frequency * 6, amp: 0.3, wave: 'sine' as OscillatorType },
+        { freq: frequency * 8, amp: 0.2, wave: 'sine' as OscillatorType },
+      ];
+      reverbAmount = 0.35; // Cathedral reverb
+      filterCutoff = frequency * 6; // Warmer tone
+    } else {
+      // Default acoustic piano
+      harmonics = [
+        { freq: frequency, amp: 1.0, wave: 'triangle' as OscillatorType },
+        { freq: frequency * 2, amp: 0.4, wave: 'sine' as OscillatorType },
+        { freq: frequency * 3, amp: 0.3, wave: 'sine' as OscillatorType },
+        { freq: frequency * 4, amp: 0.2, wave: 'triangle' as OscillatorType },
+        { freq: frequency * 5, amp: 0.15, wave: 'sine' as OscillatorType },
+        { freq: frequency * 6, amp: 0.1, wave: 'sine' as OscillatorType },
+      ];
+    }
 
     harmonics.forEach((harmonic, index) => {
       const osc = this.audioContext!.createOscillator();
@@ -138,8 +182,8 @@ export class AudioEngine {
       
       // Filter to simulate piano string resonance
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(Math.min(8000, frequency * 8), currentTime);
-      filter.Q.setValueAtTime(2, currentTime);
+      filter.frequency.setValueAtTime(Math.min(8000, filterCutoff), currentTime);
+      filter.Q.setValueAtTime(instrument.includes('organ') ? 1 : 2, currentTime);
       
       osc.connect(filter);
       filter.connect(gain);
@@ -150,8 +194,8 @@ export class AudioEngine {
       oscillators.push(osc);
     });
 
-    // Add reverb for piano
-    this.addReverb(masterGain, 0.15);
+    // Add reverb based on instrument type
+    this.addReverb(masterGain, reverbAmount);
     masterGain.connect(this.masterGain);
 
     this.trackOscillators(oscillators, 'piano', frequency);

@@ -113,7 +113,7 @@ export default function MelodyComposer() {
     { note: "C", octave: 4, duration: 0.5, start: 0, track: 'track1' },
     { note: "E", octave: 4, duration: 0.5, start: 0.5, track: 'track1' },
     { note: "G", octave: 4, duration: 0.5, start: 1, track: 'track2' },
-    { note: "C", octave: 5, duration: 1, track: 'track2' },
+    { note: "C", octave: 5, duration: 1, start: 1.5, track: 'track2' },
   ]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(0);
@@ -165,9 +165,21 @@ export default function MelodyComposer() {
 
     pattern.forEach((noteData, index) => {
       setTimeout(() => {
-        playNote(noteData.note, noteData.octave, duration * 0.7, instrument, 0.6);
+        playNote(getNoteFrequency(noteData.note, noteData.octave), duration * 0.7, instrument, 0.6);
       }, index * noteSpacing * 1000);
     });
+  };
+
+  // Helper function to convert note name and octave to frequency
+  const getNoteFrequency = (note: string, octave: number): number => {
+    const noteFrequencies: { [key: string]: number } = {
+      'C': 261.63, 'C#': 277.18, 'D': 293.66, 'D#': 311.13,
+      'E': 329.63, 'F': 349.23, 'F#': 369.99, 'G': 392.00,
+      'G#': 415.30, 'A': 440.00, 'A#': 466.16, 'B': 493.88
+    };
+    
+    const baseFreq = noteFrequencies[note.toUpperCase()] || 440;
+    return baseFreq * Math.pow(2, octave - 4); // A4 = 440Hz is reference
   };
 
   // Helper function to get next note in scale
@@ -307,7 +319,7 @@ export default function MelodyComposer() {
 
     setNotes([...notes, newNote]);
     const currentTrack = tracks.find(t => t.id === selectedTrack);
-    playNote(note, octave, gridSnapSize, currentTrack?.instrument || 'piano');
+    playNote(getNoteFrequency(note, octave), gridSnapSize, currentTrack?.instrument || 'piano');
   };
 
   const removeNote = (index: number) => {
@@ -742,7 +754,7 @@ export default function MelodyComposer() {
                       if (arpeggioMode) {
                         playArpeggio(key.note, currentOctave, currentTrack?.instrument || 'piano');
                       } else {
-                        playNote(key.note, currentOctave, gridSnapSize, currentTrack?.instrument || 'piano');
+                        playNote(getNoteFrequency(key.note, currentOctave), gridSnapSize, currentTrack?.instrument || 'piano');
                       }
                     }}
                     className={`piano-key w-8 h-32 border border-gray-400 rounded-b ${key.color} text-black text-xs flex items-end justify-center pb-2 hover:bg-gray-200`}
@@ -764,7 +776,7 @@ export default function MelodyComposer() {
                       if (arpeggioMode) {
                         playArpeggio(key.note, currentOctave, currentTrack?.instrument || 'piano');
                       } else {
-                        playNote(key.note, currentOctave, gridSnapSize, currentTrack?.instrument || 'piano');
+                        playNote(getNoteFrequency(key.note, currentOctave), gridSnapSize, currentTrack?.instrument || 'piano');
                       }
                     }}
                     className={`piano-key w-4 h-20 border border-gray-700 rounded-b ${key.color} text-white text-xs flex items-end justify-center pb-1 ${
