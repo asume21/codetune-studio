@@ -82,13 +82,13 @@ export default function Studio() {
 
   return (
     <StudioAudioContext.Provider value={studioAudioValue}>
-      <div className="h-screen flex flex-col bg-studio-bg text-white overflow-hidden">
+      <div className="h-screen flex flex-col bg-studio-bg text-white">
         <Header />
         
-        <div className="flex-1 flex">
+        <div className="flex-1 flex overflow-hidden">
           <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
           
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
               {renderTabContent()}
             </div>
