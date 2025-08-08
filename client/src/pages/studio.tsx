@@ -46,6 +46,20 @@ export default function Studio() {
     setIsStudioPlaying(false);
   };
 
+  const getActiveToolName = (tab: Tab): string => {
+    const toolNames: Record<Tab, string> = {
+      "translator": "Code Translator",
+      "beatmaker": "Beat Maker", 
+      "melody": "Melody Composer",
+      "codebeat": "Code to Music",
+      "assistant": "AI Assistant",
+      "security": "Security Scanner",
+      "lyrics": "Lyric Lab",
+      "mixer": "Mixer"
+    };
+    return toolNames[tab] || "Beat Maker";
+  };
+
   const studioAudioValue = {
     currentPattern,
     currentMelody,
@@ -89,11 +103,13 @@ export default function Studio() {
           <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
           
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto overflow-x-hidden">
-              {renderTabContent()}
+            <div className="flex-1 overflow-auto">
+              <div className="min-w-max p-6">
+                {renderTabContent()}
+              </div>
             </div>
             
-            <TransportControls />
+            <TransportControls currentTool={getActiveToolName(activeTab)} />
           </div>
         </div>
       </div>

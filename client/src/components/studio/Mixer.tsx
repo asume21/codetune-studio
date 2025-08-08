@@ -200,7 +200,7 @@ export default function Mixer() {
       </div>
 
       <ScrollArea className="flex-1 p-6">
-        <div className="flex space-x-4 overflow-x-auto">
+        <div className="flex space-x-4 min-w-max pb-4">
           {/* Mixer Channels */}
           {channels.map((channel) => (
             <div key={channel.id} className="bg-studio-panel border border-gray-600 rounded-lg p-3 w-24 flex flex-col flex-shrink-0">

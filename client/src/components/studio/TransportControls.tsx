@@ -1,6 +1,7 @@
 import { useState, useContext, createContext } from "react";
 import { Button } from "@/components/ui/button";
 import { useAudio, useSequencer } from "@/hooks/use-audio";
+import { StudioAudioContext } from "@/pages/studio";
 
 // Audio Context for sharing state between components
 export const AudioContext = createContext({
@@ -13,7 +14,11 @@ export const AudioContext = createContext({
   setVolume: (volume: number) => {},
 });
 
-export default function TransportControls() {
+interface TransportControlsProps {
+  currentTool?: string;
+}
+
+export default function TransportControls({ currentTool = "Beat Maker" }: TransportControlsProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState("00:00");
   const [totalTime] = useState("02:45");
@@ -59,9 +64,11 @@ export default function TransportControls() {
 
   return (
     <div className="bg-studio-panel border-t border-gray-700 px-6 py-4">
-      {/* Playback Controls Help */}
-      <div className="mb-2 text-xs text-gray-500 text-center">
-        <strong>Playback Controls:</strong> Use the round buttons below to play, pause, and control your music
+      {/* Current Audio Source Indicator */}
+      <div className="mb-2 text-xs text-gray-400 text-center">
+        <strong>Now Playing:</strong> {isPlaying ? "Basic Drum Pattern (Demo)" : "Nothing playing"} | 
+        <strong> Current Tool:</strong> {currentTool} | 
+        <strong> Tip:</strong> Switch to different tools to play their specific audio content
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
