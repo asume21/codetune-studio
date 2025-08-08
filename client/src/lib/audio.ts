@@ -67,26 +67,33 @@ export class AudioEngine {
   }
 
   playNote(frequency: number, duration: number = 0.5, instrument: string = 'piano', velocity: number = 0.7) {
-    if (!this.audioContext || !this.masterGain) return;
+    if (!this.audioContext || !this.masterGain) {
+      console.error("Audio context not initialized");
+      return;
+    }
 
-    const preset = this.getInstrumentPreset(instrument);
-    const currentTime = this.audioContext.currentTime;
+    try {
+      const preset = this.getInstrumentPreset(instrument);
+      const currentTime = this.audioContext.currentTime;
 
-    // Use specialized synthesis based on instrument type
-    if (instrument.includes('piano')) {
-      this.playPianoNote(frequency, duration, preset, velocity, currentTime);
-    } else if (instrument.includes('strings')) {
-      this.playStringNote(frequency, duration, preset, velocity, currentTime);
-    } else if (instrument.includes('flute')) {
-      this.playFluteNote(frequency, duration, preset, velocity, currentTime);
-    } else if (instrument.includes('horns')) {
-      this.playHornNote(frequency, duration, preset, velocity, currentTime);
-    } else if (instrument.includes('guitar')) {
-      this.playGuitarNote(frequency, duration, preset, velocity, currentTime);
-    } else if (instrument.includes('violin')) {
-      this.playViolinNote(frequency, duration, preset, velocity, currentTime);
-    } else {
-      this.playGenericNote(frequency, duration, preset, velocity, currentTime);
+      // Use specialized synthesis based on instrument type
+      if (instrument.includes('piano')) {
+        this.playPianoNote(frequency, duration, preset, velocity, currentTime);
+      } else if (instrument.includes('strings')) {
+        this.playStringNote(frequency, duration, preset, velocity, currentTime);
+      } else if (instrument.includes('flute')) {
+        this.playFluteNote(frequency, duration, preset, velocity, currentTime);
+      } else if (instrument.includes('horns')) {
+        this.playHornNote(frequency, duration, preset, velocity, currentTime);
+      } else if (instrument.includes('guitar')) {
+        this.playGuitarNote(frequency, duration, preset, velocity, currentTime);
+      } else if (instrument.includes('violin')) {
+        this.playViolinNote(frequency, duration, preset, velocity, currentTime);
+      } else {
+        this.playGenericNote(frequency, duration, preset, velocity, currentTime);
+      }
+    } catch (error) {
+      console.error("Failed to play note:", error);
     }
   }
 
@@ -123,8 +130,10 @@ export class AudioEngine {
       const initialVolume = Math.max(0.001, harmonic.amp * velocity * 0.15);
       
       gain.gain.setValueAtTime(0.001, currentTime);
-      gain.gain.exponentialRampToValueAtTime(initialVolume, currentTime + attack);
-      gain.gain.exponentialRampToValueAtTime(initialVolume * 0.3, currentTime + 0.1);
+      if (initialVolume > 0.001) {
+        gain.gain.exponentialRampToValueAtTime(initialVolume, currentTime + attack);
+        gain.gain.exponentialRampToValueAtTime(Math.max(0.001, initialVolume * 0.3), currentTime + 0.1);
+      }
       gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
       
       // Filter to simulate piano string resonance
@@ -188,8 +197,12 @@ export class AudioEngine {
     const sustainLevel = Math.max(0.001, velocity * 0.4);
     
     stringGain.gain.setValueAtTime(0.001, currentTime);
-    stringGain.gain.exponentialRampToValueAtTime(sustainLevel, currentTime + attackTime);
-    stringGain.gain.setValueAtTime(sustainLevel, currentTime + duration - 0.5);
+    if (sustainLevel > 0.001) {
+      stringGain.gain.exponentialRampToValueAtTime(sustainLevel, currentTime + attackTime);
+      if (duration > 0.5) {
+        stringGain.gain.setValueAtTime(sustainLevel, currentTime + duration - 0.5);
+      }
+    }
     stringGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
     // Connect audio graph
@@ -220,8 +233,11 @@ export class AudioEngine {
       
       harmonicOsc.type = 'sine';
       harmonicOsc.frequency.setValueAtTime(frequency * i, currentTime);
-      harmonicGain.gain.setValueAtTime(Math.max(0.001, velocity * 0.2 / i), currentTime);
-      harmonicGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+      const harmonicVolume = Math.max(0.001, velocity * 0.2 / i);
+      harmonicGain.gain.setValueAtTime(harmonicVolume, currentTime);
+      if (harmonicVolume > 0.001) {
+        harmonicGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+      }
       
       harmonicOsc.connect(harmonicGain);
       harmonicGain.connect(masterGain);
@@ -271,14 +287,18 @@ export class AudioEngine {
     // Pluck envelope - fast attack, complex decay
     const pluckVolume = Math.max(0.001, velocity * 0.6);
     pluckGain.gain.setValueAtTime(pluckVolume, currentTime);
-    pluckGain.gain.exponentialRampToValueAtTime(pluckVolume * 0.3, currentTime + 0.05);
-    pluckGain.gain.exponentialRampToValueAtTime(pluckVolume * 0.1, currentTime + 0.2);
+    if (pluckVolume > 0.001) {
+      pluckGain.gain.exponentialRampToValueAtTime(Math.max(0.001, pluckVolume * 0.3), currentTime + 0.05);
+      pluckGain.gain.exponentialRampToValueAtTime(Math.max(0.001, pluckVolume * 0.1), currentTime + 0.2);
+    }
     pluckGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
     // Body resonance envelope
     const bodyVolume = Math.max(0.001, velocity * 0.2);
     bodyGain.gain.setValueAtTime(0.001, currentTime);
-    bodyGain.gain.exponentialRampToValueAtTime(bodyVolume, currentTime + 0.01);
+    if (bodyVolume > 0.001) {
+      bodyGain.gain.exponentialRampToValueAtTime(bodyVolume, currentTime + 0.01);
+    }
     bodyGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
     // Connect audio graph
@@ -353,8 +373,12 @@ export class AudioEngine {
     const sustainLevel = Math.max(0.001, velocity * 0.4);
     
     violinGain.gain.setValueAtTime(0.001, currentTime);
-    violinGain.gain.exponentialRampToValueAtTime(sustainLevel, currentTime + attackTime);
-    violinGain.gain.setValueAtTime(sustainLevel, currentTime + duration - 0.3);
+    if (sustainLevel > 0.001) {
+      violinGain.gain.exponentialRampToValueAtTime(sustainLevel, currentTime + attackTime);
+      if (duration > 0.3) {
+        violinGain.gain.setValueAtTime(sustainLevel, currentTime + duration - 0.3);
+      }
+    }
     violinGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
     // Connect audio graph
@@ -424,8 +448,12 @@ export class AudioEngine {
     const sustainLevel = Math.max(0.001, velocity * 0.5);
     
     fluteGain.gain.setValueAtTime(0.001, currentTime);
-    fluteGain.gain.exponentialRampToValueAtTime(sustainLevel, currentTime + attackTime);
-    fluteGain.gain.setValueAtTime(sustainLevel, currentTime + duration - 0.2);
+    if (sustainLevel > 0.001) {
+      fluteGain.gain.exponentialRampToValueAtTime(sustainLevel, currentTime + attackTime);
+      if (duration > 0.2) {
+        fluteGain.gain.setValueAtTime(sustainLevel, currentTime + duration - 0.2);
+      }
+    }
     fluteGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
     // Connect audio graph
@@ -476,8 +504,12 @@ export class AudioEngine {
     const sustainLevel = Math.max(0.001, velocity * 0.6);
     
     hornGain.gain.setValueAtTime(0.001, currentTime);
-    hornGain.gain.exponentialRampToValueAtTime(sustainLevel, currentTime + attackTime);
-    hornGain.gain.setValueAtTime(sustainLevel, currentTime + duration - 0.3);
+    if (sustainLevel > 0.001) {
+      hornGain.gain.exponentialRampToValueAtTime(sustainLevel, currentTime + attackTime);
+      if (duration > 0.3) {
+        hornGain.gain.setValueAtTime(sustainLevel, currentTime + duration - 0.3);
+      }
+    }
     hornGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
     // Add harmonics for brass character
@@ -487,8 +519,11 @@ export class AudioEngine {
       
       harmonicOsc.type = 'sine';
       harmonicOsc.frequency.setValueAtTime(frequency * i, currentTime);
-      harmonicGain.gain.setValueAtTime(Math.max(0.001, velocity * 0.3 / i), currentTime);
-      harmonicGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+      const harmonicVolume = Math.max(0.001, velocity * 0.3 / i);
+      harmonicGain.gain.setValueAtTime(harmonicVolume, currentTime);
+      if (harmonicVolume > 0.001) {
+        harmonicGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+      }
       
       harmonicOsc.connect(harmonicGain);
       harmonicGain.connect(masterGain);
@@ -610,29 +645,36 @@ export class AudioEngine {
   }
 
   playDrumSound(type: string, volume: number = 0.5) {
-    if (!this.audioContext || !this.masterGain) return;
+    if (!this.audioContext || !this.masterGain) {
+      console.error("Audio context not initialized");
+      return;
+    }
     
-    const currentTime = this.audioContext.currentTime;
-    
-    switch (type) {
-      case 'kick':
-        this.playKickDrum(volume, currentTime);
-        break;
-      case 'snare':
-        this.playSnare(volume, currentTime);
-        break;
-      case 'hihat':
-      case 'openhat':
-        this.playHiHat(type, volume, currentTime);
-        break;
-      case 'clap':
-        this.playClap(volume, currentTime);
-        break;
-      case 'crash':
-        this.playCrash(volume, currentTime);
-        break;
-      default:
-        this.playGenericDrum(volume, currentTime);
+    try {
+      const currentTime = this.audioContext.currentTime;
+      
+      switch (type) {
+        case 'kick':
+          this.playKickDrum(volume, currentTime);
+          break;
+        case 'snare':
+          this.playSnare(volume, currentTime);
+          break;
+        case 'hihat':
+        case 'openhat':
+          this.playHiHat(type, volume, currentTime);
+          break;
+        case 'clap':
+          this.playClap(volume, currentTime);
+          break;
+        case 'crash':
+          this.playCrash(volume, currentTime);
+          break;
+        default:
+          this.playGenericDrum(volume, currentTime);
+      }
+    } catch (error) {
+      console.error("Failed to play drum sound:", error);
     }
   }
 
