@@ -18,21 +18,45 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   ];
 
   return (
-    <div className="w-16 bg-studio-panel border-r border-gray-700 flex flex-col items-center py-4 space-y-4">
+    <div className="w-48 bg-studio-panel border-r border-gray-700 flex flex-col py-4 space-y-2">
+      <div className="px-4 mb-4">
+        <h3 className="text-sm font-medium text-gray-300 mb-2">Studio Tools</h3>
+        <p className="text-xs text-gray-500">Click any tool to switch</p>
+      </div>
+      
       {tabs.map((tab) => (
         <Button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`w-12 h-12 rounded-lg flex items-center justify-center transition-colors ${
+          className={`mx-2 h-12 rounded-lg flex items-center justify-start px-4 transition-colors ${
             activeTab === tab.id
-              ? "bg-studio-accent hover:bg-blue-500"
-              : "bg-gray-700 hover:bg-gray-600"
+              ? "bg-studio-accent hover:bg-blue-500 text-white"
+              : "bg-gray-700 hover:bg-gray-600 text-gray-300"
           }`}
           title={tab.label}
         >
-          <i className={`${tab.icon} text-lg`}></i>
+          <i className={`${tab.icon} text-lg mr-3 flex-shrink-0`}></i>
+          <span className="text-sm font-medium">{tab.label}</span>
         </Button>
       ))}
+      
+      <div className="px-4 mt-6 pt-4 border-t border-gray-600">
+        <div className="text-xs text-gray-500">
+          <div className="mb-2">
+            <strong className="text-gray-400">Current:</strong> {tabs.find(tab => tab.id === activeTab)?.label || "Unknown"}
+          </div>
+          <div>
+            {activeTab === "beatmaker" && "Create drum patterns and beats"}
+            {activeTab === "translator" && "Convert code between languages"}
+            {activeTab === "melody" && "Compose musical melodies"}
+            {activeTab === "codebeat" && "Turn code into music"}
+            {activeTab === "assistant" && "AI-powered music help"}
+            {activeTab === "security" && "Scan code for vulnerabilities"}
+            {activeTab === "lyrics" && "Write and edit song lyrics"}
+            {activeTab === "mixer" && "Mix and master your tracks"}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
