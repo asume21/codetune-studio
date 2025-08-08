@@ -6,7 +6,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/hooks/use-audio";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface BeatPattern {
   kick: boolean[];
