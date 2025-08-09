@@ -47,23 +47,28 @@ Type here or use AI generation...`);
 
   // Check if there's already generated music in studio context and localStorage
   React.useEffect(() => {
-    const hasPattern = studioContext.currentPattern && Object.keys(studioContext.currentPattern).length > 0;
+    const hasPattern = studioContext.currentPattern && Object.keys(studioContext.currentPattern).length > 0 && 
+      Object.values(studioContext.currentPattern).some(arr => Array.isArray(arr) && arr.some(val => val === true));
     const hasMelody = studioContext.currentMelody && studioContext.currentMelody.length > 0;
     const hasCodeMusic = studioContext.currentCodeMusic && Object.keys(studioContext.currentCodeMusic).length > 0;
     
-    console.log("🎵 Checking for generated music:", { hasPattern, hasMelody, hasCodeMusic });
-    console.log("🎵 Current studio context:", {
-      pattern: studioContext.currentPattern,
-      melody: studioContext.currentMelody,
-      codeMusic: studioContext.currentCodeMusic
-    });
-    
-    // Also check localStorage for persisted data
-    const storedData = localStorage.getItem('generatedMusicData');
-    const hasStoredData = storedData && JSON.parse(storedData)?.beatPattern;
+    // Also check localStorage for persisted data  
+    let hasStoredData = false;
+    try {
+      const storedData = localStorage.getItem('generatedMusicData');
+      if (storedData) {
+        const parsed = JSON.parse(storedData);
+        hasStoredData = parsed?.beatPattern && Object.values(parsed.beatPattern).some(arr => 
+          Array.isArray(arr) && arr.some(val => val === true));
+      }
+    } catch (error) {
+      // Ignore localStorage errors
+    }
     
     if (hasPattern || hasMelody || hasCodeMusic || hasStoredData) {
       setHasGeneratedMusic(true);
+    } else {
+      setHasGeneratedMusic(false);
     }
   }, [studioContext.currentPattern, studioContext.currentMelody, studioContext.currentCodeMusic]);
 

@@ -123,17 +123,23 @@ export default function BeatMaker() {
   // Listen for updates to studio context pattern
   useEffect(() => {
     if (studioContext.currentPattern && Object.keys(studioContext.currentPattern).length > 0) {
-      console.log("🥁 Studio context pattern updated, updating BeatMaker:", studioContext.currentPattern);
-      setPattern({
-        kick: studioContext.currentPattern.kick || Array(16).fill(false),
-        bass: studioContext.currentPattern.bass || Array(16).fill(false),
-        tom: studioContext.currentPattern.tom || Array(16).fill(false),
-        snare: studioContext.currentPattern.snare || Array(16).fill(false),
-        hihat: studioContext.currentPattern.hihat || Array(16).fill(false),
-        openhat: studioContext.currentPattern.openhat || Array(16).fill(false),
-        clap: studioContext.currentPattern.clap || Array(16).fill(false),
-        crash: studioContext.currentPattern.crash || Array(16).fill(false),
-      });
+      // Check if the pattern has any true values (actual beat data)
+      const hasRealData = Object.values(studioContext.currentPattern).some(arr => 
+        Array.isArray(arr) && arr.some(val => val === true));
+      
+      if (hasRealData) {
+        console.log("🥁 Loading real beat pattern into BeatMaker");
+        setPattern({
+          kick: studioContext.currentPattern.kick || Array(16).fill(false),
+          bass: studioContext.currentPattern.bass || Array(16).fill(false),
+          tom: studioContext.currentPattern.tom || Array(16).fill(false),
+          snare: studioContext.currentPattern.snare || Array(16).fill(false),
+          hihat: studioContext.currentPattern.hihat || Array(16).fill(false),
+          openhat: studioContext.currentPattern.openhat || Array(16).fill(false),
+          clap: studioContext.currentPattern.clap || Array(16).fill(false),
+          crash: studioContext.currentPattern.crash || Array(16).fill(false),
+        });
+      }
     }
   }, [studioContext.currentPattern]);
 
