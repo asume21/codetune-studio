@@ -1,4 +1,5 @@
 import { useState, useContext } from "react";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,28 @@ Type here or use AI generation...`);
   const [currentWord, setCurrentWord] = useState("");
   const [rhymeSuggestions, setRhymeSuggestions] = useState<RhymeSuggestion[]>([]);
   const [hasGeneratedMusic, setHasGeneratedMusic] = useState(false);
+
+  // Check if there's already generated music in studio context and localStorage
+  React.useEffect(() => {
+    const hasPattern = studioContext.currentPattern && Object.keys(studioContext.currentPattern).length > 0;
+    const hasMelody = studioContext.currentMelody && studioContext.currentMelody.length > 0;
+    const hasCodeMusic = studioContext.currentCodeMusic && Object.keys(studioContext.currentCodeMusic).length > 0;
+    
+    console.log("🎵 Checking for generated music:", { hasPattern, hasMelody, hasCodeMusic });
+    console.log("🎵 Current studio context:", {
+      pattern: studioContext.currentPattern,
+      melody: studioContext.currentMelody,
+      codeMusic: studioContext.currentCodeMusic
+    });
+    
+    // Also check localStorage for persisted data
+    const storedData = localStorage.getItem('generatedMusicData');
+    const hasStoredData = storedData && JSON.parse(storedData)?.beatPattern;
+    
+    if (hasPattern || hasMelody || hasCodeMusic || hasStoredData) {
+      setHasGeneratedMusic(true);
+    }
+  }, [studioContext.currentPattern, studioContext.currentMelody, studioContext.currentCodeMusic]);
 
   const { toast } = useToast();
   const { initialize, isInitialized } = useAudio();
@@ -106,16 +129,29 @@ Type here or use AI generation...`);
       return response.json();
     },
     onSuccess: (data) => {
+      console.log("🎵 Music generated from lyrics:", data);
       if (data.beatPattern) {
+        console.log("🥁 Setting beat pattern:", data.beatPattern);
         studioContext.setCurrentPattern(data.beatPattern);
       }
       if (data.melody) {
+        console.log("🎼 Setting melody:", data.melody);
         studioContext.setCurrentMelody(data.melody);
       }
       if (data.codeMusic) {
+        console.log("🎹 Setting code music:", data.codeMusic);
         studioContext.setCurrentCodeMusic(data.codeMusic);
       }
       setHasGeneratedMusic(true);
+      
+      // Store in localStorage for persistence across tabs
+      localStorage.setItem('generatedMusicData', JSON.stringify({
+        beatPattern: data.beatPattern,
+        melody: data.melody,
+        codeMusic: data.codeMusic,
+        timestamp: Date.now()
+      }));
+      
       toast({
         title: "Music Generated from Lyrics",
         description: "Beat pattern and melody created! Check the Beat Maker or Melody Composer tabs to see and edit your generated music.",

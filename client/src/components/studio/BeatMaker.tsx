@@ -56,16 +56,57 @@ export default function BeatMaker() {
   const [selectedDrumKit, setSelectedDrumKit] = useState('acoustic');
   const [bassDrumDuration, setBassDrumDuration] = useState(0.8);
 
-  // Initialize pattern with default structure
-  const [pattern, setPattern] = useState<BeatPattern>({
-    kick: Array(16).fill(false),
-    bass: Array(16).fill(false),
-    tom: Array(16).fill(false),
-    snare: Array(16).fill(false),
-    hihat: Array(16).fill(false),
-    openhat: Array(16).fill(false),
-    clap: Array(16).fill(false),
-    crash: Array(16).fill(false),
+  // Initialize pattern with default structure or load from studio context
+  const [pattern, setPattern] = useState<BeatPattern>(() => {
+    // Check for pattern from studio context first
+    if (studioContext.currentPattern && Object.keys(studioContext.currentPattern).length > 0) {
+      console.log("🥁 Loading pattern from studio context:", studioContext.currentPattern);
+      return {
+        kick: studioContext.currentPattern.kick || Array(16).fill(false),
+        bass: studioContext.currentPattern.bass || Array(16).fill(false),
+        tom: studioContext.currentPattern.tom || Array(16).fill(false),
+        snare: studioContext.currentPattern.snare || Array(16).fill(false),
+        hihat: studioContext.currentPattern.hihat || Array(16).fill(false),
+        openhat: studioContext.currentPattern.openhat || Array(16).fill(false),
+        clap: studioContext.currentPattern.clap || Array(16).fill(false),
+        crash: studioContext.currentPattern.crash || Array(16).fill(false),
+      };
+    }
+    
+    // Check localStorage for persisted data
+    const storedData = localStorage.getItem('generatedMusicData');
+    if (storedData) {
+      try {
+        const parsed = JSON.parse(storedData);
+        if (parsed.beatPattern) {
+          console.log("🥁 Loading pattern from localStorage:", parsed.beatPattern);
+          return {
+            kick: parsed.beatPattern.kick || Array(16).fill(false),
+            bass: parsed.beatPattern.bass || Array(16).fill(false),
+            tom: parsed.beatPattern.tom || Array(16).fill(false),
+            snare: parsed.beatPattern.snare || Array(16).fill(false),
+            hihat: parsed.beatPattern.hihat || Array(16).fill(false),
+            openhat: parsed.beatPattern.openhat || Array(16).fill(false),
+            clap: parsed.beatPattern.clap || Array(16).fill(false),
+            crash: parsed.beatPattern.crash || Array(16).fill(false),
+          };
+        }
+      } catch (error) {
+        console.error("Error loading stored pattern:", error);
+      }
+    }
+    
+    // Default empty pattern
+    return {
+      kick: Array(16).fill(false),
+      bass: Array(16).fill(false),
+      tom: Array(16).fill(false),
+      snare: Array(16).fill(false),
+      hihat: Array(16).fill(false),
+      openhat: Array(16).fill(false),
+      clap: Array(16).fill(false),
+      crash: Array(16).fill(false),
+    };
   });
 
   const { toast } = useToast();
@@ -78,6 +119,23 @@ export default function BeatMaker() {
       initialize();
     }
   }, [initialize, isInitialized]);
+
+  // Listen for updates to studio context pattern
+  useEffect(() => {
+    if (studioContext.currentPattern && Object.keys(studioContext.currentPattern).length > 0) {
+      console.log("🥁 Studio context pattern updated, updating BeatMaker:", studioContext.currentPattern);
+      setPattern({
+        kick: studioContext.currentPattern.kick || Array(16).fill(false),
+        bass: studioContext.currentPattern.bass || Array(16).fill(false),
+        tom: studioContext.currentPattern.tom || Array(16).fill(false),
+        snare: studioContext.currentPattern.snare || Array(16).fill(false),
+        hihat: studioContext.currentPattern.hihat || Array(16).fill(false),
+        openhat: studioContext.currentPattern.openhat || Array(16).fill(false),
+        clap: studioContext.currentPattern.clap || Array(16).fill(false),
+        crash: studioContext.currentPattern.crash || Array(16).fill(false),
+      });
+    }
+  }, [studioContext.currentPattern]);
 
   // Real-time pattern updates for live editing
   useEffect(() => {
