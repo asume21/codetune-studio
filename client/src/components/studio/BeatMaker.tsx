@@ -60,7 +60,6 @@ export default function BeatMaker() {
   const [pattern, setPattern] = useState<BeatPattern>(() => {
     // Check for pattern from studio context first
     if (studioContext.currentPattern && Object.keys(studioContext.currentPattern).length > 0) {
-      console.log("🥁 Loading pattern from studio context:", studioContext.currentPattern);
       return {
         kick: studioContext.currentPattern.kick || Array(16).fill(false),
         bass: studioContext.currentPattern.bass || Array(16).fill(false),
@@ -79,7 +78,6 @@ export default function BeatMaker() {
       try {
         const parsed = JSON.parse(storedData);
         if (parsed.beatPattern) {
-          console.log("🥁 Loading pattern from localStorage:", parsed.beatPattern);
           return {
             kick: parsed.beatPattern.kick || Array(16).fill(false),
             bass: parsed.beatPattern.bass || Array(16).fill(false),
