@@ -15,8 +15,12 @@ export class RealisticAudioEngine {
     'piano-organ': 'church_organ',
     
     // String instruments
-    guitar: 'acoustic_guitar_nylon',
-    'strings-guitar': 'acoustic_guitar_nylon',
+    guitar: 'acoustic_guitar_steel',
+    'strings-guitar': 'acoustic_guitar_steel',
+    'guitar-acoustic': 'acoustic_guitar_steel',
+    'guitar-electric': 'electric_guitar_clean',
+    'guitar-distorted': 'distortion_guitar',
+    'guitar-nylon': 'acoustic_guitar_nylon',
     'strings-violin': 'violin',
     'strings-ukulele': 'acoustic_guitar_nylon',
     
@@ -77,7 +81,7 @@ export class RealisticAudioEngine {
 
       // Load essential instruments first (piano, guitar, and a few more)
       await this.loadInstruments([
-        'piano', 'guitar', 'violin', 'flute', 'trumpet', 
+        'piano', 'guitar', 'strings-guitar', 'violin', 'flute', 'trumpet', 
         'piano-organ', 'bass-electric', 'strings-violin'
       ]);
       
