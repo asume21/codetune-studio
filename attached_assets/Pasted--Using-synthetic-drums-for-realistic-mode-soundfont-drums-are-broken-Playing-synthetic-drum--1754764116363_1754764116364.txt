@@ -1,0 +1,27 @@
+🎵 Using synthetic drums for realistic mode (soundfont drums are broken)
+🎵 Playing synthetic drum in realistic mode: snare
+Failed to play drum sound: 
+ReferenceError {}
+
+at t.value (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+🎵 Using synthetic drums for realistic mode (soundfont drums are broken)
+🎵 Playing synthetic drum in realistic mode: snare
+Failed to play drum sound: 
+ReferenceError {}
+
+at t.value (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+🎵 Using synthetic drums for realistic mode (soundfont drums are broken)
+🎵 Playing synthetic drum in realistic mode: snare
+Failed to play drum sound: 
+ReferenceError {}
+
+at t.value (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400

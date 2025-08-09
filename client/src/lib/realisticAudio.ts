@@ -278,12 +278,34 @@ export class RealisticAudioEngine {
     // Use synthetic drum engine for "realistic" mode since soundfonts are broken
     console.log(`🎵 Playing synthetic drum in realistic mode: ${drumType}`);
     
-    // Import the synthetic audio engine
-    if (typeof window !== 'undefined' && (window as any).syntheticAudioEngine) {
-      const syntheticEngine = (window as any).syntheticAudioEngine;
-      syntheticEngine.playDrum(drumType, velocity);
-    } else {
-      console.warn('🎵 Synthetic audio engine not available');
+    // Use the same synthetic drum implementation directly here to avoid circular imports
+    if (!this.audioContext) {
+      console.error('🎵 AudioContext not available for synthetic drums');
+      return;
+    }
+
+    const currentTime = this.audioContext.currentTime;
+    
+    try {
+      // Recreate the professional drum synthesis here
+      switch (drumType) {
+        case 'kick':
+          this.playSyntheticKick(currentTime, velocity);
+          break;
+        case 'snare':
+          this.playSyntheticSnare(currentTime, velocity);
+          break;
+        case 'hihat':
+          this.playSyntheticHihat(currentTime, velocity);
+          break;
+        case 'tom':
+          this.playSyntheticTom(currentTime, velocity);
+          break;
+        default:
+          console.warn(`🎵 Unknown drum type: ${drumType}`);
+      }
+    } catch (error) {
+      console.error('🎵 Failed to play synthetic drum:', error);
     }
   }
 
@@ -313,6 +335,193 @@ export class RealisticAudioEngine {
   // Check if engine is ready
   isReady(): boolean {
     return this.isInitialized && !this.isLoading;
+  }
+  // Professional synthetic drum implementations (to avoid circular imports)
+  private playSyntheticKick(currentTime: number, velocity: number): void {
+    if (!this.audioContext) return;
+
+    try {
+      const kickOsc = this.audioContext.createOscillator();
+      const kickClickOsc = this.audioContext.createOscillator();
+      const kickGain = this.audioContext.createGain();
+      const kickClickGain = this.audioContext.createGain();
+      const kickFilter = this.audioContext.createBiquadFilter();
+
+      // Main kick - deep sine wave
+      kickOsc.type = 'sine';
+      kickOsc.frequency.setValueAtTime(65, currentTime);
+      kickOsc.frequency.exponentialRampToValueAtTime(35, currentTime + 0.15);
+
+      // Click/beater attack
+      kickClickOsc.type = 'triangle';
+      kickClickOsc.frequency.setValueAtTime(1200, currentTime);
+      kickClickOsc.frequency.exponentialRampToValueAtTime(800, currentTime + 0.01);
+
+      // Tight filter for definition
+      kickFilter.type = 'lowpass';
+      kickFilter.frequency.setValueAtTime(120, currentTime);
+      kickFilter.Q.setValueAtTime(8, currentTime);
+
+      // Main kick envelope - punchy decay
+      const kickVol = Math.max(0.001, velocity * 1.2);
+      kickGain.gain.setValueAtTime(kickVol, currentTime);
+      kickGain.gain.exponentialRampToValueAtTime(kickVol * 0.6, currentTime + 0.08);
+      kickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.4);
+
+      // Click envelope - very short attack
+      const clickVol = Math.max(0.001, velocity * 0.3);
+      kickClickGain.gain.setValueAtTime(clickVol, currentTime);
+      kickClickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.015);
+
+      // Connect
+      kickOsc.connect(kickFilter);
+      kickFilter.connect(kickGain);
+      kickGain.connect(this.audioContext.destination);
+
+      kickClickOsc.connect(kickClickGain);
+      kickClickGain.connect(this.audioContext.destination);
+
+      kickOsc.start(currentTime);
+      kickClickOsc.start(currentTime);
+      kickOsc.stop(currentTime + 0.4);
+      kickClickOsc.stop(currentTime + 0.015);
+    } catch (error) {
+      console.error('🎵 Kick drum error:', error);
+    }
+  }
+
+  private playSyntheticSnare(currentTime: number, velocity: number): void {
+    if (!this.audioContext) return;
+
+    try {
+      const snareNoise = this.audioContext.createBufferSource();
+      const snareTone = this.audioContext.createOscillator();
+      const snareGain = this.audioContext.createGain();
+      const snareToneGain = this.audioContext.createGain();
+      const snareFilter = this.audioContext.createBiquadFilter();
+
+      // Generate proper snare noise
+      const bufferSize = this.audioContext.sampleRate * 0.12;
+      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < bufferSize; i++) {
+        const envelope = Math.pow(1 - (i / bufferSize), 2);
+        data[i] = (Math.random() * 2 - 1) * envelope;
+      }
+
+      snareNoise.buffer = buffer;
+
+      // Snare fundamental
+      snareTone.type = 'triangle';
+      snareTone.frequency.setValueAtTime(240, currentTime);
+      snareTone.frequency.exponentialRampToValueAtTime(180, currentTime + 0.08);
+
+      // Bandpass for snare character
+      snareFilter.type = 'bandpass';
+      snareFilter.frequency.setValueAtTime(2500, currentTime);
+      snareFilter.Q.setValueAtTime(2.5, currentTime);
+
+      // Snare crack envelope
+      const snareVol = Math.max(0.001, velocity * 0.9);
+      snareGain.gain.setValueAtTime(snareVol, currentTime);
+      snareGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.12);
+
+      const toneVol = Math.max(0.001, velocity * 0.4);
+      snareToneGain.gain.setValueAtTime(toneVol, currentTime);
+      snareToneGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.08);
+
+      // Connect
+      snareNoise.connect(snareFilter);
+      snareFilter.connect(snareGain);
+      snareGain.connect(this.audioContext.destination);
+
+      snareTone.connect(snareToneGain);
+      snareToneGain.connect(this.audioContext.destination);
+
+      snareNoise.start(currentTime);
+      snareTone.start(currentTime);
+      snareTone.stop(currentTime + 0.08);
+    } catch (error) {
+      console.error('🎵 Snare drum error:', error);
+    }
+  }
+
+  private playSyntheticHihat(currentTime: number, velocity: number): void {
+    if (!this.audioContext) return;
+
+    try {
+      const hihatNoise = this.audioContext.createBufferSource();
+      const hihatGain = this.audioContext.createGain();
+      const hihatFilter = this.audioContext.createBiquadFilter();
+
+      const duration = 0.05;
+      const bufferSize = this.audioContext.sampleRate * duration;
+      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      // Generate hi-hat noise with proper envelope
+      for (let i = 0; i < bufferSize; i++) {
+        const envelope = Math.pow(1 - (i / bufferSize), 4);
+        data[i] = (Math.random() * 2 - 1) * envelope;
+      }
+
+      hihatNoise.buffer = buffer;
+
+      // High-pass for metallic character
+      hihatFilter.type = 'highpass';
+      hihatFilter.frequency.setValueAtTime(10000, currentTime);
+      hihatFilter.Q.setValueAtTime(1, currentTime);
+
+      const hihatVol = Math.max(0.001, velocity * 0.7);
+      hihatGain.gain.setValueAtTime(hihatVol, currentTime);
+      hihatGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+
+      // Connect
+      hihatNoise.connect(hihatFilter);
+      hihatFilter.connect(hihatGain);
+      hihatGain.connect(this.audioContext.destination);
+
+      hihatNoise.start(currentTime);
+    } catch (error) {
+      console.error('🎵 Hi-hat error:', error);
+    }
+  }
+
+  private playSyntheticTom(currentTime: number, velocity: number): void {
+    if (!this.audioContext) return;
+
+    try {
+      const tomOsc = this.audioContext.createOscillator();
+      const tomGain = this.audioContext.createGain();
+      const tomFilter = this.audioContext.createBiquadFilter();
+
+      // Tom fundamental frequency
+      tomOsc.type = 'sine';
+      tomOsc.frequency.setValueAtTime(120, currentTime);
+      tomOsc.frequency.exponentialRampToValueAtTime(80, currentTime + 0.3);
+
+      // Mid-focused filter
+      tomFilter.type = 'lowpass';
+      tomFilter.frequency.setValueAtTime(600, currentTime);
+      tomFilter.Q.setValueAtTime(3, currentTime);
+
+      // Punchy envelope
+      const tomVol = Math.max(0.001, velocity * 0.8);
+      tomGain.gain.setValueAtTime(tomVol, currentTime);
+      tomGain.gain.exponentialRampToValueAtTime(tomVol * 0.5, currentTime + 0.1);
+      tomGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.4);
+
+      // Connect
+      tomOsc.connect(tomFilter);
+      tomFilter.connect(tomGain);
+      tomGain.connect(this.audioContext.destination);
+
+      tomOsc.start(currentTime);
+      tomOsc.stop(currentTime + 0.4);
+    } catch (error) {
+      console.error('🎵 Tom drum error:', error);
+    }
   }
 }
 
