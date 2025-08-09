@@ -124,6 +124,7 @@ export default function MelodyComposer() {
   const [isHoldingNote, setIsHoldingNote] = useState(false);
   const [holdStartTime, setHoldStartTime] = useState<number | null>(null);
   const [heldKeyInfo, setHeldKeyInfo] = useState<{note: string, octave: number, instrument: string} | null>(null);
+  const [sustainTimeout, setSustainTimeout] = useState<NodeJS.Timeout | null>(null);
   const [zoom, setZoom] = useState(1);
   const [arpeggioMode, setArpeggioMode] = useState(false);
   const [arpeggioPattern, setArpeggioPattern] = useState('up');
@@ -289,7 +290,7 @@ export default function MelodyComposer() {
         return track && !track.muted;
       });
 
-      playMelodySequence(activeNotes, bpm);
+      playMelodySequence(activeNotes, String(bpm));
       setIsPlaying(true);
 
       // Start beat counter
@@ -338,66 +339,83 @@ export default function MelodyComposer() {
 
     setNotes([...notes, newNote]);
     
+    // Clear any existing sustain timeout
+    if (sustainTimeout) {
+      clearTimeout(sustainTimeout);
+      setSustainTimeout(null);
+    }
+    
     // Start hold tracking for sustain
     setIsHoldingNote(true);
     setHoldStartTime(Date.now());
+    setHeldKeyInfo({ note, octave, instrument: tracks.find(t => t.id === selectedTrack)?.instrument || 'piano' });
     
-    // Play note immediately on mouse down (quick click = no sustain)
+    // Play note immediately - start with short duration, extend if held
     const currentTrack = tracks.find(t => t.id === selectedTrack);
-    playNote(note, octave, gridSnapSize, currentTrack?.instrument || 'piano', 0.7, false); // No sustain on initial click
+    playNote(note, octave, gridSnapSize, currentTrack?.instrument || 'piano', 0.7, false);
+    
+    // Set timeout to play sustained version if held long enough  
+    const timeout = setTimeout(() => {
+      if (isHoldingNote && sustainEnabled) {
+        // Play longer sustained note
+        playNote(note, octave, gridSnapSize * 4, currentTrack?.instrument || 'piano', 0.7, true);
+      }
+    }, 100); // Shorter delay for smoother transition
+    setSustainTimeout(timeout);
   };
 
   const handlePianoRollMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isHoldingNote && holdStartTime) {
-      const holdDuration = Date.now() - holdStartTime;
-      
-      // If held for more than 150ms, play with sustain
-      if (holdDuration > 150) {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        // Calculate note from y position
-        const noteIndex = Math.floor((rect.height - y) / (rect.height / 48));
-        const octave = Math.floor(noteIndex / 12) + 2;
-        const noteInOctave = noteIndex % 12;
-        const note = pianoKeys[noteInOctave].note;
-
-        const currentTrack = tracks.find(t => t.id === selectedTrack);
-        // Play with sustain for held notes
-        playNote(note, octave, gridSnapSize * 2, currentTrack?.instrument || 'piano', 0.7, sustainEnabled);
-      }
+    // Clear sustain timeout - no additional sound on mouseup
+    if (sustainTimeout) {
+      clearTimeout(sustainTimeout);
+      setSustainTimeout(null);
     }
     
     setIsHoldingNote(false);
     setHoldStartTime(null);
+    setHeldKeyInfo(null);
   };
 
   // Piano key mouse handlers - ISOLATED FOR ALL PIANO KEYS
   const handlePianoKeyMouseDown = (keyNote: string, keyOctave: number, instrument: string) => {
+    // Clear any existing sustain timeout
+    if (sustainTimeout) {
+      clearTimeout(sustainTimeout);
+      setSustainTimeout(null);
+    }
+    
     // Start hold tracking
     setIsHoldingNote(true);
     setHoldStartTime(Date.now());
     setHeldKeyInfo({ note: keyNote, octave: keyOctave, instrument });
     
-    // Play note immediately on mouse down (quick click = no sustain)
+    // Play note immediately - duration depends on if held
+    const initialDuration = 0.3; // Short initial duration
+    
     if (arpeggioMode) {
       playArpeggio(keyNote, keyOctave, instrument);
     } else {
-      playNote(keyNote, keyOctave, 0.3, instrument, 0.7, false); // No sustain on initial click
+      // Play with short duration initially
+      playNote(keyNote, keyOctave, initialDuration, instrument, 0.7, false);
+    }
+    
+    // Set timeout to play sustained version if held long enough
+    if (!arpeggioMode) {
+      const timeout = setTimeout(() => {
+        if (isHoldingNote && sustainEnabled) {
+          // Play longer sustained note 
+          playNote(keyNote, keyOctave, 2.5, instrument, 0.7, true);
+        }
+      }, 100); // Shorter delay for smoother transition
+      setSustainTimeout(timeout);
     }
   };
 
   const handlePianoKeyMouseUp = () => {
-    if (isHoldingNote && holdStartTime && heldKeyInfo) {
-      const holdDuration = Date.now() - holdStartTime;
-      
-      // If held for more than 150ms, play with sustain
-      if (holdDuration > 150) {
-        const { note, octave, instrument } = heldKeyInfo;
-        // Play with sustain for held notes
-        playNote(note, octave, 1.5, instrument, 0.7, sustainEnabled);
-      }
+    // Clear sustain timeout - no additional sound on mouseup
+    if (sustainTimeout) {
+      clearTimeout(sustainTimeout);
+      setSustainTimeout(null);
     }
     
     setIsHoldingNote(false);
@@ -607,7 +625,7 @@ export default function MelodyComposer() {
       stopMelody();
       setIsMelodyPlaying(false);
     } else if (notes.length > 0) {
-      playMelody(notes, bpm);
+      playMelody(notes, String(bpm));
       setIsMelodyPlaying(true);
       // Stop after melody duration
       setTimeout(() => {
