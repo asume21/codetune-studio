@@ -123,6 +123,7 @@ export default function MelodyComposer() {
   const [sustainEnabled, setSustainEnabled] = useState(true);
   const [isHoldingNote, setIsHoldingNote] = useState(false);
   const [holdStartTime, setHoldStartTime] = useState<number | null>(null);
+  const [heldKeyInfo, setHeldKeyInfo] = useState<{note: string, octave: number, instrument: string} | null>(null);
   const [zoom, setZoom] = useState(1);
   const [arpeggioMode, setArpeggioMode] = useState(false);
   const [arpeggioPattern, setArpeggioPattern] = useState('up');
@@ -370,6 +371,38 @@ export default function MelodyComposer() {
     
     setIsHoldingNote(false);
     setHoldStartTime(null);
+  };
+
+  // Piano key mouse handlers - ISOLATED FOR ALL PIANO KEYS
+  const handlePianoKeyMouseDown = (keyNote: string, keyOctave: number, instrument: string) => {
+    // Start hold tracking
+    setIsHoldingNote(true);
+    setHoldStartTime(Date.now());
+    setHeldKeyInfo({ note: keyNote, octave: keyOctave, instrument });
+    
+    // Play note immediately on mouse down (quick click = no sustain)
+    if (arpeggioMode) {
+      playArpeggio(keyNote, keyOctave, instrument);
+    } else {
+      playNote(keyNote, keyOctave, 0.3, instrument, 0.7, false); // No sustain on initial click
+    }
+  };
+
+  const handlePianoKeyMouseUp = () => {
+    if (isHoldingNote && holdStartTime && heldKeyInfo) {
+      const holdDuration = Date.now() - holdStartTime;
+      
+      // If held for more than 150ms, play with sustain
+      if (holdDuration > 150) {
+        const { note, octave, instrument } = heldKeyInfo;
+        // Play with sustain for held notes
+        playNote(note, octave, 1.5, instrument, 0.7, sustainEnabled);
+      }
+    }
+    
+    setIsHoldingNote(false);
+    setHoldStartTime(null);
+    setHeldKeyInfo(null);
   };
 
   const removeNote = (index: number) => {
@@ -895,7 +928,7 @@ export default function MelodyComposer() {
           <div className="w-80 bg-studio-panel border border-gray-600 rounded-lg p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-medium text-gray-200">Virtual Piano</h3>
-              <span className="text-sm text-gray-400">Click keys to play notes</span>
+              <span className="text-sm text-gray-400">Hold keys for sustain • Quick click for percussive</span>
             </div>
 
             <div className="relative mb-4">
@@ -904,16 +937,14 @@ export default function MelodyComposer() {
                 {pianoKeys.filter(key => key.type === "white").map((key, index) => (
                   <button
                     key={`white-${index}`}
-                    onClick={() => {
+                    onMouseDown={() => {
                       const currentTrack = tracks.find(t => t.id === selectedTrack);
-                      if (arpeggioMode) {
-                        playArpeggio(key.note, currentOctave, currentTrack?.instrument || 'piano');
-                      } else {
-                        playNote(key.note, currentOctave, gridSnapSize, currentTrack?.instrument || 'piano');
-                      }
+                      handlePianoKeyMouseDown(key.note, currentOctave, currentTrack?.instrument || 'piano');
                     }}
-                    className={`piano-key w-8 h-32 border border-gray-400 rounded-b ${key.color} text-black text-xs flex items-end justify-center pb-2 hover:bg-gray-200`}
-                    title={`Play ${key.note}${currentOctave}`}
+                    onMouseUp={handlePianoKeyMouseUp}
+                    onMouseLeave={handlePianoKeyMouseUp} // Handle case where mouse leaves key
+                    className={`piano-key w-8 h-32 border border-gray-400 rounded-b ${key.color} text-black text-xs flex items-end justify-center pb-2 hover:bg-gray-200 select-none`}
+                    title={`Play ${key.note}${currentOctave} (hold for sustain)`}
                   >
                     {key.note}
                   </button>
@@ -926,18 +957,16 @@ export default function MelodyComposer() {
                 {pianoKeys.filter(key => key.type === "black").map((key, index) => (
                   <button
                     key={`black-${index}`}
-                    onClick={() => {
+                    onMouseDown={() => {
                       const currentTrack = tracks.find(t => t.id === selectedTrack);
-                      if (arpeggioMode) {
-                        playArpeggio(key.note, currentOctave, currentTrack?.instrument || 'piano');
-                      } else {
-                        playNote(key.note, currentOctave, gridSnapSize, currentTrack?.instrument || 'piano');
-                      }
+                      handlePianoKeyMouseDown(key.note, currentOctave, currentTrack?.instrument || 'piano');
                     }}
+                    onMouseUp={handlePianoKeyMouseUp}
+                    onMouseLeave={handlePianoKeyMouseUp} // Handle case where mouse leaves key
                     className={`piano-key w-4 h-20 border border-gray-700 rounded-b ${key.color} text-white text-xs flex items-end justify-center pb-1 ${
                       index === 1 || index === 4 ? "mr-6" : "mr-4"
-                    } hover:bg-gray-600`}
-                    title={`Play ${key.note}${currentOctave}`}
+                    } hover:bg-gray-600 select-none`}
+                    title={`Play ${key.note}${currentOctave} (hold for sustain)`}
                   >
                     {key.note}
                   </button>

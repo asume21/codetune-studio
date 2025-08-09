@@ -20,8 +20,9 @@ CodedSwitch is a revolutionary AI-powered web application that embodies the trip
 - **Piano Roll Note Editing** (NEW - January 9, 2025): Added drag-to-resize functionality for note length editing with visual resize handles and snap-to-grid behavior
 - **Complete Sustain Implementation** (SUCCESS - January 9, 2025): Added proper ADSR envelopes with strong sustain to ALL instruments (piano, violin, guitar, organ, bass) - all instruments now maintain proper sustained notes with attack, decay, sustain, and release phases
 - **Sustain Control Toggle** (NEW - January 9, 2025): Added user-controlled sustain toggle in Melody Composer allowing musicians to switch between sustained notes (piano 75%, guitar 65%) and percussive notes (piano 20%, guitar 15%) for creative flexibility
-- **Click-and-Hold Note Playback** (NEW - January 9, 2025): Implemented immediate note playback on mousedown with intelligent sustain - quick clicks play without sustain, holding for 150ms+ triggers sustained playback with user's sustain settings
-- **Component Isolation Architecture** (ONGOING - January 9, 2025): Implementing complete variable isolation across all components (audio engine, beat maker, melody composer) so changes to one component cannot break others - each drum sound now has unique variables
+- **Click-and-Hold Note Playback** (COMPLETED - January 9, 2025): Implemented immediate note playback on mousedown with intelligent sustain - quick clicks play without sustain, holding for 150ms+ triggers sustained playback with user's sustain settings - NOW WORKS ON ALL PIANO KEYS AND PIANO ROLL
+- **Universal Mousedown System** (NEW - January 9, 2025): All piano keys (white and black) now respond to mousedown with hold-for-sustain behavior - quick clicks are percussive, held clicks (150ms+) add sustain - includes onMouseLeave handling for edge cases
+- **Component Isolation Architecture** (PROGRESS - January 9, 2025): Drum sounds completely isolated with unique variables in audio engine - beat maker and melody composer now have separate interaction handlers to prevent interference
 
 # User Preferences
 
