@@ -374,14 +374,14 @@ export class RealisticAudioEngine {
       kickFilter.frequency.setValueAtTime(120, currentTime);
       kickFilter.Q.setValueAtTime(8, currentTime);
 
-      // Main kick envelope - punchy decay
-      const kickVol = Math.max(0.001, velocity * 1.2);
+      // Main kick envelope - punchy decay - BOOSTED VOLUME
+      const kickVol = Math.max(0.001, velocity * 1.8);
       kickGain.gain.setValueAtTime(kickVol, currentTime);
       kickGain.gain.exponentialRampToValueAtTime(kickVol * 0.6, currentTime + 0.08);
       kickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.4);
 
-      // Click envelope - very short attack
-      const clickVol = Math.max(0.001, velocity * 0.3);
+      // Click envelope - very short attack - BOOSTED VOLUME
+      const clickVol = Math.max(0.001, velocity * 0.5);
       kickClickGain.gain.setValueAtTime(clickVol, currentTime);
       kickClickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.015);
 
@@ -434,12 +434,12 @@ export class RealisticAudioEngine {
       snareFilter.frequency.setValueAtTime(2500, currentTime);
       snareFilter.Q.setValueAtTime(2.5, currentTime);
 
-      // Snare crack envelope
-      const snareVol = Math.max(0.001, velocity * 0.9);
+      // Snare crack envelope - BOOSTED VOLUME
+      const snareVol = Math.max(0.001, velocity * 1.4);
       snareGain.gain.setValueAtTime(snareVol, currentTime);
       snareGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.12);
 
-      const toneVol = Math.max(0.001, velocity * 0.4);
+      const toneVol = Math.max(0.001, velocity * 0.6);
       snareToneGain.gain.setValueAtTime(toneVol, currentTime);
       snareToneGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.08);
 
@@ -485,7 +485,7 @@ export class RealisticAudioEngine {
       hihatFilter.frequency.setValueAtTime(10000, currentTime);
       hihatFilter.Q.setValueAtTime(1, currentTime);
 
-      const hihatVol = Math.max(0.001, velocity * 0.7);
+      const hihatVol = Math.max(0.001, velocity * 1.2); // BOOSTED VOLUME
       hihatGain.gain.setValueAtTime(hihatVol, currentTime);
       hihatGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
 
@@ -518,8 +518,8 @@ export class RealisticAudioEngine {
       tomFilter.frequency.setValueAtTime(600, currentTime);
       tomFilter.Q.setValueAtTime(3, currentTime);
 
-      // Punchy envelope
-      const tomVol = Math.max(0.001, velocity * 0.8);
+      // Punchy envelope - BOOSTED VOLUME
+      const tomVol = Math.max(0.001, velocity * 1.4);
       tomGain.gain.setValueAtTime(tomVol, currentTime);
       tomGain.gain.exponentialRampToValueAtTime(tomVol * 0.5, currentTime + 0.1);
       tomGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.4);
@@ -562,7 +562,7 @@ export class RealisticAudioEngine {
       openhatFilter.frequency.setValueAtTime(8000, currentTime);
       openhatFilter.Q.setValueAtTime(1, currentTime);
 
-      const openhatVol = Math.max(0.001, velocity * 0.8);
+      const openhatVol = Math.max(0.001, velocity * 1.2); // BOOSTED VOLUME
       openhatGain.gain.setValueAtTime(openhatVol, currentTime);
       openhatGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
 
@@ -609,8 +609,8 @@ export class RealisticAudioEngine {
       clapFilter2.frequency.setValueAtTime(2200, currentTime);
       clapFilter2.Q.setValueAtTime(3, currentTime);
 
-      // Sharp attack, quick decay
-      const clapVol = Math.max(0.001, velocity * 0.8);
+      // Sharp attack, quick decay - BOOSTED VOLUME  
+      const clapVol = Math.max(0.001, velocity * 1.3);
       clapGain.gain.setValueAtTime(clapVol, currentTime);
       clapGain.gain.exponentialRampToValueAtTime(clapVol * 0.3, currentTime + 0.01);
       clapGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
@@ -689,8 +689,8 @@ export class RealisticAudioEngine {
       bassFilter.frequency.setValueAtTime(80, currentTime);
       bassFilter.Q.setValueAtTime(10, currentTime);
 
-      // MUCH longer, deeper envelope than kick - extended duration
-      const bassVol = Math.max(0.001, velocity * 1.4);
+      // MUCH longer, deeper envelope than kick - extended duration - BOOSTED VOLUME
+      const bassVol = Math.max(0.001, velocity * 2.0);
       bassGain.gain.setValueAtTime(bassVol, currentTime);
       bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.8, currentTime + 0.15);
       bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.5, currentTime + 0.5);
