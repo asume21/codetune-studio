@@ -16,7 +16,8 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     { id: "assistant", icon: "fas fa-robot", label: "AI Assistant" },
     { id: "security", icon: "fas fa-shield-alt", label: "Security Scanner" },
     { id: "lyrics", icon: "fas fa-microphone", label: "Lyric Lab" },
-    { id: "mixer", icon: "fas fa-sliders-h", label: "Mixer" },
+    { id: "musicmixer", icon: "fas fa-sliders-h", label: "Music Mixer" },
+    { id: "mixer", icon: "fas fa-sliders-v", label: "Track Mixer" },
     { id: "midi", icon: "fas fa-piano", label: "MIDI Controller" },
     { id: "metrics", icon: "fas fa-chart-line", label: "Performance Metrics" },
   ];
@@ -59,7 +60,8 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             {activeTab === "assistant" && "AI-powered music help"}
             {activeTab === "security" && "Scan code for vulnerabilities"}
             {activeTab === "lyrics" && "Write and edit song lyrics"}
-            {activeTab === "mixer" && "Mix and master your tracks"}
+            {activeTab === "musicmixer" && "Mix beats, melodies & lyrics together"}
+            {activeTab === "mixer" && "Mix and master individual tracks"}
             {activeTab === "midi" && "Connect physical MIDI controllers"}
             {activeTab === "metrics" && "AI music generation analytics"}
           </div>

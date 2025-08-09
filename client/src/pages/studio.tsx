@@ -9,6 +9,7 @@ import CodeToMusic from "@/components/studio/CodeToMusic";
 import AIAssistant from "@/components/studio/AIAssistant";
 import VulnerabilityScanner from "@/components/studio/VulnerabilityScanner";
 import LyricLab from "@/components/studio/LyricLab";
+import MusicMixer from "@/components/studio/MusicMixer";
 import Mixer from "@/components/studio/Mixer";
 import DynamicLayering from "@/components/studio/DynamicLayering";
 import SongUploader from "@/components/studio/SongUploader";
@@ -36,7 +37,7 @@ export const StudioAudioContext = createContext({
   stopFullSong: () => {},
 });
 
-type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "assistant" | "security" | "lyrics" | "mixer" | "layers" | "upload" | "midi" | "metrics";
+type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "assistant" | "security" | "lyrics" | "musicmixer" | "mixer" | "layers" | "upload" | "midi" | "metrics";
 
 export default function Studio() {
   const [activeTab, setActiveTab] = useState<Tab>("beatmaker");
@@ -83,6 +84,7 @@ export default function Studio() {
       "assistant": "AI Assistant",
       "security": "Security Scanner",
       "lyrics": "Lyric Lab",
+      "musicmixer": "Music Mixer",
       "mixer": "Mixer",
       "layers": "Dynamic Layering",
       "upload": "Song Uploader",
@@ -146,6 +148,8 @@ export default function Studio() {
         return <VulnerabilityScanner />;
       case "lyrics":
         return <LyricLab />;
+      case "musicmixer":
+        return <MusicMixer />;
       case "mixer":
         return <Mixer />;
       case "layers":
