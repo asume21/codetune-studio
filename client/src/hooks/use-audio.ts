@@ -50,15 +50,17 @@ export function useSequencer() {
 // Melody player hook for playing note sequences
 export function useMelodyPlayer() {
   const { playNote } = useAudio();
+  let melodyTimeouts: NodeJS.Timeout[] = [];
   
   return {
     playMelody: (notes: any[], instrument: string = 'piano') => {
       notes.forEach((note, index) => {
-        setTimeout(() => {
+        const timeout = setTimeout(() => {
           if (note && note.note) {
             playNote(note.note, note.octave || 4, note.duration || 0.5, instrument);
           }
         }, index * (note?.duration || 0.5) * 1000);
+        melodyTimeouts.push(timeout);
       });
     },
     playChord: (notes: any[], instrument: string = 'piano') => {
@@ -67,6 +69,11 @@ export function useMelodyPlayer() {
           playNote(note.note, note.octave || 4, note.duration || 1.0, instrument);
         }
       });
+    },
+    stopMelody: () => {
+      melodyTimeouts.forEach(timeout => clearTimeout(timeout));
+      melodyTimeouts = [];
+      audioEngine.stopAllInstruments();
     }
   };
 }
