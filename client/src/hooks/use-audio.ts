@@ -23,7 +23,7 @@ function getNoteFrequency(note: string, octave: number = 4): number {
 }
 
 interface UseAudioReturn {
-  playNote: (note: string | number, octave?: number, duration?: number, instrument?: string) => void;
+  playNote: (note: string | number, octave?: number, duration?: number, instrument?: string, velocity?: number, sustainEnabled?: boolean) => void;
   playDrumSound: (type: string, volume?: number) => void;
   setMasterVolume: (volume: number) => void;
   isInitialized: boolean;
@@ -120,7 +120,7 @@ export function useAudio(): UseAudioReturn {
     };
   }, []);
 
-  const playNote = useCallback(async (note: string | number, octave: number = 4, duration: number = 0.5, instrument: string = 'piano') => {
+  const playNote = useCallback(async (note: string | number, octave: number = 4, duration: number = 0.5, instrument: string = 'piano', velocity: number = 0.7, sustainEnabled: boolean = true) => {
     try {
       if (!globalAudioInitialized) {
         await initialize();
@@ -132,7 +132,7 @@ export function useAudio(): UseAudioReturn {
       }
       
       const frequency = typeof note === 'string' ? getNoteFrequency(note, octave) : note;
-      await audioEngine.playNote(frequency, duration, 0.7, instrument);
+      await audioEngine.playNote(frequency, duration, velocity, instrument, sustainEnabled);
     } catch (error) {
       console.error("Failed to play note:", error);
     }

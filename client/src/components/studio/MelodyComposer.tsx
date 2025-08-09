@@ -120,6 +120,7 @@ export default function MelodyComposer() {
   const [bpm, setBpm] = useState(120);
   const [currentOctave, setCurrentOctave] = useState(4);
   const [gridSnapSize, setGridSnapSize] = useState(0.25); // 16th notes
+  const [sustainEnabled, setSustainEnabled] = useState(true);
   const [zoom, setZoom] = useState(1);
   const [arpeggioMode, setArpeggioMode] = useState(false);
   const [arpeggioPattern, setArpeggioPattern] = useState('up');
@@ -169,7 +170,7 @@ export default function MelodyComposer() {
 
     pattern.forEach((noteData, index) => {
       setTimeout(() => {
-        playNote(noteData.note, noteData.octave, duration * 0.7, instrument);
+        playNote(noteData.note, noteData.octave, duration * 0.7, instrument, 0.6, sustainEnabled);
       }, index * noteSpacing * 1000);
     });
   };
@@ -587,6 +588,18 @@ export default function MelodyComposer() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-300">Sustain:</label>
+              <Button
+                size="sm"
+                variant={sustainEnabled ? "default" : "outline"}
+                onClick={() => setSustainEnabled(!sustainEnabled)}
+                className={`${sustainEnabled ? 'bg-studio-accent hover:bg-blue-500' : 'bg-gray-600 hover:bg-gray-500'} text-white`}
+              >
+                {sustainEnabled ? "ON" : "OFF"}
+              </Button>
             </div>
 
             <Button onClick={handlePlayMelody} className="bg-studio-success hover:bg-green-500">

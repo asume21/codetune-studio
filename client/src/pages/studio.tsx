@@ -39,10 +39,10 @@ type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "assistant" | "s
 export default function Studio() {
   const [activeTab, setActiveTab] = useState<Tab>("beatmaker");
   const [currentPattern, setCurrentPattern] = useState({});
-  const [currentMelody, setCurrentMelody] = useState([]);
+  const [currentMelody, setCurrentMelody] = useState<any[]>([]);
   const [currentLyrics, setCurrentLyrics] = useState("");
   const [currentCodeMusic, setCurrentCodeMusic] = useState({});
-  const [currentLayers, setCurrentLayers] = useState([]);
+  const [currentLayers, setCurrentLayers] = useState<any[]>([]);
   const [isStudioPlaying, setIsStudioPlaying] = useState(false);
   const [studioBpm, setStudioBpm] = useState(120);
   
@@ -146,7 +146,7 @@ export default function Studio() {
         <Header />
         
         <div className="flex-1 flex overflow-hidden">
-          <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+          <Sidebar activeTab={activeTab} onTabChange={(tab: string) => setActiveTab(tab as Tab)} />
           
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-auto">

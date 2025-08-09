@@ -65,7 +65,7 @@ export class AudioEngine {
     dryGain.connect(this.masterGain);
   }
 
-  async playNote(frequency: number, duration: number, velocity: number = 0.7, instrument: string = 'piano'): Promise<void> {
+  async playNote(frequency: number, duration: number, velocity: number = 0.7, instrument: string = 'piano', sustainEnabled: boolean = true): Promise<void> {
     if (!this.audioContext || !this.masterGain) {
       await this.initialize();
     }
@@ -75,25 +75,25 @@ export class AudioEngine {
 
       // Route to completely different synthesis methods for each instrument
       if (instrument.includes('piano') && !instrument.includes('organ')) {
-        this.playPianoNote(frequency, duration, velocity, currentTime);
+        this.playPianoNote(frequency, duration, velocity, currentTime, sustainEnabled);
       } else if (instrument.includes('grand')) {
-        this.playGrandPianoNote(frequency, duration, velocity, currentTime);
+        this.playGrandPianoNote(frequency, duration, velocity, currentTime, sustainEnabled);
       } else if (instrument.includes('organ')) {
-        this.playOrganNote(frequency, duration, velocity, currentTime);
+        this.playOrganNote(frequency, duration, velocity, currentTime, sustainEnabled);
       } else if (instrument.includes('guitar')) {
-        this.playGuitarNote(frequency, duration, velocity, currentTime);
+        this.playGuitarNote(frequency, duration, velocity, currentTime, sustainEnabled);
       } else if (instrument.includes('violin')) {
-        this.playViolinNote(frequency, duration, velocity, currentTime);
+        this.playViolinNote(frequency, duration, velocity, currentTime, sustainEnabled);
       } else if (instrument.includes('ukulele')) {
-        this.playUkuleleNote(frequency, duration, velocity, currentTime);
+        this.playUkuleleNote(frequency, duration, velocity, currentTime, sustainEnabled);
       } else if (instrument.includes('flute') && !instrument.includes('pan')) {
-        this.playFluteNote(frequency, duration, velocity, currentTime);
+        this.playFluteNote(frequency, duration, velocity, currentTime, sustainEnabled);
       } else if (instrument.includes('panflute')) {
-        this.playPanFluteNote(frequency, duration, velocity, currentTime);
+        this.playPanFluteNote(frequency, duration, velocity, currentTime, sustainEnabled);
       } else if (instrument.includes('recorder')) {
-        this.playRecorderNote(frequency, duration, velocity, currentTime);
+        this.playRecorderNote(frequency, duration, velocity, currentTime, sustainEnabled);
       } else {
-        this.playGenericNote(frequency, duration, velocity, currentTime);
+        this.playGenericNote(frequency, duration, velocity, currentTime, sustainEnabled);
       }
     } catch (error) {
       console.error("Failed to play note:", error);
@@ -101,7 +101,7 @@ export class AudioEngine {
   }
 
   // PIANO: Authentic acoustic piano with hammer strike, string resonance, and natural decay
-  private playPianoNote(frequency: number, duration: number, velocity: number, currentTime: number) {
+  private playPianoNote(frequency: number, duration: number, velocity: number, currentTime: number, sustainEnabled: boolean = true) {
     if (!this.audioContext || !this.masterGain) return;
 
     const oscillators: OscillatorNode[] = [];
@@ -194,11 +194,11 @@ export class AudioEngine {
       brightnessFilter.gain.setValueAtTime(3, currentTime);
     }
     
-    // Piano ADSR envelope with proper sustain
+    // Piano ADSR envelope with configurable sustain
     const attackTime = 0.02;
     const decayTime = 0.15;
-    const sustainLevel = 0.75;
-    const releaseTime = Math.min(0.4, duration * 0.3);
+    const sustainLevel = sustainEnabled ? 0.75 : 0.2; // Lower sustain when disabled
+    const releaseTime = sustainEnabled ? Math.min(0.4, duration * 0.3) : Math.min(0.2, duration * 0.7);
     
     // Fundamental with sustain
     const fundVol = Math.max(0.001, velocity * 0.8);
@@ -668,7 +668,7 @@ export class AudioEngine {
   }
 
   // GUITAR: Sharp percussive attack - completely different from violin
-  private playGuitarNote(frequency: number, duration: number, velocity: number, currentTime: number) {
+  private playGuitarNote(frequency: number, duration: number, velocity: number, currentTime: number, sustainEnabled: boolean = true) {
     if (!this.audioContext || !this.masterGain) return;
 
     const oscillators: OscillatorNode[] = [];
@@ -704,11 +704,11 @@ export class AudioEngine {
     pluckFilter.frequency.setValueAtTime(2000, currentTime);
     pluckFilter.Q.setValueAtTime(5, currentTime);
     
-    // Guitar ADSR with proper sustain
+    // Guitar ADSR with configurable sustain
     const attackTime = 0.01; // Very fast attack
     const decayTime = 0.08;
-    const sustainLevel = 0.65; // Good sustain for guitar
-    const releaseTime = Math.min(0.3, duration * 0.4);
+    const sustainLevel = sustainEnabled ? 0.65 : 0.15; // Lower sustain when disabled
+    const releaseTime = sustainEnabled ? Math.min(0.3, duration * 0.4) : Math.min(0.15, duration * 0.8);
     
     // Pluck attack - instant but brief
     const pluckVolume = Math.max(0.001, velocity * 1.2);
