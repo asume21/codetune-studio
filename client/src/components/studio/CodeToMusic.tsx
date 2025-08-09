@@ -178,6 +178,31 @@ export default function CodeToMusic() {
               <i className="fas fa-play mr-2"></i>
               Play Result
             </Button>
+            <Button
+              onClick={() => {
+                setMusicData(null);
+                studioContext.setCurrentCodeMusic({});
+                studioContext.setCurrentMelody([]);
+                // Reset pattern to empty
+                const emptyPattern = {
+                  kick: Array(16).fill(false),
+                  snare: Array(16).fill(false),
+                  hihat: Array(16).fill(false),
+                  bass: Array(16).fill(false),
+                  tom: Array(16).fill(false),
+                  openhat: Array(16).fill(false),
+                  clap: Array(16).fill(false),
+                  crash: Array(16).fill(false)
+                };
+                studioContext.setCurrentPattern(emptyPattern);
+                toast({ title: "Music Cleared", description: "All compiled music data has been cleared." });
+              }}
+              disabled={!musicData}
+              className="bg-gray-600 hover:bg-gray-500"
+            >
+              <i className="fas fa-trash mr-2"></i>
+              Clear Music
+            </Button>
           </div>
         </div>
       </div>
