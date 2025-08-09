@@ -194,33 +194,58 @@ export class AudioEngine {
       brightnessFilter.gain.setValueAtTime(3, currentTime);
     }
     
-    // Piano envelope - quick attack, natural decay
+    // Piano ADSR envelope with proper sustain
+    const attackTime = 0.02;
+    const decayTime = 0.15;
+    const sustainLevel = 0.75;
+    const releaseTime = Math.min(0.4, duration * 0.3);
+    
+    // Fundamental with sustain
     const fundVol = Math.max(0.001, velocity * 0.8);
-    fundGain.gain.setValueAtTime(fundVol, currentTime);
-    fundGain.gain.exponentialRampToValueAtTime(fundVol * 0.7, currentTime + 0.1);
-    fundGain.gain.exponentialRampToValueAtTime(fundVol * 0.5, currentTime + duration * 0.3);
+    fundGain.gain.setValueAtTime(0.001, currentTime);
+    fundGain.gain.exponentialRampToValueAtTime(fundVol, currentTime + attackTime);
+    fundGain.gain.exponentialRampToValueAtTime(fundVol * sustainLevel, currentTime + attackTime + decayTime);
+    if (duration > attackTime + decayTime + releaseTime) {
+      fundGain.gain.setValueAtTime(fundVol * sustainLevel, currentTime + duration - releaseTime);
+    }
     fundGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    // Harmonics with piano-like distribution
+    // Harmonics with sustain
     const harm2Vol = Math.max(0.001, velocity * 0.6);
-    harm2Gain.gain.setValueAtTime(harm2Vol, currentTime);
-    harm2Gain.gain.exponentialRampToValueAtTime(harm2Vol * 0.6, currentTime + 0.08);
-    harm2Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.8);
+    harm2Gain.gain.setValueAtTime(0.001, currentTime);
+    harm2Gain.gain.exponentialRampToValueAtTime(harm2Vol, currentTime + attackTime);
+    harm2Gain.gain.exponentialRampToValueAtTime(harm2Vol * sustainLevel, currentTime + attackTime + decayTime);
+    if (duration > attackTime + decayTime + releaseTime) {
+      harm2Gain.gain.setValueAtTime(harm2Vol * sustainLevel, currentTime + duration - releaseTime);
+    }
+    harm2Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
     const harm3Vol = Math.max(0.001, velocity * 0.4);
-    harm3Gain.gain.setValueAtTime(harm3Vol, currentTime);
-    harm3Gain.gain.exponentialRampToValueAtTime(harm3Vol * 0.5, currentTime + 0.06);
-    harm3Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.6);
+    harm3Gain.gain.setValueAtTime(0.001, currentTime);
+    harm3Gain.gain.exponentialRampToValueAtTime(harm3Vol, currentTime + attackTime);
+    harm3Gain.gain.exponentialRampToValueAtTime(harm3Vol * sustainLevel, currentTime + attackTime + decayTime);
+    if (duration > attackTime + decayTime + releaseTime) {
+      harm3Gain.gain.setValueAtTime(harm3Vol * sustainLevel, currentTime + duration - releaseTime);
+    }
+    harm3Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
     const harm4Vol = Math.max(0.001, velocity * 0.3);
-    harm4Gain.gain.setValueAtTime(harm4Vol, currentTime);
-    harm4Gain.gain.exponentialRampToValueAtTime(harm4Vol * 0.4, currentTime + 0.04);
-    harm4Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.4);
+    harm4Gain.gain.setValueAtTime(0.001, currentTime);
+    harm4Gain.gain.exponentialRampToValueAtTime(harm4Vol, currentTime + attackTime);
+    harm4Gain.gain.exponentialRampToValueAtTime(harm4Vol * sustainLevel, currentTime + attackTime + decayTime);
+    if (duration > attackTime + decayTime + releaseTime) {
+      harm4Gain.gain.setValueAtTime(harm4Vol * sustainLevel, currentTime + duration - releaseTime);
+    }
+    harm4Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
     const harm5Vol = Math.max(0.001, velocity * 0.2);
-    harm5Gain.gain.setValueAtTime(harm5Vol, currentTime);
-    harm5Gain.gain.exponentialRampToValueAtTime(harm5Vol * 0.3, currentTime + 0.03);
-    harm5Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.3);
+    harm5Gain.gain.setValueAtTime(0.001, currentTime);
+    harm5Gain.gain.exponentialRampToValueAtTime(harm5Vol, currentTime + attackTime);
+    harm5Gain.gain.exponentialRampToValueAtTime(harm5Vol * sustainLevel, currentTime + attackTime + decayTime);
+    if (duration > attackTime + decayTime + releaseTime) {
+      harm5Gain.gain.setValueAtTime(harm5Vol * sustainLevel, currentTime + duration - releaseTime);
+    }
+    harm5Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
     // Hammer components
     const hammerVol = Math.max(0.001, velocity * 0.3);
@@ -679,14 +704,25 @@ export class AudioEngine {
     pluckFilter.frequency.setValueAtTime(2000, currentTime);
     pluckFilter.Q.setValueAtTime(5, currentTime);
     
-    // INSTANT attack, quick decay
+    // Guitar ADSR with proper sustain
+    const attackTime = 0.01; // Very fast attack
+    const decayTime = 0.08;
+    const sustainLevel = 0.65; // Good sustain for guitar
+    const releaseTime = Math.min(0.3, duration * 0.4);
+    
+    // Pluck attack - instant but brief
     const pluckVolume = Math.max(0.001, velocity * 1.2);
     pluckGain.gain.setValueAtTime(pluckVolume, currentTime);
     pluckGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.05);
     
+    // Sustain with proper ADSR
     const sustainVolume = Math.max(0.001, velocity * 0.6);
-    sustainGain.gain.setValueAtTime(sustainVolume * 0.8, currentTime);
-    sustainGain.gain.exponentialRampToValueAtTime(sustainVolume * 0.3, currentTime + duration * 0.3);
+    sustainGain.gain.setValueAtTime(0.001, currentTime);
+    sustainGain.gain.exponentialRampToValueAtTime(sustainVolume, currentTime + attackTime);
+    sustainGain.gain.exponentialRampToValueAtTime(sustainVolume * sustainLevel, currentTime + attackTime + decayTime);
+    if (duration > attackTime + decayTime + releaseTime) {
+      sustainGain.gain.setValueAtTime(sustainVolume * sustainLevel, currentTime + duration - releaseTime);
+    }
     sustainGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
     const noiseVolume = Math.max(0.001, velocity * 0.3);
