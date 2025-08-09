@@ -247,6 +247,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Song upload and analysis routes
+  app.post("/api/objects/upload", async (req, res) => {
+    try {
+      const { ObjectStorageService } = await import("./objectStorage.js");
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getAudioUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Upload URL generation error:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
+  app.post("/api/songs/upload", async (req, res) => {
+    try {
+      const { songURL, name } = req.body;
+      const song = {
+        id: `song-${Date.now()}`,
+        name,
+        url: songURL,
+        size: Math.floor(Math.random() * 10000000), // Mock size
+        uploadDate: new Date().toISOString(),
+        duration: Math.floor(Math.random() * 300) + 60 // Mock duration 1-5 minutes
+      };
+      res.json(song);
+    } catch (error) {
+      console.error("Song upload error:", error);
+      res.status(500).json({ error: "Failed to save uploaded song" });
+    }
+  });
+
+  app.post("/api/songs/analyze", async (req, res) => {
+    try {
+      const { songURL, songName } = req.body;
+      // Mock analysis result - in real implementation this would analyze the audio file
+      const analysis = {
+        title: songName,
+        estimatedBPM: Math.floor(Math.random() * 40) + 100, // 100-140 BPM
+        keySignature: ["C Major", "G Major", "D Major", "A Major", "F Major"][Math.floor(Math.random() * 5)],
+        genre: ["Electronic", "Rock", "Pop", "Jazz", "Classical"][Math.floor(Math.random() * 5)],
+        mood: ["Energetic", "Calm", "Dark", "Happy", "Melancholic"][Math.floor(Math.random() * 5)],
+        structure: {
+          intro: "0:00-0:15",
+          verse1: "0:15-0:45", 
+          chorus: "0:45-1:15",
+          verse2: "1:15-1:45",
+          chorus2: "1:45-2:15",
+          bridge: "2:15-2:30",
+          outro: "2:30-end"
+        },
+        instruments: ["drums", "bass", "guitar", "vocals", "synth"],
+        analysis_notes: `AI analysis of ${songName}: This song has a ${["driving", "laid-back", "complex", "simple"][Math.floor(Math.random() * 4)]} rhythm with ${["rich", "sparse", "dynamic", "steady"][Math.floor(Math.random() * 4)]} instrumentation.`
+      };
+      res.json(analysis);
+    } catch (error) {
+      console.error("Song analysis error:", error);
+      res.status(500).json({ error: "Failed to analyze song" });
+    }
+  });
+
   // AI Assistant Routes
   app.post("/api/assistant/chat", async (req, res) => {
     try {

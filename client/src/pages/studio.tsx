@@ -11,6 +11,7 @@ import VulnerabilityScanner from "@/components/studio/VulnerabilityScanner";
 import LyricLab from "@/components/studio/LyricLab";
 import Mixer from "@/components/studio/Mixer";
 import DynamicLayering from "@/components/studio/DynamicLayering";
+import SongUploader from "@/components/studio/SongUploader";
 import { useAudio } from "@/hooks/use-audio";
 
 // Global studio audio context for master playback
@@ -33,7 +34,7 @@ export const StudioAudioContext = createContext({
   stopFullSong: () => {},
 });
 
-type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "assistant" | "security" | "lyrics" | "mixer" | "layers";
+type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "assistant" | "security" | "lyrics" | "mixer" | "layers" | "upload";
 
 export default function Studio() {
   const [activeTab, setActiveTab] = useState<Tab>("beatmaker");
@@ -68,7 +69,8 @@ export default function Studio() {
       "security": "Security Scanner",
       "lyrics": "Lyric Lab",
       "mixer": "Mixer",
-      "layers": "Dynamic Layering"
+      "layers": "Dynamic Layering",
+      "upload": "Song Uploader"
     };
     return toolNames[tab] || "Beat Maker";
   };
@@ -131,6 +133,8 @@ export default function Studio() {
         return <Mixer />;
       case "layers":
         return <DynamicLayering />;
+      case "upload":
+        return <SongUploader />;
       default:
         return <BeatMaker />;
     }

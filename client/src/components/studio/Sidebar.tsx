@@ -12,6 +12,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     { id: "melody", icon: "fas fa-music", label: "Melody Composer" },
     { id: "codebeat", icon: "fas fa-exchange-alt", label: "Code to Music" },
     { id: "layers", icon: "fas fa-layer-group", label: "Dynamic Layering" },
+    { id: "upload", icon: "fas fa-cloud-upload-alt", label: "Song Uploader" },
     { id: "assistant", icon: "fas fa-robot", label: "AI Assistant" },
     { id: "security", icon: "fas fa-shield-alt", label: "Security Scanner" },
     { id: "lyrics", icon: "fas fa-microphone", label: "Lyric Lab" },
@@ -52,6 +53,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             {activeTab === "melody" && "Compose musical melodies"}
             {activeTab === "codebeat" && "Turn code into music"}
             {activeTab === "layers" && "AI-powered instrument layering"}
+            {activeTab === "upload" && "Upload and analyze existing songs"}
             {activeTab === "assistant" && "AI-powered music help"}
             {activeTab === "security" && "Scan code for vulnerabilities"}
             {activeTab === "lyrics" && "Write and edit song lyrics"}

@@ -1,6 +1,6 @@
 # Overview
 
-CodedSwitch is a revolutionary AI-powered web application that embodies the triple entendre of its name - representing code development, state switching, and adaptive communication. The platform bridges the gap between coding and music creation. The platform offers an integrated development environment where developers can translate code between programming languages, generate musical compositions from code structures, create beats and melodies, scan code for security vulnerabilities, write lyrics, and intelligently layer complementary instruments - all powered by AI assistance. The application combines a modern React frontend with an Express.js backend, featuring advanced multi-layered audio synthesis for realistic instrument sounds, comprehensive AI integrations, dynamic instrument layering, and a studio-grade interface designed for both developers and musicians.
+CodedSwitch is a revolutionary AI-powered web application that embodies the triple entendre of its name - representing code development, state switching, and adaptive communication. The platform bridges the gap between coding and music creation. The platform offers an integrated development environment where developers can translate code between programming languages, generate musical compositions from code structures, create beats and melodies, scan code for security vulnerabilities, write lyrics, upload and analyze existing songs, and intelligently layer complementary instruments - all powered by AI assistance. The application combines a modern React frontend with an Express.js backend, featuring advanced multi-layered audio synthesis for realistic instrument sounds, comprehensive AI integrations, dynamic instrument layering, song upload capabilities, and a studio-grade interface designed for both developers and musicians.
 
 ## Recent Changes (January 2025)
 - **Audio Engine Overhaul**: Completely redesigned audio synthesis for professional-quality drum and instrument sounds
@@ -13,6 +13,7 @@ CodedSwitch is a revolutionary AI-powered web application that embodies the trip
 - **Scrolling Implementation**: Fixed layout constraints and added smooth scrolling with custom dark theme scrollbars
 - **User Experience**: Added step-by-step instructions, tooltips, and visual guides for all controls
 - **AI-Powered Dynamic Instrument Layering** (NEW): Intelligent instrument layering system that analyzes current arrangements and adds complementary instrumental parts using AI (January 8, 2025)
+- **Song Upload & Analysis** (NEW): Upload existing audio files (MP3, WAV, M4A, OGG) for AI analysis and integration with other studio tools (January 8, 2025)
 
 # User Preferences
 
