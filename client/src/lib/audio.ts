@@ -1347,300 +1347,335 @@ export class AudioEngine {
   private playKick(currentTime: number, velocity: number): void {
     if (!this.audioContext || !this.masterGain) return;
 
-    const osc1 = this.audioContext.createOscillator();
-    const osc2 = this.audioContext.createOscillator();
-    const gain = this.audioContext.createGain();
-    const filter = this.audioContext.createBiquadFilter();
+    try {
+      // ISOLATED KICK DRUM - Deep bass punch
+      const kickOsc1 = this.audioContext.createOscillator();
+      const kickOsc2 = this.audioContext.createOscillator();
+      const kickGain = this.audioContext.createGain();
+      const kickFilter = this.audioContext.createBiquadFilter();
 
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(80, currentTime);
-    osc1.frequency.exponentialRampToValueAtTime(0.1, currentTime + 0.5);
+      kickOsc1.type = 'sine';
+      kickOsc1.frequency.setValueAtTime(80, currentTime);
+      kickOsc1.frequency.exponentialRampToValueAtTime(20, currentTime + 0.5);
 
-    osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(60, currentTime);
-    osc2.frequency.exponentialRampToValueAtTime(0.1, currentTime + 0.3);
+      kickOsc2.type = 'triangle';
+      kickOsc2.frequency.setValueAtTime(60, currentTime);
+      kickOsc2.frequency.exponentialRampToValueAtTime(15, currentTime + 0.3);
 
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(120, currentTime);
-    filter.Q.setValueAtTime(10, currentTime);
+      kickFilter.type = 'lowpass';
+      kickFilter.frequency.setValueAtTime(150, currentTime);
+      kickFilter.Q.setValueAtTime(8, currentTime);
 
-    const maxGain = Math.max(0.001, velocity * 2.0);
-    gain.gain.setValueAtTime(maxGain, currentTime);
-    gain.gain.exponentialRampToValueAtTime(maxGain * 0.3, currentTime + 0.1);
-    gain.gain.exponentialRampToValueAtTime(0.001, currentTime + 1.2);
+      const kickVol = Math.max(0.001, velocity * 1.8);
+      kickGain.gain.setValueAtTime(kickVol, currentTime);
+      kickGain.gain.exponentialRampToValueAtTime(kickVol * 0.4, currentTime + 0.1);
+      kickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 1.2);
 
-    osc1.connect(filter);
-    osc2.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
+      kickOsc1.connect(kickFilter);
+      kickOsc2.connect(kickFilter);
+      kickFilter.connect(kickGain);
+      kickGain.connect(this.masterGain);
 
-    osc1.start(currentTime);
-    osc2.start(currentTime);
-    osc1.stop(currentTime + 1.2);
-    osc2.stop(currentTime + 1.2);
+      kickOsc1.start(currentTime);
+      kickOsc2.start(currentTime);
+      kickOsc1.stop(currentTime + 1.2);
+      kickOsc2.stop(currentTime + 1.2);
+    } catch (error) {
+      console.error('Kick drum error:', error);
+    }
   }
 
   private playSnare(currentTime: number, velocity: number): void {
     if (!this.audioContext || !this.masterGain) return;
 
-    const noise = this.audioContext.createBufferSource();
-    const tone = this.audioContext.createOscillator();
-    const noiseGain = this.audioContext.createGain();
-    const toneGain = this.audioContext.createGain();
-    const filter = this.audioContext.createBiquadFilter();
-    const rattleFilter = this.audioContext.createBiquadFilter();
+    try {
+      // ISOLATED SNARE DRUM - Crisp snap with rattle
+      const snareNoise = this.audioContext.createBufferSource();
+      const snareTone = this.audioContext.createOscillator();
+      const snareNoiseGain = this.audioContext.createGain();
+      const snareToneGain = this.audioContext.createGain();
+      const snareFilter = this.audioContext.createBiquadFilter();
+      const snareRattleFilter = this.audioContext.createBiquadFilter();
 
-    const bufferSize = this.audioContext.sampleRate * 0.4;
-    const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-    const data = buffer.getChannelData(0);
+      const snareBufferSize = this.audioContext.sampleRate * 0.4;
+      const snareBuffer = this.audioContext.createBuffer(1, snareBufferSize, this.audioContext.sampleRate);
+      const snareData = snareBuffer.getChannelData(0);
 
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize) * 0.8;
+      for (let i = 0; i < snareBufferSize; i++) {
+        snareData[i] = (Math.random() * 2 - 1) * (1 - i / snareBufferSize) * 0.9;
+      }
+
+      snareNoise.buffer = snareBuffer;
+
+      snareTone.type = 'triangle';
+      snareTone.frequency.setValueAtTime(250, currentTime);
+
+      snareFilter.type = 'highpass';
+      snareFilter.frequency.setValueAtTime(8000, currentTime);
+      snareFilter.Q.setValueAtTime(20, currentTime);
+
+      snareRattleFilter.type = 'bandpass';
+      snareRattleFilter.frequency.setValueAtTime(6000, currentTime);
+      snareRattleFilter.Q.setValueAtTime(8, currentTime);
+
+      const snareNoiseVol = Math.max(0.001, velocity * 1.6);
+      snareNoiseGain.gain.setValueAtTime(snareNoiseVol, currentTime);
+      snareNoiseGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.4);
+
+      const snareToneVol = Math.max(0.001, velocity * 0.9);
+      snareToneGain.gain.setValueAtTime(snareToneVol, currentTime);
+      snareToneGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.25);
+
+      snareNoise.connect(snareFilter);
+      snareFilter.connect(snareRattleFilter);
+      snareRattleFilter.connect(snareNoiseGain);
+      snareNoiseGain.connect(this.masterGain);
+
+      snareTone.connect(snareToneGain);
+      snareToneGain.connect(this.masterGain);
+
+      snareNoise.start(currentTime);
+      snareTone.start(currentTime);
+      snareTone.stop(currentTime + 0.4);
+    } catch (error) {
+      console.error('Snare drum error:', error);
     }
-
-    noise.buffer = buffer;
-
-    tone.type = 'triangle';
-    tone.frequency.setValueAtTime(250, currentTime);
-
-    filter.type = 'highpass';
-    filter.frequency.setValueAtTime(8000, currentTime);
-    filter.Q.setValueAtTime(25, currentTime);
-
-    rattleFilter.type = 'bandpass';
-    rattleFilter.frequency.setValueAtTime(6000, currentTime);
-    rattleFilter.Q.setValueAtTime(8, currentTime);
-
-    const noiseVol = Math.max(0.001, velocity * 1.5);
-    noiseGain.gain.setValueAtTime(noiseVol, currentTime);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.4);
-
-    const toneVol = Math.max(0.001, velocity * 0.8);
-    toneGain.gain.setValueAtTime(toneVol, currentTime);
-    toneGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.25);
-
-    noise.connect(filter);
-    filter.connect(rattleFilter);
-    rattleFilter.connect(noiseGain);
-    noiseGain.connect(this.masterGain);
-
-    tone.connect(toneGain);
-    toneGain.connect(this.masterGain);
-
-    noise.start(currentTime);
-    tone.start(currentTime);
-    tone.stop(currentTime + 0.4);
   }
 
   private playHihat(currentTime: number, velocity: number, open: boolean = false): void {
     if (!this.audioContext || !this.masterGain) return;
 
-    const noise = this.audioContext.createBufferSource();
-    const gain = this.audioContext.createGain();
-    const filter = this.audioContext.createBiquadFilter();
-    const shimmerFilter = this.audioContext.createBiquadFilter();
+    try {
+      // ISOLATED HI-HAT - Crisp high frequency metal
+      const hihatNoise = this.audioContext.createBufferSource();
+      const hihatGain = this.audioContext.createGain();
+      const hihatFilter = this.audioContext.createBiquadFilter();
+      const hihatShimmerFilter = this.audioContext.createBiquadFilter();
 
-    const duration = open ? 0.6 : 0.12;
-    const bufferSize = this.audioContext.sampleRate * duration;
-    const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-    const data = buffer.getChannelData(0);
+      const hihatDuration = open ? 0.8 : 0.15;
+      const hihatBufferSize = this.audioContext.sampleRate * hihatDuration;
+      const hihatBuffer = this.audioContext.createBuffer(1, hihatBufferSize, this.audioContext.sampleRate);
+      const hihatData = hihatBuffer.getChannelData(0);
 
-    for (let i = 0; i < bufferSize; i++) {
-      const decay = 1 - (i / bufferSize);
-      data[i] = (Math.random() * 2 - 1) * decay * (open ? 0.6 : 0.8);
-      
-      if (open && i % 4 === 0) {
-        data[i] *= 1.2;
+      for (let i = 0; i < hihatBufferSize; i++) {
+        const hihatDecay = 1 - (i / hihatBufferSize);
+        hihatData[i] = (Math.random() * 2 - 1) * hihatDecay * (open ? 0.7 : 0.9);
+        
+        if (open && i % 3 === 0) {
+          hihatData[i] *= 1.3;
+        }
       }
+
+      hihatNoise.buffer = hihatBuffer;
+
+      hihatFilter.type = 'highpass';
+      hihatFilter.frequency.setValueAtTime(12000, currentTime);
+      hihatFilter.Q.setValueAtTime(15, currentTime);
+
+      hihatShimmerFilter.type = 'bandpass';
+      hihatShimmerFilter.frequency.setValueAtTime(open ? 18000 : 16000, currentTime);
+      hihatShimmerFilter.Q.setValueAtTime(open ? 5 : 12, currentTime);
+
+      const hihatVol = Math.max(0.001, velocity * (open ? 0.9 : 1.3));
+      hihatGain.gain.setValueAtTime(hihatVol, currentTime);
+      hihatGain.gain.exponentialRampToValueAtTime(0.001, currentTime + hihatDuration);
+
+      hihatNoise.connect(hihatFilter);
+      hihatFilter.connect(hihatShimmerFilter);
+      hihatShimmerFilter.connect(hihatGain);
+      hihatGain.connect(this.masterGain);
+
+      hihatNoise.start(currentTime);
+    } catch (error) {
+      console.error('Hi-hat error:', error);
     }
-
-    noise.buffer = buffer;
-
-    filter.type = 'highpass';
-    filter.frequency.setValueAtTime(12000, currentTime);
-    filter.Q.setValueAtTime(12, currentTime);
-
-    shimmerFilter.type = 'bandpass';
-    shimmerFilter.frequency.setValueAtTime(open ? 18000 : 16000, currentTime);
-    shimmerFilter.Q.setValueAtTime(open ? 6 : 10, currentTime);
-
-    const maxGain = Math.max(0.001, velocity * (open ? 0.8 : 1.2));
-    gain.gain.setValueAtTime(maxGain, currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
-
-    noise.connect(filter);
-    filter.connect(shimmerFilter);
-    shimmerFilter.connect(gain);
-    gain.connect(this.masterGain);
-
-    noise.start(currentTime);
   }
 
   private playCrash(currentTime: number, velocity: number): void {
     if (!this.audioContext || !this.masterGain) return;
 
-    const noise = this.audioContext.createBufferSource();
-    const gain = this.audioContext.createGain();
-    const filter = this.audioContext.createBiquadFilter();
+    try {
+      // ISOLATED CRASH CYMBAL - Explosive metallic crash
+      const crashNoise = this.audioContext.createBufferSource();
+      const crashGain = this.audioContext.createGain();
+      const crashFilter = this.audioContext.createBiquadFilter();
 
-    const bufferSize = this.audioContext.sampleRate * 2;
-    const buffer = this.audioContext.createBuffer(2, bufferSize, this.audioContext.sampleRate);
+      const crashBufferSize = this.audioContext.sampleRate * 2.5;
+      const crashBuffer = this.audioContext.createBuffer(2, crashBufferSize, this.audioContext.sampleRate);
 
-    for (let channel = 0; channel < 2; channel++) {
-      const data = buffer.getChannelData(channel);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize) * 0.5;
+      for (let crashChannel = 0; crashChannel < 2; crashChannel++) {
+        const crashData = crashBuffer.getChannelData(crashChannel);
+        for (let i = 0; i < crashBufferSize; i++) {
+          crashData[i] = (Math.random() * 2 - 1) * (1 - i / crashBufferSize) * 0.6;
+        }
       }
+
+      crashNoise.buffer = crashBuffer;
+
+      crashFilter.type = 'highpass';
+      crashFilter.frequency.setValueAtTime(4000, currentTime);
+      crashFilter.Q.setValueAtTime(1.5, currentTime);
+
+      const crashVol = Math.max(0.001, velocity * 0.9);
+      crashGain.gain.setValueAtTime(crashVol, currentTime);
+      crashGain.gain.exponentialRampToValueAtTime(crashVol * 0.4, currentTime + 0.1);
+      crashGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 2.5);
+
+      crashNoise.connect(crashFilter);
+      crashFilter.connect(crashGain);
+      crashGain.connect(this.masterGain);
+
+      crashNoise.start(currentTime);
+    } catch (error) {
+      console.error('Crash cymbal error:', error);
     }
-
-    noise.buffer = buffer;
-
-    filter.type = 'highpass';
-    filter.frequency.setValueAtTime(5000, currentTime);
-    filter.Q.setValueAtTime(1, currentTime);
-
-    const maxGain = Math.max(0.001, velocity * 0.8);
-    gain.gain.setValueAtTime(maxGain, currentTime);
-    gain.gain.exponentialRampToValueAtTime(maxGain * 0.3, currentTime + 0.1);
-    gain.gain.exponentialRampToValueAtTime(0.001, currentTime + 2);
-
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
-
-    noise.start(currentTime);
   }
 
   private playRide(currentTime: number, velocity: number): void {
     if (!this.audioContext || !this.masterGain) return;
 
-    const osc1 = this.audioContext.createOscillator();
-    const osc2 = this.audioContext.createOscillator();
-    const noise = this.audioContext.createBufferSource();
-    const gain = this.audioContext.createGain();
-    const filter = this.audioContext.createBiquadFilter();
+    try {
+      // ISOLATED RIDE CYMBAL - Smooth metallic ride
+      const rideOsc1 = this.audioContext.createOscillator();
+      const rideOsc2 = this.audioContext.createOscillator();
+      const rideNoise = this.audioContext.createBufferSource();
+      const rideGain = this.audioContext.createGain();
+      const rideFilter = this.audioContext.createBiquadFilter();
 
-    osc1.type = 'triangle';
-    osc1.frequency.setValueAtTime(800, currentTime);
+      rideOsc1.type = 'triangle';
+      rideOsc1.frequency.setValueAtTime(850, currentTime);
 
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(1200, currentTime);
+      rideOsc2.type = 'sine';
+      rideOsc2.frequency.setValueAtTime(1300, currentTime);
 
-    const bufferSize = this.audioContext.sampleRate * 0.3;
-    const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-    const data = buffer.getChannelData(0);
+      const rideBufferSize = this.audioContext.sampleRate * 0.35;
+      const rideBuffer = this.audioContext.createBuffer(1, rideBufferSize, this.audioContext.sampleRate);
+      const rideData = rideBuffer.getChannelData(0);
 
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize) * 0.1;
+      for (let i = 0; i < rideBufferSize; i++) {
+        rideData[i] = (Math.random() * 2 - 1) * (1 - i / rideBufferSize) * 0.12;
+      }
+
+      rideNoise.buffer = rideBuffer;
+
+      rideFilter.type = 'highpass';
+      rideFilter.frequency.setValueAtTime(2800, currentTime);
+      rideFilter.Q.setValueAtTime(2.5, currentTime);
+
+      const rideVol = Math.max(0.001, velocity * 0.7);
+      rideGain.gain.setValueAtTime(rideVol, currentTime);
+      rideGain.gain.exponentialRampToValueAtTime(rideVol * 0.6, currentTime + 0.05);
+      rideGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 1.5);
+
+      rideOsc1.connect(rideFilter);
+      rideOsc2.connect(rideFilter);
+      rideNoise.connect(rideFilter);
+      rideFilter.connect(rideGain);
+      rideGain.connect(this.masterGain);
+
+      rideOsc1.start(currentTime);
+      rideOsc2.start(currentTime);
+      rideNoise.start(currentTime);
+      rideOsc1.stop(currentTime + 1.5);
+      rideOsc2.stop(currentTime + 1.5);
+    } catch (error) {
+      console.error('Ride cymbal error:', error);
     }
-
-    noise.buffer = buffer;
-
-    filter.type = 'highpass';
-    filter.frequency.setValueAtTime(3000, currentTime);
-    filter.Q.setValueAtTime(2, currentTime);
-
-    const maxGain = Math.max(0.001, velocity * 0.6);
-    gain.gain.setValueAtTime(maxGain, currentTime);
-    gain.gain.exponentialRampToValueAtTime(maxGain * 0.5, currentTime + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, currentTime + 1.5);
-
-    osc1.connect(filter);
-    osc2.connect(filter);
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
-
-    osc1.start(currentTime);
-    osc2.start(currentTime);
-    noise.start(currentTime);
-    osc1.stop(currentTime + 1.5);
-    osc2.stop(currentTime + 1.5);
   }
 
   private playClap(currentTime: number, velocity: number): void {
     if (!this.audioContext || !this.masterGain) return;
 
-    for (let i = 0; i < 4; i++) {
-      const delay = i * 0.01;
-      const noise = this.audioContext.createBufferSource();
-      const gain = this.audioContext.createGain();
-      const filter = this.audioContext.createBiquadFilter();
+    try {
+      // ISOLATED CLAP - Multiple burst layers
+      for (let clapBurst = 0; clapBurst < 4; clapBurst++) {
+        const clapDelay = clapBurst * 0.01;
+        const clapNoise = this.audioContext.createBufferSource();
+        const clapGain = this.audioContext.createGain();
+        const clapFilter = this.audioContext.createBiquadFilter();
 
-      const bufferSize = this.audioContext.sampleRate * 0.15;
-      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-      const data = buffer.getChannelData(0);
+        const clapBufferSize = this.audioContext.sampleRate * 0.15;
+        const clapBuffer = this.audioContext.createBuffer(1, clapBufferSize, this.audioContext.sampleRate);
+        const clapData = clapBuffer.getChannelData(0);
 
-      for (let j = 0; j < bufferSize; j++) {
-        data[j] = (Math.random() * 2 - 1) * (1 - j / bufferSize) * 0.8;
+        for (let j = 0; j < clapBufferSize; j++) {
+          clapData[j] = (Math.random() * 2 - 1) * (1 - j / clapBufferSize) * 0.85;
+        }
+
+        clapNoise.buffer = clapBuffer;
+
+        clapFilter.type = 'bandpass';
+        clapFilter.frequency.setValueAtTime(1400 + (clapBurst * 250), currentTime);
+        clapFilter.Q.setValueAtTime(9, currentTime);
+
+        const clapBurstGain = Math.max(0.001, velocity * (0.9 - clapBurst * 0.15));
+        clapGain.gain.setValueAtTime(clapBurstGain, currentTime + clapDelay);
+        clapGain.gain.exponentialRampToValueAtTime(0.001, currentTime + clapDelay + 0.12);
+
+        clapNoise.connect(clapFilter);
+        clapFilter.connect(clapGain);
+        clapGain.connect(this.masterGain);
+
+        clapNoise.start(currentTime + clapDelay);
       }
-
-      noise.buffer = buffer;
-
-      filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(1500 + (i * 200), currentTime);
-      filter.Q.setValueAtTime(8, currentTime);
-
-      const burstGain = Math.max(0.001, velocity * (0.8 - i * 0.15));
-      gain.gain.setValueAtTime(burstGain, currentTime + delay);
-      gain.gain.exponentialRampToValueAtTime(0.001, currentTime + delay + 0.12);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.masterGain);
-
-      noise.start(currentTime + delay);
+    } catch (error) {
+      console.error('Clap error:', error);
     }
   }
 
   private playTom(currentTime: number, velocity: number): void {
     if (!this.audioContext || !this.masterGain) return;
 
-    const osc1 = this.audioContext.createOscillator();
-    const osc2 = this.audioContext.createOscillator();
-    const noise = this.audioContext.createBufferSource();
-    const gain = this.audioContext.createGain();
-    const filter = this.audioContext.createBiquadFilter();
+    try {
+      // ISOLATED TOM DRUM - Deep punchy tom
+      const tomOsc1 = this.audioContext.createOscillator();
+      const tomOsc2 = this.audioContext.createOscillator();
+      const tomNoise = this.audioContext.createBufferSource();
+      const tomGain = this.audioContext.createGain();
+      const tomFilter = this.audioContext.createBiquadFilter();
 
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(120, currentTime);
-    osc1.frequency.exponentialRampToValueAtTime(80, currentTime + 0.8);
+      tomOsc1.type = 'sine';
+      tomOsc1.frequency.setValueAtTime(130, currentTime);
+      tomOsc1.frequency.exponentialRampToValueAtTime(85, currentTime + 0.8);
 
-    osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(180, currentTime);
-    osc2.frequency.exponentialRampToValueAtTime(100, currentTime + 0.6);
+      tomOsc2.type = 'triangle';
+      tomOsc2.frequency.setValueAtTime(190, currentTime);
+      tomOsc2.frequency.exponentialRampToValueAtTime(110, currentTime + 0.6);
 
-    const bufferSize = this.audioContext.sampleRate * 0.2;
-    const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-    const data = buffer.getChannelData(0);
+      const tomBufferSize = this.audioContext.sampleRate * 0.25;
+      const tomBuffer = this.audioContext.createBuffer(1, tomBufferSize, this.audioContext.sampleRate);
+      const tomData = tomBuffer.getChannelData(0);
 
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize) * 0.2;
+      for (let i = 0; i < tomBufferSize; i++) {
+        tomData[i] = (Math.random() * 2 - 1) * (1 - i / tomBufferSize) * 0.25;
+      }
+
+      tomNoise.buffer = tomBuffer;
+
+      tomFilter.type = 'lowpass';
+      tomFilter.frequency.setValueAtTime(900, currentTime);
+      tomFilter.frequency.exponentialRampToValueAtTime(350, currentTime + 0.8);
+      tomFilter.Q.setValueAtTime(5, currentTime);
+
+      const tomVol = Math.max(0.001, velocity * 1.4);
+      tomGain.gain.setValueAtTime(tomVol, currentTime);
+      tomGain.gain.exponentialRampToValueAtTime(tomVol * 0.7, currentTime + 0.1);
+      tomGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.8);
+
+      tomOsc1.connect(tomFilter);
+      tomOsc2.connect(tomFilter);
+      tomNoise.connect(tomFilter);
+      tomFilter.connect(tomGain);
+      tomGain.connect(this.masterGain);
+
+      tomOsc1.start(currentTime);
+      tomOsc2.start(currentTime);
+      tomNoise.start(currentTime);
+      tomOsc1.stop(currentTime + 0.8);
+      tomOsc2.stop(currentTime + 0.8);
+    } catch (error) {
+      console.error('Tom drum error:', error);
     }
-
-    noise.buffer = buffer;
-
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(800, currentTime);
-    filter.frequency.exponentialRampToValueAtTime(300, currentTime + 0.8);
-    filter.Q.setValueAtTime(4, currentTime);
-
-    const maxGain = Math.max(0.001, velocity * 1.2);
-    gain.gain.setValueAtTime(maxGain, currentTime);
-    gain.gain.exponentialRampToValueAtTime(maxGain * 0.6, currentTime + 0.1);
-    gain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.8);
-
-    osc1.connect(filter);
-    osc2.connect(filter);
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
-
-    osc1.start(currentTime);
-    osc2.start(currentTime);
-    noise.start(currentTime);
-    osc1.stop(currentTime + 0.8);
-    osc2.stop(currentTime + 0.8);
   }
 
   stopAllInstruments(): void {
