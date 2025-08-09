@@ -6,7 +6,9 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/hooks/use-audio";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Slider } from "@/components/ui/slider";
 import { StudioAudioContext } from "@/pages/studio";
+import { realisticAudio } from "@/lib/realisticAudio";
 
 interface BeatPattern {
   kick: boolean[];
@@ -52,6 +54,7 @@ export default function BeatMaker() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedDrumKit, setSelectedDrumKit] = useState('acoustic');
+  const [bassDrumDuration, setBassDrumDuration] = useState(0.8);
 
   // Initialize pattern with default structure
   const [pattern, setPattern] = useState<BeatPattern>({
@@ -262,6 +265,26 @@ export default function BeatMaker() {
                 min="60"
                 max="200"
               />
+            </div>
+            <div className="flex items-center space-x-3">
+              <span className="text-sm whitespace-nowrap">Bass Duration:</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-gray-400">0.3s</span>
+                <Slider
+                  value={[bassDrumDuration]}
+                  onValueChange={(value) => {
+                    const newDuration = value[0];
+                    setBassDrumDuration(newDuration);
+                    realisticAudio.bassDrumDuration = newDuration;
+                  }}
+                  max={2.0}
+                  min={0.3}
+                  step={0.1}
+                  className="w-20"
+                />
+                <span className="text-xs text-gray-400">2.0s</span>
+              </div>
+              <span className="text-xs text-studio-accent font-mono">{bassDrumDuration.toFixed(1)}s</span>
             </div>
             <Button
               onClick={playPattern}

@@ -5,6 +5,7 @@ export class RealisticAudioEngine {
   private audioContext: AudioContext | null = null;
   private isInitialized = false;
   private isLoading = false;
+  public bassDrumDuration = 0.8; // Configurable bass drum duration
 
   // Map our instrument names to General MIDI soundfont names
   private instrumentLibrary: { [key: string]: string } = {
@@ -687,14 +688,15 @@ export class RealisticAudioEngine {
       // Gentler low-pass filter to reduce distortion
       bassFilter.type = 'lowpass';
       bassFilter.frequency.setValueAtTime(100, currentTime);
-      bassFilter.Q.setValueAtTime(2, currentTime); // Even lower Q
+      bassFilter.Q.setValueAtTime(2, currentTime);
 
-      // Shorter duration to prevent overlap distortion when played rapidly
+      // Use configurable duration from settings
+      const duration = this.bassDrumDuration;
       const bassVol = Math.max(0.001, velocity * 1.1);
       bassGain.gain.setValueAtTime(bassVol, currentTime);
       bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.6, currentTime + 0.15);
-      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.2, currentTime + 0.5);
-      bassGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.8); // Shortened to 0.8s to prevent overlap
+      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.2, currentTime + duration * 0.6);
+      bassGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
 
       // Connect
       bassOsc.connect(bassFilter);
@@ -702,7 +704,7 @@ export class RealisticAudioEngine {
       bassGain.connect(this.audioContext.destination);
 
       bassOsc.start(currentTime);
-      bassOsc.stop(currentTime + 0.8); // Shorter duration
+      bassOsc.stop(currentTime + duration);
     } catch (error) {
       console.error('🎵 Bass drum error:', error);
     }
