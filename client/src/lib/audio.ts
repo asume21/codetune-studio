@@ -1292,7 +1292,7 @@ export class AudioEngine {
   }
 
   playFrequency(frequency: number, duration: number = 0.5, velocity: number = 0.7): void {
-    this.playNote(frequency, duration, velocity, 'piano');
+    this.playNote(frequency, duration, velocity, 'piano', true);
   }
 
   private trackOscillators(oscillators: OscillatorNode[], instrument: string, frequency: number): void {
@@ -1354,11 +1354,11 @@ export class AudioEngine {
 
     osc1.type = 'sine';
     osc1.frequency.setValueAtTime(80, currentTime);
-    osc1.frequency.exponentialRampToValueAtTime(0.01, currentTime + 0.5);
+    osc1.frequency.exponentialRampToValueAtTime(0.1, currentTime + 0.5);
 
     osc2.type = 'triangle';
     osc2.frequency.setValueAtTime(60, currentTime);
-    osc2.frequency.exponentialRampToValueAtTime(0.01, currentTime + 0.3);
+    osc2.frequency.exponentialRampToValueAtTime(0.1, currentTime + 0.3);
 
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(120, currentTime);
