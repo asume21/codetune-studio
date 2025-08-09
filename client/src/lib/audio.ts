@@ -1385,53 +1385,51 @@ export class AudioEngine {
     if (!this.audioContext || !this.masterGain) return;
 
     try {
-      // ENHANCED KICK DRUM - Punchy bass with attack
+      // PROFESSIONAL KICK DRUM - Real thump and punch
       const kickOsc = this.audioContext.createOscillator();
-      const kickSub = this.audioContext.createOscillator();
+      const kickClickOsc = this.audioContext.createOscillator();
       const kickGain = this.audioContext.createGain();
+      const kickClickGain = this.audioContext.createGain();
       const kickFilter = this.audioContext.createBiquadFilter();
-      const kickCompressor = this.audioContext.createDynamicsCompressor();
 
-      // Main kick oscillator
+      // Main kick - deep sine wave
       kickOsc.type = 'sine';
-      kickOsc.frequency.setValueAtTime(60, currentTime);
-      kickOsc.frequency.exponentialRampToValueAtTime(35, currentTime + 0.1);
-      kickOsc.frequency.exponentialRampToValueAtTime(25, currentTime + 0.3);
+      kickOsc.frequency.setValueAtTime(65, currentTime);
+      kickOsc.frequency.exponentialRampToValueAtTime(35, currentTime + 0.15);
 
-      // Sub bass for punch
-      kickSub.type = 'triangle';
-      kickSub.frequency.setValueAtTime(45, currentTime);
-      kickSub.frequency.exponentialRampToValueAtTime(20, currentTime + 0.2);
+      // Click/beater attack
+      kickClickOsc.type = 'triangle';
+      kickClickOsc.frequency.setValueAtTime(1200, currentTime);
+      kickClickOsc.frequency.exponentialRampToValueAtTime(800, currentTime + 0.01);
 
-      // Tight lowpass filter
+      // Tight filter for definition
       kickFilter.type = 'lowpass';
-      kickFilter.frequency.setValueAtTime(200, currentTime);
-      kickFilter.Q.setValueAtTime(12, currentTime);
+      kickFilter.frequency.setValueAtTime(120, currentTime);
+      kickFilter.Q.setValueAtTime(8, currentTime);
 
-      // Compressor for punch
-      kickCompressor.threshold.setValueAtTime(-24, currentTime);
-      kickCompressor.knee.setValueAtTime(30, currentTime);
-      kickCompressor.ratio.setValueAtTime(12, currentTime);
-      kickCompressor.attack.setValueAtTime(0.003, currentTime);
-      kickCompressor.release.setValueAtTime(0.25, currentTime);
-
-      // Sharp attack, quick decay
-      const kickVol = Math.max(0.001, velocity * 2.2);
+      // Main kick envelope - punchy decay
+      const kickVol = Math.max(0.001, velocity * 1.2);
       kickGain.gain.setValueAtTime(kickVol, currentTime);
-      kickGain.gain.exponentialRampToValueAtTime(kickVol * 0.3, currentTime + 0.05);
-      kickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.6);
+      kickGain.gain.exponentialRampToValueAtTime(kickVol * 0.6, currentTime + 0.08);
+      kickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.4);
 
-      // Connect the chain
+      // Click envelope - very short attack
+      const clickVol = Math.max(0.001, velocity * 0.3);
+      kickClickGain.gain.setValueAtTime(clickVol, currentTime);
+      kickClickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.015);
+
+      // Connect
       kickOsc.connect(kickFilter);
-      kickSub.connect(kickFilter);
-      kickFilter.connect(kickCompressor);
-      kickCompressor.connect(kickGain);
+      kickFilter.connect(kickGain);
       kickGain.connect(this.masterGain);
 
+      kickClickOsc.connect(kickClickGain);
+      kickClickGain.connect(this.masterGain);
+
       kickOsc.start(currentTime);
-      kickSub.start(currentTime);
-      kickOsc.stop(currentTime + 0.6);
-      kickSub.stop(currentTime + 0.6);
+      kickClickOsc.start(currentTime);
+      kickOsc.stop(currentTime + 0.4);
+      kickClickOsc.stop(currentTime + 0.015);
     } catch (error) {
       console.error('🎵 Kick drum error:', error);
     }
@@ -1441,78 +1439,55 @@ export class AudioEngine {
     if (!this.audioContext || !this.masterGain) return;
 
     try {
-      // ENHANCED SNARE DRUM - Crisp crack with realistic rattle
+      // PROFESSIONAL SNARE DRUM - Crisp crack
       const snareNoise = this.audioContext.createBufferSource();
       const snareTone = this.audioContext.createOscillator();
-      const snareRattle = this.audioContext.createOscillator();
-      const snareNoiseGain = this.audioContext.createGain();
+      const snareGain = this.audioContext.createGain();
       const snareToneGain = this.audioContext.createGain();
-      const snareRattleGain = this.audioContext.createGain();
       const snareFilter = this.audioContext.createBiquadFilter();
-      const snareEQ = this.audioContext.createBiquadFilter();
 
-      // White noise buffer for snare body
-      const snareBufferSize = this.audioContext.sampleRate * 0.15;
-      const snareBuffer = this.audioContext.createBuffer(1, snareBufferSize, this.audioContext.sampleRate);
-      const snareData = snareBuffer.getChannelData(0);
+      // Generate proper snare noise
+      const bufferSize = this.audioContext.sampleRate * 0.12;
+      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
 
-      for (let i = 0; i < snareBufferSize; i++) {
-        const decay = 1 - (i / snareBufferSize);
-        snareData[i] = (Math.random() * 2 - 1) * decay * decay;
+      for (let i = 0; i < bufferSize; i++) {
+        const envelope = Math.pow(1 - (i / bufferSize), 2);
+        data[i] = (Math.random() * 2 - 1) * envelope;
       }
 
-      snareNoise.buffer = snareBuffer;
+      snareNoise.buffer = buffer;
 
-      // Snare fundamental tone
+      // Snare fundamental
       snareTone.type = 'triangle';
-      snareTone.frequency.setValueAtTime(200, currentTime);
-      snareTone.frequency.exponentialRampToValueAtTime(150, currentTime + 0.1);
-
-      // Snare rattle/buzz
-      snareRattle.type = 'sawtooth';
-      snareRattle.frequency.setValueAtTime(120, currentTime);
-
-      // High-shelf EQ for brightness
-      snareEQ.type = 'highshelf';
-      snareEQ.frequency.setValueAtTime(3000, currentTime);
-      snareEQ.gain.setValueAtTime(6, currentTime);
+      snareTone.frequency.setValueAtTime(240, currentTime);
+      snareTone.frequency.exponentialRampToValueAtTime(180, currentTime + 0.08);
 
       // Bandpass for snare character
       snareFilter.type = 'bandpass';
-      snareFilter.frequency.setValueAtTime(1500, currentTime);
-      snareFilter.Q.setValueAtTime(3, currentTime);
+      snareFilter.frequency.setValueAtTime(2500, currentTime);
+      snareFilter.Q.setValueAtTime(2.5, currentTime);
 
-      // Sharp attack for crack
-      const snareNoiseVol = Math.max(0.001, velocity * 1.4);
-      snareNoiseGain.gain.setValueAtTime(snareNoiseVol, currentTime);
-      snareNoiseGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.15);
+      // Snare crack envelope
+      const snareVol = Math.max(0.001, velocity * 0.9);
+      snareGain.gain.setValueAtTime(snareVol, currentTime);
+      snareGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.12);
 
-      const snareToneVol = Math.max(0.001, velocity * 0.6);
-      snareToneGain.gain.setValueAtTime(snareToneVol, currentTime);
-      snareToneGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.12);
+      const toneVol = Math.max(0.001, velocity * 0.4);
+      snareToneGain.gain.setValueAtTime(toneVol, currentTime);
+      snareToneGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.08);
 
-      const snareRattleVol = Math.max(0.001, velocity * 0.4);
-      snareRattleGain.gain.setValueAtTime(snareRattleVol, currentTime);
-      snareRattleGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.08);
-
-      // Connect audio chain
+      // Connect
       snareNoise.connect(snareFilter);
-      snareFilter.connect(snareEQ);
-      snareEQ.connect(snareNoiseGain);
-      snareNoiseGain.connect(this.masterGain);
+      snareFilter.connect(snareGain);
+      snareGain.connect(this.masterGain);
 
       snareTone.connect(snareToneGain);
       snareToneGain.connect(this.masterGain);
 
-      snareRattle.connect(snareRattleGain);
-      snareRattleGain.connect(this.masterGain);
-
       snareNoise.start(currentTime);
       snareTone.start(currentTime);
-      snareRattle.start(currentTime);
-      
-      snareTone.stop(currentTime + 0.15);
-      snareRattle.stop(currentTime + 0.08);
+      snareTone.stop(currentTime + 0.08);
     } catch (error) {
       console.error('🎵 Snare drum error:', error);
     }
@@ -1522,62 +1497,41 @@ export class AudioEngine {
     if (!this.audioContext || !this.masterGain) return;
 
     try {
-      // ENHANCED HI-HAT - Metallic shimmer
+      // PROFESSIONAL HI-HAT - Clean metallic hit
       const hihatNoise = this.audioContext.createBufferSource();
-      const hihatTone = this.audioContext.createOscillator();
       const hihatGain = this.audioContext.createGain();
-      const hihatToneGain = this.audioContext.createGain();
       const hihatFilter = this.audioContext.createBiquadFilter();
-      const hihatEQ = this.audioContext.createBiquadFilter();
 
-      const hihatDuration = open ? 0.4 : 0.08;
-      const hihatBufferSize = this.audioContext.sampleRate * hihatDuration;
-      const hihatBuffer = this.audioContext.createBuffer(1, hihatBufferSize, this.audioContext.sampleRate);
-      const hihatData = hihatBuffer.getChannelData(0);
+      const duration = open ? 0.2 : 0.05;
+      const bufferSize = this.audioContext.sampleRate * duration;
+      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
 
-      // Generate metallic noise
-      for (let i = 0; i < hihatBufferSize; i++) {
-        const decay = open ? (1 - i / hihatBufferSize) * 0.7 : Math.pow(1 - i / hihatBufferSize, 3);
-        hihatData[i] = (Math.random() * 2 - 1) * decay;
+      // Generate hi-hat noise with proper envelope
+      for (let i = 0; i < bufferSize; i++) {
+        const envelope = open 
+          ? Math.pow(1 - (i / bufferSize), 0.8) 
+          : Math.pow(1 - (i / bufferSize), 4);
+        data[i] = (Math.random() * 2 - 1) * envelope;
       }
 
-      hihatNoise.buffer = hihatBuffer;
-
-      // Metallic resonance
-      hihatTone.type = 'square';
-      hihatTone.frequency.setValueAtTime(open ? 8000 : 12000, currentTime);
+      hihatNoise.buffer = buffer;
 
       // High-pass for metallic character
       hihatFilter.type = 'highpass';
-      hihatFilter.frequency.setValueAtTime(8000, currentTime);
-      hihatFilter.Q.setValueAtTime(2, currentTime);
+      hihatFilter.frequency.setValueAtTime(10000, currentTime);
+      hihatFilter.Q.setValueAtTime(1, currentTime);
 
-      // Presence boost
-      hihatEQ.type = 'peaking';
-      hihatEQ.frequency.setValueAtTime(12000, currentTime);
-      hihatEQ.gain.setValueAtTime(8, currentTime);
-      hihatEQ.Q.setValueAtTime(2, currentTime);
-
-      const hihatVol = Math.max(0.001, velocity * (open ? 0.6 : 0.8));
+      const hihatVol = Math.max(0.001, velocity * (open ? 0.5 : 0.7));
       hihatGain.gain.setValueAtTime(hihatVol, currentTime);
-      hihatGain.gain.exponentialRampToValueAtTime(0.001, currentTime + hihatDuration);
+      hihatGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
 
-      const hihatToneVol = Math.max(0.001, velocity * (open ? 0.15 : 0.25));
-      hihatToneGain.gain.setValueAtTime(hihatToneVol, currentTime);
-      hihatToneGain.gain.exponentialRampToValueAtTime(0.001, currentTime + (hihatDuration * 0.5));
-
-      // Connect chain
+      // Connect
       hihatNoise.connect(hihatFilter);
-      hihatFilter.connect(hihatEQ);
-      hihatEQ.connect(hihatGain);
+      hihatFilter.connect(hihatGain);
       hihatGain.connect(this.masterGain);
 
-      hihatTone.connect(hihatToneGain);
-      hihatToneGain.connect(this.masterGain);
-
       hihatNoise.start(currentTime);
-      hihatTone.start(currentTime);
-      hihatTone.stop(currentTime + (hihatDuration * 0.5));
     } catch (error) {
       console.error('🎵 Hi-hat error:', error);
     }
@@ -1719,54 +1673,36 @@ export class AudioEngine {
     if (!this.audioContext || !this.masterGain) return;
 
     try {
-      // ISOLATED TOM DRUM - Deep punchy tom
-      const tomOsc1 = this.audioContext.createOscillator();
-      const tomOsc2 = this.audioContext.createOscillator();
-      const tomNoise = this.audioContext.createBufferSource();
+      // PROFESSIONAL TOM DRUM - Punchy and focused
+      const tomOsc = this.audioContext.createOscillator();
       const tomGain = this.audioContext.createGain();
       const tomFilter = this.audioContext.createBiquadFilter();
 
-      tomOsc1.type = 'sine';
-      tomOsc1.frequency.setValueAtTime(130, currentTime);
-      tomOsc1.frequency.exponentialRampToValueAtTime(85, currentTime + 0.8);
+      // Tom fundamental frequency
+      tomOsc.type = 'sine';
+      tomOsc.frequency.setValueAtTime(120, currentTime);
+      tomOsc.frequency.exponentialRampToValueAtTime(80, currentTime + 0.3);
 
-      tomOsc2.type = 'triangle';
-      tomOsc2.frequency.setValueAtTime(190, currentTime);
-      tomOsc2.frequency.exponentialRampToValueAtTime(110, currentTime + 0.6);
-
-      const tomBufferSize = this.audioContext.sampleRate * 0.25;
-      const tomBuffer = this.audioContext.createBuffer(1, tomBufferSize, this.audioContext.sampleRate);
-      const tomData = tomBuffer.getChannelData(0);
-
-      for (let i = 0; i < tomBufferSize; i++) {
-        tomData[i] = (Math.random() * 2 - 1) * (1 - i / tomBufferSize) * 0.25;
-      }
-
-      tomNoise.buffer = tomBuffer;
-
+      // Mid-focused filter
       tomFilter.type = 'lowpass';
-      tomFilter.frequency.setValueAtTime(900, currentTime);
-      tomFilter.frequency.exponentialRampToValueAtTime(350, currentTime + 0.8);
-      tomFilter.Q.setValueAtTime(5, currentTime);
+      tomFilter.frequency.setValueAtTime(600, currentTime);
+      tomFilter.Q.setValueAtTime(3, currentTime);
 
-      const tomVol = Math.max(0.001, velocity * 1.4);
+      // Punchy envelope
+      const tomVol = Math.max(0.001, velocity * 0.8);
       tomGain.gain.setValueAtTime(tomVol, currentTime);
-      tomGain.gain.exponentialRampToValueAtTime(tomVol * 0.7, currentTime + 0.1);
-      tomGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.8);
+      tomGain.gain.exponentialRampToValueAtTime(tomVol * 0.5, currentTime + 0.1);
+      tomGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.4);
 
-      tomOsc1.connect(tomFilter);
-      tomOsc2.connect(tomFilter);
-      tomNoise.connect(tomFilter);
+      // Connect
+      tomOsc.connect(tomFilter);
       tomFilter.connect(tomGain);
       tomGain.connect(this.masterGain);
 
-      tomOsc1.start(currentTime);
-      tomOsc2.start(currentTime);
-      tomNoise.start(currentTime);
-      tomOsc1.stop(currentTime + 0.8);
-      tomOsc2.stop(currentTime + 0.8);
+      tomOsc.start(currentTime);
+      tomOsc.stop(currentTime + 0.4);
     } catch (error) {
-      console.error('Tom drum error:', error);
+      console.error('🎵 Tom drum error:', error);
     }
   }
 
