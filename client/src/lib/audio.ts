@@ -473,69 +473,193 @@ export class AudioEngine {
     this.trackOscillators(oscillators, 'guitar', frequency);
   }
 
-  // VIOLIN: Pure sine with deep vibrato and VERY slow attack
+  // VIOLIN: Authentic bowed string with bow friction, harmonics, and realistic vibrato
   private playViolinNote(frequency: number, duration: number, velocity: number, currentTime: number) {
     if (!this.audioContext || !this.masterGain) return;
 
     const oscillators: OscillatorNode[] = [];
     const masterGain = this.audioContext.createGain();
     
-    const pureOsc = this.audioContext.createOscillator();
+    // Violin string harmonics - realistic overtone series
+    const fundamental = this.audioContext.createOscillator();
+    const harmonic2 = this.audioContext.createOscillator();
+    const harmonic3 = this.audioContext.createOscillator();
+    const harmonic4 = this.audioContext.createOscillator();
+    const harmonic5 = this.audioContext.createOscillator();
+    
+    // Bow friction simulation
+    const bowFriction = this.audioContext.createOscillator();
+    const bowNoise = this.audioContext.createBufferSource();
+    
+    // Vibrato and tremolo
     const vibrato = this.audioContext.createOscillator();
     const tremolo = this.audioContext.createOscillator();
     
-    const mainGain = this.audioContext.createGain();
+    // Gains for each component
+    const fundGain = this.audioContext.createGain();
+    const harm2Gain = this.audioContext.createGain();
+    const harm3Gain = this.audioContext.createGain();
+    const harm4Gain = this.audioContext.createGain();
+    const harm5Gain = this.audioContext.createGain();
+    const bowGain = this.audioContext.createGain();
+    const noiseGain = this.audioContext.createGain();
     const vibratoGain = this.audioContext.createGain();
     const tremoloGain = this.audioContext.createGain();
     
-    const smoothFilter = this.audioContext.createBiquadFilter();
+    // Filters for realistic string resonance
+    const stringFilter = this.audioContext.createBiquadFilter();
+    const bodyFilter = this.audioContext.createBiquadFilter();
     
-    pureOsc.type = 'sine';
-    pureOsc.frequency.setValueAtTime(frequency, currentTime);
+    // String harmonics - perfect harmonic series
+    fundamental.type = 'sawtooth'; // Rich in harmonics naturally
+    fundamental.frequency.setValueAtTime(frequency, currentTime);
     
-    vibrato.type = 'sine';
-    vibrato.frequency.setValueAtTime(5.8, currentTime);
-    vibratoGain.gain.setValueAtTime(frequency * 0.15, currentTime);
+    harmonic2.type = 'sine';
+    harmonic2.frequency.setValueAtTime(frequency * 2, currentTime);
     
-    tremolo.type = 'sine';
-    tremolo.frequency.setValueAtTime(4.2, currentTime);
-    tremoloGain.gain.setValueAtTime(0.3, currentTime);
+    harmonic3.type = 'sine';
+    harmonic3.frequency.setValueAtTime(frequency * 3, currentTime);
     
-    smoothFilter.type = 'lowpass';
-    smoothFilter.frequency.setValueAtTime(frequency * 12, currentTime);
-    smoothFilter.Q.setValueAtTime(0.5, currentTime);
+    harmonic4.type = 'sine';
+    harmonic4.frequency.setValueAtTime(frequency * 4, currentTime);
     
-    // VERY slow attack, long sustain
-    const maxVolume = Math.max(0.001, velocity * 1.5);
-    mainGain.gain.setValueAtTime(0.001, currentTime);
-    mainGain.gain.exponentialRampToValueAtTime(maxVolume * 0.1, currentTime + 0.3);
-    mainGain.gain.exponentialRampToValueAtTime(maxVolume, currentTime + 0.8);
-    if (duration > 1.0) {
-      mainGain.gain.setValueAtTime(maxVolume, currentTime + duration - 0.5);
+    harmonic5.type = 'sine';
+    harmonic5.frequency.setValueAtTime(frequency * 5, currentTime);
+    
+    // Bow friction - creates the characteristic violin texture
+    bowFriction.type = 'sawtooth';
+    bowFriction.frequency.setValueAtTime(frequency * 0.5, currentTime);
+    
+    // Bow noise for realistic bow-on-string sound
+    const noiseLength = this.audioContext.sampleRate * duration;
+    const noiseBuffer = this.audioContext.createBuffer(1, noiseLength, this.audioContext.sampleRate);
+    const noiseData = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < noiseLength; i++) {
+      noiseData[i] = (Math.random() * 2 - 1) * 0.1 * (1 - i / noiseLength);
     }
-    mainGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    bowNoise.buffer = noiseBuffer;
     
+    // Realistic violin vibrato - 6.2 Hz
+    vibrato.type = 'sine';
+    vibrato.frequency.setValueAtTime(6.2, currentTime);
+    vibratoGain.gain.setValueAtTime(frequency * 0.08, currentTime); // Subtle vibrato
+    
+    // Bow tremolo for expression
+    tremolo.type = 'sine';
+    tremolo.frequency.setValueAtTime(3.8, currentTime);
+    tremoloGain.gain.setValueAtTime(0.15, currentTime);
+    
+    // String resonance filter
+    stringFilter.type = 'bandpass';
+    stringFilter.frequency.setValueAtTime(frequency * 4, currentTime);
+    stringFilter.Q.setValueAtTime(3, currentTime);
+    
+    // Body resonance filter
+    bodyFilter.type = 'lowpass';
+    bodyFilter.frequency.setValueAtTime(frequency * 8, currentTime);
+    bodyFilter.Q.setValueAtTime(1.5, currentTime);
+    
+    // Realistic violin envelope - slow bow attack, sustain, gentle release
+    const fundVol = Math.max(0.001, velocity * 0.8);
+    fundGain.gain.setValueAtTime(0.001, currentTime);
+    fundGain.gain.exponentialRampToValueAtTime(fundVol * 0.3, currentTime + 0.2); // Bow contact
+    fundGain.gain.exponentialRampToValueAtTime(fundVol, currentTime + 0.5); // Full bow pressure
+    if (duration > 1.0) {
+      fundGain.gain.setValueAtTime(fundVol * 0.9, currentTime + duration - 0.3);
+    }
+    fundGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    
+    // Harmonics with violin-like distribution
+    const harm2Vol = Math.max(0.001, velocity * 0.4);
+    harm2Gain.gain.setValueAtTime(0.001, currentTime);
+    harm2Gain.gain.exponentialRampToValueAtTime(harm2Vol, currentTime + 0.3);
+    harm2Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    
+    const harm3Vol = Math.max(0.001, velocity * 0.3);
+    harm3Gain.gain.setValueAtTime(0.001, currentTime);
+    harm3Gain.gain.exponentialRampToValueAtTime(harm3Vol, currentTime + 0.4);
+    harm3Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    
+    const harm4Vol = Math.max(0.001, velocity * 0.2);
+    harm4Gain.gain.setValueAtTime(0.001, currentTime);
+    harm4Gain.gain.exponentialRampToValueAtTime(harm4Vol, currentTime + 0.3);
+    harm4Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    
+    const harm5Vol = Math.max(0.001, velocity * 0.15);
+    harm5Gain.gain.setValueAtTime(0.001, currentTime);
+    harm5Gain.gain.exponentialRampToValueAtTime(harm5Vol, currentTime + 0.35);
+    harm5Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    
+    // Bow friction and noise
+    const bowVol = Math.max(0.001, velocity * 0.25);
+    bowGain.gain.setValueAtTime(bowVol, currentTime);
+    bowGain.gain.exponentialRampToValueAtTime(bowVol * 0.6, currentTime + 0.1);
+    bowGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    
+    const noiseVol = Math.max(0.001, velocity * 0.1);
+    noiseGain.gain.setValueAtTime(noiseVol, currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.8);
+    
+    // Apply vibrato to fundamental and harmonics
     vibrato.connect(vibratoGain);
-    vibratoGain.connect(pureOsc.frequency);
+    vibratoGain.connect(fundamental.frequency);
+    vibratoGain.connect(harmonic2.frequency);
+    vibratoGain.connect(harmonic3.frequency);
     
+    // Apply tremolo to overall amplitude
     tremolo.connect(tremoloGain);
-    tremoloGain.connect(mainGain.gain);
+    tremoloGain.connect(fundGain.gain);
     
-    pureOsc.connect(smoothFilter);
-    smoothFilter.connect(mainGain);
-    mainGain.connect(masterGain);
+    // Connect fundamental through both filters
+    fundamental.connect(stringFilter);
+    stringFilter.connect(bodyFilter);
+    bodyFilter.connect(fundGain);
+    fundGain.connect(masterGain);
     
-    pureOsc.start(currentTime);
+    // Connect harmonics
+    harmonic2.connect(harm2Gain);
+    harm2Gain.connect(masterGain);
+    
+    harmonic3.connect(harm3Gain);
+    harm3Gain.connect(masterGain);
+    
+    harmonic4.connect(harm4Gain);
+    harm4Gain.connect(masterGain);
+    
+    harmonic5.connect(harm5Gain);
+    harm5Gain.connect(masterGain);
+    
+    // Connect bow components
+    bowFriction.connect(bowGain);
+    bowGain.connect(masterGain);
+    
+    bowNoise.connect(noiseGain);
+    noiseGain.connect(masterGain);
+    
+    // Start all oscillators
+    fundamental.start(currentTime);
+    harmonic2.start(currentTime);
+    harmonic3.start(currentTime);
+    harmonic4.start(currentTime);
+    harmonic5.start(currentTime);
+    bowFriction.start(currentTime);
+    bowNoise.start(currentTime);
     vibrato.start(currentTime);
     tremolo.start(currentTime);
     
-    pureOsc.stop(currentTime + duration);
+    // Stop all oscillators
+    fundamental.stop(currentTime + duration);
+    harmonic2.stop(currentTime + duration);
+    harmonic3.stop(currentTime + duration);
+    harmonic4.stop(currentTime + duration);
+    harmonic5.stop(currentTime + duration);
+    bowFriction.stop(currentTime + duration);
     vibrato.stop(currentTime + duration);
     tremolo.stop(currentTime + duration);
     
-    oscillators.push(pureOsc, vibrato, tremolo);
+    oscillators.push(fundamental, harmonic2, harmonic3, harmonic4, harmonic5, bowFriction, vibrato, tremolo);
 
-    this.addReverb(masterGain, 0.4);
+    this.addReverb(masterGain, 0.5); // Concert hall reverb
     masterGain.connect(this.masterGain);
     this.trackOscillators(oscillators, 'violin', frequency);
   }
