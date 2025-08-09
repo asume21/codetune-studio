@@ -8,8 +8,49 @@ export class RealisticAudioEngine {
 
   // Map our instrument names to General MIDI soundfont names
   private instrumentLibrary: { [key: string]: string } = {
+    // Piano instruments
     piano: 'acoustic_grand_piano',
+    'piano-keyboard': 'acoustic_grand_piano',
+    'piano-grand': 'acoustic_grand_piano', 
+    'piano-organ': 'church_organ',
+    
+    // String instruments
     guitar: 'acoustic_guitar_nylon',
+    'strings-guitar': 'acoustic_guitar_nylon',
+    'strings-violin': 'violin',
+    'strings-ukulele': 'acoustic_guitar_nylon',
+    
+    // Flute instruments
+    'flute-recorder': 'recorder',
+    'flute-indian': 'flute',
+    'flute-concert': 'flute',
+    
+    // Horn instruments
+    'horns-trumpet': 'trumpet',
+    'horns-trombone': 'trombone',
+    'horns-french': 'french_horn',
+    
+    // Synthesizer (fallback to electric piano)
+    'synth-analog': 'electric_piano_1',
+    'synth-digital': 'electric_piano_2',
+    'synth-fm': 'electric_piano_1',
+    
+    // Bass instruments
+    'bass-electric': 'electric_bass_finger',
+    'bass-upright': 'acoustic_bass',
+    'bass-synth': 'synth_bass_1',
+    
+    // Pads (use warm synth sounds)
+    'pads-warm': 'pad_2_warm',
+    'pads-strings': 'string_ensemble_1',
+    'pads-choir': 'choir_aahs',
+    
+    // Leads (use bright synth sounds)
+    'leads-square': 'lead_1_square',
+    'leads-saw': 'lead_2_sawtooth',
+    'leads-pluck': 'lead_6_voice',
+    
+    // Legacy mappings for backwards compatibility
     bass: 'electric_bass_finger',
     violin: 'violin',
     organ: 'church_organ',
@@ -34,8 +75,11 @@ export class RealisticAudioEngine {
 
       console.log('Realistic audio context started');
 
-      // Load essential instruments first (piano, guitar)
-      await this.loadInstruments(['piano', 'guitar']);
+      // Load essential instruments first (piano, guitar, and a few more)
+      await this.loadInstruments([
+        'piano', 'guitar', 'violin', 'flute', 'trumpet', 
+        'piano-organ', 'bass-electric', 'strings-violin'
+      ]);
       
       this.isInitialized = true;
       this.isLoading = false;
@@ -63,7 +107,7 @@ export class RealisticAudioEngine {
         
         const instrument = await Soundfont.instrument(
           this.audioContext!, 
-          soundfontName,
+          soundfontName as any, // Type assertion for soundfont-player compatibility
           {
             format: 'mp3', // Use MP3 for better browser compatibility
             soundfont: 'MusyngKite' // High-quality soundfont
@@ -91,7 +135,7 @@ export class RealisticAudioEngine {
       const soundfontName = this.instrumentLibrary[instrumentName];
       const instrument = await Soundfont.instrument(
         this.audioContext, 
-        soundfontName,
+        soundfontName as any, // Type assertion for soundfont-player compatibility
         {
           format: 'mp3',
           soundfont: 'MusyngKite'
@@ -117,19 +161,35 @@ export class RealisticAudioEngine {
       await this.initialize();
     }
 
-    // Map our instrument names to realistic instruments
-    const instrumentMap: { [key: string]: string } = {
-      'piano': 'piano',
-      'guitar': 'guitar',
-      'bass': 'bass',
-      'violin': 'violin',
-      'organ': 'organ',
-      'synth': 'piano', // Fallback to piano for synth
-      'lead': 'guitar', // Fallback to guitar for lead
-      'strings': 'violin' // Use violin for strings
-    };
-
-    const realInstrument = instrumentMap[instrument] || 'piano';
+    // Use the instrument key directly, or fallback to legacy mapping
+    let realInstrument = instrument;
+    
+    // If instrument not in library, try fallback mapping
+    if (!(realInstrument in this.instrumentLibrary)) {
+      if (instrument.includes('piano') || instrument.includes('keyboard')) {
+        realInstrument = 'piano';
+      } else if (instrument.includes('guitar') || instrument.includes('string')) {
+        realInstrument = 'guitar';
+      } else if (instrument.includes('violin')) {
+        realInstrument = 'strings-violin';
+      } else if (instrument.includes('flute')) {
+        realInstrument = 'flute-concert';
+      } else if (instrument.includes('trumpet') || instrument.includes('horn')) {
+        realInstrument = 'horns-trumpet';
+      } else if (instrument.includes('bass')) {
+        realInstrument = 'bass-electric';
+      } else if (instrument.includes('organ')) {
+        realInstrument = 'piano-organ';
+      } else if (instrument.includes('synth')) {
+        realInstrument = 'synth-analog';
+      } else if (instrument.includes('lead')) {
+        realInstrument = 'leads-square';
+      } else if (instrument.includes('pad')) {
+        realInstrument = 'pads-warm';
+      } else {
+        realInstrument = 'piano'; // Ultimate fallback
+      }
+    }
     
     // Load instrument if not already loaded
     if (!this.instruments[realInstrument]) {

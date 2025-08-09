@@ -214,28 +214,41 @@ export default function MelodyComposer() {
       const randomStyle = styles[Math.floor(Math.random() * styles.length)];
       const randomComplexity = complexities[Math.floor(Math.random() * complexities.length)];
       
+      // Send ALL available tracks to AI for multi-instrument composition
+      const availableTracks = tracks.map(track => ({
+        id: track.id,
+        instrument: track.instrument,
+        name: track.name
+      }));
+      
       const response = await apiRequest("POST", "/api/melodies/generate", {
         ...data,
         style: randomStyle,
-        complexity: randomComplexity
+        complexity: randomComplexity,
+        availableTracks: availableTracks
       });
       return response.json();
     },
     onSuccess: (data) => {
       if (data.notes && data.notes.notes) {
-        const currentTrack = tracks.find(t => t.id === selectedTrack);
-        const instrument = currentTrack?.instrument || 'piano';
-
-        const newNotes = data.notes.notes.map((note: any, index: number) => ({
-          ...note,
-          track: selectedTrack,
-          start: note.start || index * 0.5,
-          duration: note.duration || getInstrumentDuration(instrument),
-        })) || [];
-        setNotes(prev => [...prev.filter(n => n.track !== selectedTrack), ...newNotes]);
+        // AI now generates for ALL tracks, not just selected one
+        const newNotes = data.notes.notes.map((note: any, index: number) => {
+          const noteTrack = tracks.find(t => t.id === note.track);
+          const instrument = noteTrack?.instrument || 'piano';
+          
+          return {
+            ...note,
+            track: note.track || selectedTrack, // Use AI-specified track or fallback
+            start: note.start || index * 0.5,
+            duration: note.duration || getInstrumentDuration(instrument),
+          };
+        }) || [];
+        
+        // Replace all existing notes with new multi-track composition
+        setNotes(newNotes);
         toast({
-          title: "Melody Generated",
-          description: `AI has composed a unique melody!`,
+          title: "Multi-Track Melody Generated",
+          description: `AI has composed a ${newNotes.length}-note arrangement across ${tracks.length} instruments!`,
         });
       }
     },
@@ -262,11 +275,11 @@ export default function MelodyComposer() {
   });
 
   const handleGenerateAI = () => {
-    const selectedTrackData = tracks.find(t => t.id === selectedTrack);
+    // AI now composes for ALL instruments simultaneously
     generateMelodyMutation.mutate({
       scale,
-      style: selectedTrackData?.instrument || 'electronic',
-      complexity: 5,
+      style: 'orchestral', // Use orchestral style to encourage multi-instrument composition
+      complexity: 6, // Higher complexity for richer arrangements
     });
   };
 

@@ -154,7 +154,7 @@ function generateRandomFallbackPattern(style: string, variation: string): any {
   };
 }
 
-export async function generateMelody(scale: string, style: string, complexity: number): Promise<any> {
+export async function generateMelody(scale: string, style: string, complexity: number, availableTracks?: Array<{id: string, instrument: string, name: string}>): Promise<any> {
   try {
     const melodyMoods = [
       "soaring and uplifting",
@@ -173,7 +173,10 @@ export async function generateMelody(scale: string, style: string, complexity: n
       "add ornaments and grace notes", 
       "use call and response patterns",
       "create melodic sequences",
-      "blend scalar and arpeggiated passages"
+      "blend scalar and arpeggiated passages",
+      "layer complementary instrument parts",
+      "create harmonic progressions",
+      "use instrument-specific techniques"
     ];
     
     const randomMood = melodyMoods[Math.floor(Math.random() * melodyMoods.length)];
@@ -181,31 +184,46 @@ export async function generateMelody(scale: string, style: string, complexity: n
     const timestamp = Date.now();
     const seed = Math.floor(Math.random() * 10000);
     
+    // Prepare instrument information for AI
+    const instrumentList = availableTracks ? 
+      availableTracks.map(track => `${track.id} (${track.name}: ${track.instrument})`).join(', ') :
+      'track1 (Piano: piano-keyboard), track2 (Guitar: strings-guitar), track3 (Flute: flute-recorder)';
+    
     const response = await openai.chat.completions.create({
       model: "grok-2-1212",
       messages: [
         {
           role: "system",
-          content: `You are a creative composer who writes unique, never-repeating melodies. Generate a ${randomMood} melody in ${scale} scale with ${style} style. 
+          content: `You are a creative multi-instrument composer who writes unique orchestral arrangements. Generate a ${randomMood} composition in ${scale} scale with ${style} style. 
           Complexity: ${complexity}/10. Use technique: ${randomTechnique}.
-          Return JSON with notes array: [{note, octave, start, duration, track}]. 
+          
+          CRITICAL: You have access to ALL instruments simultaneously:
+          Available instruments: ${instrumentList}
+          
+          Create parts for MULTIPLE instruments to make a rich, layered composition.
+          Return JSON with notes array where each note specifies which track/instrument to use.
           Use notes: C, D, E, F, G, A, B (without octave numbers).
-          Use octaves: 3, 4, 5. Set track to "track1". Make each melody COMPLETELY DIFFERENT.`
+          Use octaves: 3, 4, 5. Make each melody COMPLETELY DIFFERENT and use ALL available instruments.`
         },
         {
           role: "user",
-          content: `Create a fresh ${randomMood} ${style} melody in ${scale} scale (complexity ${complexity}).
+          content: `Create a fresh ${randomMood} ${style} multi-instrument composition in ${scale} scale (complexity ${complexity}).
           Session: ${timestamp}-${seed}
+          
+          Available instruments: ${instrumentList}
           
           Requirements:
           - Return JSON format: {notes: [{note: "C", octave: 4, start: 0, duration: 0.5, track: "track1"}]}
           - Use note names: C, D, E, F, G, A, B (no numbers like C4)
           - Use octaves as separate number: 3, 4, or 5
-          - Must be unique and different from previous melodies
+          - CREATE PARTS FOR MULTIPLE INSTRUMENTS - don't just use one track
+          - Layer instruments harmonically (piano chords + guitar melody + flute harmony)
           - ${randomTechnique}
-          - Create interesting melodic contours
-          - Vary note durations: 0.25, 0.5, 0.75, 1.0, 1.5
-          - Make it ${randomMood} in character`
+          - Create interesting melodic contours across ALL instruments
+          - Vary note durations: 0.25, 0.5, 0.75, 1.0, 1.5, 2.0
+          - Make it ${randomMood} in character
+          - Use instrument ranges appropriately (bass notes for low instruments, high notes for flute)
+          - Create complementary parts that work together as an ensemble`
         }
       ],
       response_format: { type: "json_object" },
@@ -215,47 +233,64 @@ export async function generateMelody(scale: string, style: string, complexity: n
     const result = JSON.parse(response.choices[0].message.content || "{}");
     
     if (!result.notes) {
-      return generateRandomMelody(scale, style, complexity, randomMood);
+      return generateRandomMultiTrackMelody(scale, style, complexity, randomMood, availableTracks);
     }
     
     return result;
   } catch (error) {
     console.error("Melody AI generation failed, using randomized fallback:", error);
-    return generateRandomMelody(scale, style, complexity, "creative");
+    return generateRandomMultiTrackMelody(scale, style, complexity, "creative", availableTracks);
   }
 }
 
-function generateRandomMelody(scale: string, style: string, complexity: number, mood: string): any {
+function generateRandomMultiTrackMelody(scale: string, style: string, complexity: number, mood: string, availableTracks?: Array<{id: string, instrument: string, name: string}>): any {
   const scaleNotes = getScaleNotes(scale);
-  const notes = [];
-  const numNotes = Math.floor(Math.random() * 8) + 6; // 6-14 notes for variety
+  const notes: any[] = [];
   
-  // Add octave variations for more interesting melodies
-  const octaveVariations = [3, 4, 5];
+  // Default tracks if none provided
+  const tracks = availableTracks || [
+    {id: 'track1', instrument: 'piano-keyboard', name: 'Piano'},
+    {id: 'track2', instrument: 'strings-guitar', name: 'Guitar'},
+    {id: 'track3', instrument: 'flute-recorder', name: 'Flute'}
+  ];
   
-  let currentTime = 0;
-  for (let i = 0; i < numNotes; i++) {
-    const randomNote = scaleNotes[Math.floor(Math.random() * scaleNotes.length)];
-    const randomOctave = octaveVariations[Math.floor(Math.random() * octaveVariations.length)];
-    const duration = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0][Math.floor(Math.random() * 6)];
+  // Generate notes for each track
+  tracks.forEach((track, trackIndex) => {
+    const numNotes = Math.floor(Math.random() * 6) + 4; // 4-10 notes per track
+    const octaveVariations = getInstrumentOctaveRange(track.instrument);
     
-    notes.push({
-      note: randomNote.note,
-      octave: randomOctave,
-      start: currentTime,
-      duration,
-      track: 'track1' // Default track for generated melodies
-    });
+    let currentTime = trackIndex * 0.5; // Slight offset between tracks
     
-    currentTime += duration;
-  }
+    for (let i = 0; i < numNotes; i++) {
+      const randomNote = scaleNotes[Math.floor(Math.random() * scaleNotes.length)];
+      const randomOctave = octaveVariations[Math.floor(Math.random() * octaveVariations.length)];
+      const duration = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0][Math.floor(Math.random() * 6)];
+      
+      notes.push({
+        note: randomNote.note,
+        octave: randomOctave,
+        start: currentTime,
+        duration,
+        track: track.id
+      });
+      
+      currentTime += duration + (Math.random() * 0.25); // Small random gaps
+    }
+  });
   
   return {
-    notes,
-    name: `${mood} ${style} Melody`,
+    notes: notes,
+    name: `${mood} ${style} Multi-Track Melody`,
     scale,
-    explanation: `Randomized ${mood} melody with ${numNotes} notes across multiple octaves`
+    explanation: `Randomized ${mood} melody with ${notes.length} notes across ${tracks.length} instruments`
   };
+}
+
+function getInstrumentOctaveRange(instrument: string): number[] {
+  if (instrument.includes('bass')) return [2, 3, 4];
+  if (instrument.includes('flute') || instrument.includes('trumpet')) return [4, 5, 6];
+  if (instrument.includes('guitar') || instrument.includes('violin')) return [3, 4, 5];
+  return [3, 4, 5]; // Default range
 }
 
 function getScaleNotes(scale: string) {

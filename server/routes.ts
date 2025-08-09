@@ -97,12 +97,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Melody Routes
   app.post("/api/melodies/generate", async (req, res) => {
     try {
-      const { scale = "C Major", style = "electronic", complexity = 5 } = req.body;
+      const { scale = "C Major", style = "electronic", complexity = 5, availableTracks } = req.body;
 
-      const melodyData = await generateMelody(scale, style, complexity);
+      const melodyData = await generateMelody(scale, style, complexity, availableTracks);
 
       const melody = await storage.createMelody(currentUserId, {
-        name: `${style} Melody`,
+        name: `${style} Multi-Track Melody`,
         notes: melodyData,
         scale,
       });
