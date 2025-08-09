@@ -76,19 +76,21 @@ export class AudioEngine {
       const preset = this.getInstrumentPreset(instrument);
       const currentTime = this.audioContext.currentTime;
 
-      // Use specialized synthesis based on instrument type
+      // Use specialized synthesis based on instrument type (most specific first)
       if (instrument.includes('piano') || instrument.includes('grand') || instrument.includes('keyboard') || instrument.includes('organ')) {
         this.playPianoNote(frequency, duration, preset, velocity, currentTime, instrument);
+      } else if (instrument.includes('guitar')) {
+        this.playGuitarNote(frequency, duration, preset, velocity, currentTime);
+      } else if (instrument.includes('violin')) {
+        this.playViolinNote(frequency, duration, preset, velocity, currentTime);
+      } else if (instrument.includes('ukulele')) {
+        this.playUkuleleNote(frequency, duration, preset, velocity, currentTime);
       } else if (instrument.includes('strings')) {
         this.playStringNote(frequency, duration, preset, velocity, currentTime);
       } else if (instrument.includes('flute')) {
         this.playFluteNote(frequency, duration, preset, velocity, currentTime);
       } else if (instrument.includes('horns')) {
         this.playHornNote(frequency, duration, preset, velocity, currentTime);
-      } else if (instrument.includes('guitar')) {
-        this.playGuitarNote(frequency, duration, preset, velocity, currentTime);
-      } else if (instrument.includes('violin')) {
-        this.playViolinNote(frequency, duration, preset, velocity, currentTime);
       } else {
         this.playGenericNote(frequency, duration, preset, velocity, currentTime);
       }
@@ -516,6 +518,115 @@ export class AudioEngine {
     this.addReverb(masterGain, 0.3);
     masterGain.connect(this.masterGain);
     this.trackOscillators(oscillators, 'violin', frequency);
+  }
+
+  private playUkuleleNote(frequency: number, duration: number, preset: any, velocity: number, currentTime: number) {
+    if (!this.audioContext || !this.masterGain) return;
+
+    const oscillators: OscillatorNode[] = [];
+    const masterGain = this.audioContext.createGain();
+    
+    // Ukulele synthesis - bright, small-bodied string instrument
+    const fundamentalOsc = this.audioContext.createOscillator();
+    const harmonic2 = this.audioContext.createOscillator();
+    const harmonic3 = this.audioContext.createOscillator();
+    const bodyResonance = this.audioContext.createOscillator();
+    
+    const fundamentalGain = this.audioContext.createGain();
+    const harmonic2Gain = this.audioContext.createGain();
+    const harmonic3Gain = this.audioContext.createGain();
+    const bodyGain = this.audioContext.createGain();
+    
+    const stringFilter = this.audioContext.createBiquadFilter();
+    const bodyFilter = this.audioContext.createBiquadFilter();
+    const brightnessFilter = this.audioContext.createBiquadFilter();
+    
+    // Fundamental - bright plucked nylon string
+    fundamentalOsc.type = 'triangle';
+    fundamentalOsc.frequency.setValueAtTime(frequency, currentTime);
+    
+    // Bright harmonics for ukulele character
+    harmonic2.type = 'sine';
+    harmonic2.frequency.setValueAtTime(frequency * 2, currentTime);
+    
+    harmonic3.type = 'sine';
+    harmonic3.frequency.setValueAtTime(frequency * 3, currentTime);
+    
+    // Small body resonance (higher than guitar)
+    bodyResonance.type = 'triangle';
+    bodyResonance.frequency.setValueAtTime(frequency * 0.9, currentTime);
+    
+    // String filtering - brighter and more open than guitar
+    stringFilter.type = 'lowpass';
+    stringFilter.frequency.setValueAtTime(Math.min(12000, frequency * 12), currentTime);
+    stringFilter.frequency.exponentialRampToValueAtTime(Math.min(8000, frequency * 8), currentTime + duration * 0.4);
+    stringFilter.Q.setValueAtTime(1.5, currentTime);
+    
+    // Small body filtering - higher resonance
+    bodyFilter.type = 'bandpass';
+    bodyFilter.frequency.setValueAtTime(220, currentTime); // Higher than guitar
+    bodyFilter.Q.setValueAtTime(6, currentTime);
+    
+    // Brightness filter for sparkle
+    brightnessFilter.type = 'highpass';
+    brightnessFilter.frequency.setValueAtTime(800, currentTime);
+    brightnessFilter.Q.setValueAtTime(0.7, currentTime);
+    
+    // Ukulele envelope - quick, bright attack with shorter sustain
+    const fundamentalVolume = Math.max(0.001, velocity * 0.9);
+    fundamentalGain.gain.setValueAtTime(fundamentalVolume, currentTime);
+    fundamentalGain.gain.exponentialRampToValueAtTime(Math.max(0.001, fundamentalVolume * 0.7), currentTime + 0.03);
+    fundamentalGain.gain.exponentialRampToValueAtTime(Math.max(0.001, fundamentalVolume * 0.3), currentTime + duration * 0.4);
+    fundamentalGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    
+    const harmonic2Volume = Math.max(0.001, velocity * 0.4);
+    harmonic2Gain.gain.setValueAtTime(harmonic2Volume, currentTime);
+    harmonic2Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.6);
+    
+    const harmonic3Volume = Math.max(0.001, velocity * 0.3);
+    harmonic3Gain.gain.setValueAtTime(harmonic3Volume, currentTime);
+    harmonic3Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.5);
+    
+    const bodyVolume = Math.max(0.001, velocity * 0.3);
+    bodyGain.gain.setValueAtTime(0.001, currentTime);
+    bodyGain.gain.exponentialRampToValueAtTime(bodyVolume, currentTime + 0.015);
+    bodyGain.gain.exponentialRampToValueAtTime(Math.max(0.001, bodyVolume * 0.4), currentTime + duration * 0.3);
+    bodyGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    
+    // Connect the audio graph
+    fundamentalOsc.connect(brightnessFilter);
+    brightnessFilter.connect(stringFilter);
+    stringFilter.connect(fundamentalGain);
+    fundamentalGain.connect(masterGain);
+    
+    harmonic2.connect(stringFilter);
+    stringFilter.connect(harmonic2Gain);
+    harmonic2Gain.connect(masterGain);
+    
+    harmonic3.connect(stringFilter);
+    stringFilter.connect(harmonic3Gain);
+    harmonic3Gain.connect(masterGain);
+    
+    bodyResonance.connect(bodyFilter);
+    bodyFilter.connect(bodyGain);
+    bodyGain.connect(masterGain);
+    
+    // Start all oscillators
+    fundamentalOsc.start(currentTime);
+    harmonic2.start(currentTime);
+    harmonic3.start(currentTime);
+    bodyResonance.start(currentTime);
+    
+    fundamentalOsc.stop(currentTime + duration);
+    harmonic2.stop(currentTime + duration);
+    harmonic3.stop(currentTime + duration);
+    bodyResonance.stop(currentTime + duration);
+    
+    oscillators.push(fundamentalOsc, harmonic2, harmonic3, bodyResonance);
+
+    this.addReverb(masterGain, 0.15);
+    masterGain.connect(this.masterGain);
+    this.trackOscillators(oscillators, 'ukulele', frequency);
   }
 
   private playFluteNote(frequency: number, duration: number, preset: any, velocity: number, currentTime: number) {
