@@ -6,12 +6,69 @@ import { useToast } from "@/hooks/use-toast";
 let globalAudioInitialized = false;
 const audioInitCallbacks: (() => void)[] = [];
 
+// Note frequency calculation helper
+function getNoteFrequency(note: string, octave: number = 4): number {
+  const noteMap: { [key: string]: number } = {
+    'C': 0, 'C#': 1, 'DB': 1, 'D': 2, 'D#': 3, 'EB': 3, 'E': 4, 'F': 5,
+    'F#': 6, 'GB': 6, 'G': 7, 'G#': 8, 'AB': 8, 'A': 9, 'A#': 10, 'BB': 10, 'B': 11
+  };
+  
+  const noteNumber = noteMap[note.toUpperCase()];
+  if (noteNumber === undefined) {
+    console.warn(`Unknown note: ${note}`);
+    return 440; // Default to A4
+  }
+  
+  return 440 * Math.pow(2, (octave - 4) + (noteNumber - 9) / 12);
+}
+
 interface UseAudioReturn {
   playNote: (note: string | number, octave?: number, duration?: number, instrument?: string) => void;
   playDrumSound: (type: string, volume?: number) => void;
   setMasterVolume: (volume: number) => void;
   isInitialized: boolean;
   initialize: () => Promise<void>;
+}
+
+// Sequencer hook for beat patterns
+export function useSequencer() {
+  const { playDrumSound } = useAudio();
+  
+  return {
+    playPattern: (pattern: any[]) => {
+      pattern.forEach((step, index) => {
+        if (step.active) {
+          setTimeout(() => {
+            playDrumSound(step.sound || 'kick', step.velocity || 0.7);
+          }, index * 125); // 125ms per step for 120 BPM
+        }
+      });
+    }
+  };
+}
+
+// Melody player hook for playing note sequences
+export function useMelodyPlayer() {
+  const { playNote } = useAudio();
+  
+  return {
+    playMelody: (notes: any[], instrument: string = 'piano') => {
+      notes.forEach((note, index) => {
+        setTimeout(() => {
+          if (note && note.note) {
+            playNote(note.note, note.octave || 4, note.duration || 0.5, instrument);
+          }
+        }, index * (note?.duration || 0.5) * 1000);
+      });
+    },
+    playChord: (notes: any[], instrument: string = 'piano') => {
+      notes.forEach(note => {
+        if (note && note.note) {
+          playNote(note.note, note.octave || 4, note.duration || 1.0, instrument);
+        }
+      });
+    }
+  };
 }
 
 export function useAudio(): UseAudioReturn {
@@ -56,30 +113,21 @@ export function useAudio(): UseAudioReturn {
     };
   }, []);
 
-  const playNote = useCallback(async (note: string | number, octave: number = 4, duration: number = 0.5, instrument: string = 'piano', velocity: number = 0.7) => {
+  const playNote = useCallback(async (note: string | number, octave: number = 4, duration: number = 0.5, instrument: string = 'piano') => {
     try {
       if (!globalAudioInitialized) {
         await initialize();
       }
       
-      await audioEngine.resumeContext();
-      const frequency = AudioEngine.getNoteFrequency(note, octave);
-      audioEngine.playNote(frequency, duration, instrument, velocity);
+      // Resume audio context if needed
+      if (audioEngine.audioContext?.state === 'suspended') {
+        await audioEngine.audioContext.resume();
+      }
+      
+      const frequency = typeof note === 'string' ? getNoteFrequency(note, octave) : note;
+      await audioEngine.playNote(frequency, duration, 0.7, instrument);
     } catch (error) {
       console.error("Failed to play note:", error);
-    }
-  }, [initialize]);
-
-  const playFrequency = useCallback(async (frequency: number, duration: number = 0.5, instrument: string = 'piano', velocity: number = 0.7) => {
-    try {
-      if (!globalAudioInitialized) {
-        await initialize();
-      }
-      
-      await audioEngine.resumeContext();
-      audioEngine.playNote(frequency, duration, instrument, velocity);
-    } catch (error) {
-      console.error("Failed to play frequency:", error);
     }
   }, [initialize]);
 
@@ -89,8 +137,12 @@ export function useAudio(): UseAudioReturn {
         await initialize();
       }
       
-      await audioEngine.resumeContext();
-      audioEngine.playDrumSound(type, volume);
+      // Resume audio context if needed
+      if (audioEngine.audioContext?.state === 'suspended') {
+        await audioEngine.audioContext.resume();
+      }
+      
+      audioEngine.playDrum(type as any, volume);
     } catch (error) {
       console.error("Failed to play drum sound:", error);
     }
@@ -125,108 +177,9 @@ export function useAudio(): UseAudioReturn {
 
   return {
     playNote,
-    playFrequency,
     playDrumSound,
     setMasterVolume,
     isInitialized,
     initialize,
-  };
-}
-
-// Hook for sequencer/pattern playback
-export function useSequencer() {
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const currentStepRef = useRef(0);
-  const { playDrumSound } = useAudio();
-
-  const playPattern = useCallback((pattern: any, bpm: number = 120) => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-
-    const stepDuration = (60 / bpm / 4) * 1000; // 16th notes in milliseconds
-    
-    intervalRef.current = setInterval(() => {
-      const step = currentStepRef.current % 16;
-      
-      // Play sounds for active steps
-      Object.entries(pattern).forEach(([track, steps]: [string, any]) => {
-        if (steps[step]) {
-          playDrumSound(track);
-        }
-      });
-      
-      currentStepRef.current++;
-    }, stepDuration);
-  }, [playDrumSound]);
-
-  const stopPattern = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    currentStepRef.current = 0;
-  }, []);
-
-  const isPlaying = intervalRef.current !== null;
-
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
-
-  return {
-    playPattern,
-    stopPattern,
-    isPlaying,
-    currentStep: currentStepRef.current % 16,
-  };
-}
-
-// Hook for melody playback
-export function useMelodyPlayer() {
-  const timeoutRefs = useRef<NodeJS.Timeout[]>([]);
-  const { playNote } = useAudio();
-
-  const playMelody = useCallback((notes: any[], bpm: number = 120, tracks: any[] = []) => {
-    // Clear any existing timeouts
-    timeoutRefs.current.forEach(timeout => clearTimeout(timeout));
-    timeoutRefs.current = [];
-
-    const beatDuration = (60 / bpm) * 1000; // Beat duration in milliseconds
-
-    notes.forEach(note => {
-      const delay = note.start * beatDuration;
-      const duration = note.duration * beatDuration / 1000; // Convert to seconds
-      
-      // Find the track to get the instrument
-      const track = tracks.find(t => t.id === note.track);
-      const instrument = track?.instrument || 'piano';
-      
-      const timeout = setTimeout(() => {
-        playNote(note.note, note.octave, duration, instrument);
-      }, delay);
-      
-      timeoutRefs.current.push(timeout);
-    });
-  }, [playNote]);
-
-  const stopMelody = useCallback(() => {
-    timeoutRefs.current.forEach(timeout => clearTimeout(timeout));
-    timeoutRefs.current = [];
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      timeoutRefs.current.forEach(timeout => clearTimeout(timeout));
-    };
-  }, []);
-
-  return {
-    playMelody,
-    stopMelody,
   };
 }
