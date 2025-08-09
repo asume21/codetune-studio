@@ -121,6 +121,8 @@ export default function MelodyComposer() {
   const [currentOctave, setCurrentOctave] = useState(4);
   const [gridSnapSize, setGridSnapSize] = useState(0.25); // 16th notes
   const [sustainEnabled, setSustainEnabled] = useState(true);
+  const [isHoldingNote, setIsHoldingNote] = useState(false);
+  const [holdStartTime, setHoldStartTime] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1);
   const [arpeggioMode, setArpeggioMode] = useState(false);
   const [arpeggioPattern, setArpeggioPattern] = useState('up');
@@ -307,7 +309,7 @@ export default function MelodyComposer() {
     }
   };
 
-  const handlePianoRollClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePianoRollMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -334,8 +336,40 @@ export default function MelodyComposer() {
     };
 
     setNotes([...notes, newNote]);
+    
+    // Start hold tracking for sustain
+    setIsHoldingNote(true);
+    setHoldStartTime(Date.now());
+    
+    // Play note immediately on mouse down (quick click = no sustain)
     const currentTrack = tracks.find(t => t.id === selectedTrack);
-    playNote(note, octave, gridSnapSize, currentTrack?.instrument || 'piano');
+    playNote(note, octave, gridSnapSize, currentTrack?.instrument || 'piano', 0.7, false); // No sustain on initial click
+  };
+
+  const handlePianoRollMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isHoldingNote && holdStartTime) {
+      const holdDuration = Date.now() - holdStartTime;
+      
+      // If held for more than 150ms, play with sustain
+      if (holdDuration > 150) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Calculate note from y position
+        const noteIndex = Math.floor((rect.height - y) / (rect.height / 48));
+        const octave = Math.floor(noteIndex / 12) + 2;
+        const noteInOctave = noteIndex % 12;
+        const note = pianoKeys[noteInOctave].note;
+
+        const currentTrack = tracks.find(t => t.id === selectedTrack);
+        // Play with sustain for held notes
+        playNote(note, octave, gridSnapSize * 2, currentTrack?.instrument || 'piano', 0.7, sustainEnabled);
+      }
+    }
+    
+    setIsHoldingNote(false);
+    setHoldStartTime(null);
   };
 
   const removeNote = (index: number) => {
@@ -739,7 +773,7 @@ export default function MelodyComposer() {
                   Piano Roll Editor - {tracks.find(t => t.id === selectedTrack)?.name} 
                 </h3>
                 <p className="text-sm text-gray-400 mt-1">
-                  Click on the grid to add notes • Click existing notes to delete them • Drag the right edge of notes to resize
+                  Click grid to add notes (hold for sustain) • Click existing notes to delete • Drag note edges to resize
                 </p>
               </div>
               <div className="text-right">
@@ -755,9 +789,9 @@ export default function MelodyComposer() {
             {/* Multi-track Piano Roll Grid */}
             <div 
               className="h-80 bg-gray-900 rounded border border-gray-600 relative overflow-hidden cursor-crosshair piano-roll-container"
-              onClick={handlePianoRollClick}
+              onMouseDown={handlePianoRollMouseDown}
+              onMouseUp={handlePianoRollMouseUp}
               onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
             >
               {/* Vertical grid lines (beats) */}
               <div className="absolute inset-0 pointer-events-none">
