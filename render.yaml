@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: codetune-studio
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        fromService:
+          type: web
+          name: codetune-studio
+          property: port
+      - key: XAI_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+    autoDeploy: false
