@@ -42,6 +42,7 @@ Type here or use AI generation...`);
   const [mood, setMood] = useState("upbeat");
   const [currentWord, setCurrentWord] = useState("");
   const [rhymeSuggestions, setRhymeSuggestions] = useState<RhymeSuggestion[]>([]);
+  const [hasGeneratedMusic, setHasGeneratedMusic] = useState(false);
 
   const { toast } = useToast();
   const { initialize, isInitialized } = useAudio();
@@ -114,9 +115,10 @@ Type here or use AI generation...`);
       if (data.codeMusic) {
         studioContext.setCurrentCodeMusic(data.codeMusic);
       }
+      setHasGeneratedMusic(true);
       toast({
         title: "Music Generated from Lyrics",
-        description: "AI has created matching beats and melodies for your lyrics!",
+        description: "Beat pattern and melody created! Check the Beat Maker or Melody Composer tabs to see and edit your generated music.",
       });
     },
     onError: () => {
@@ -429,6 +431,37 @@ Type here or use AI generation...`);
                 ))}
               </div>
             </div>
+
+            {/* Generated Music Status */}
+            {hasGeneratedMusic && (
+              <div className="bg-green-900 bg-opacity-30 border border-green-500 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium text-green-400">Generated Music Ready</h3>
+                  <i className="fas fa-check-circle text-green-400"></i>
+                </div>
+                <p className="text-sm text-green-300 mb-3">
+                  Your lyrics have been transformed into music! Check these tabs:
+                </p>
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'beatmaker' }))}
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-500 text-xs"
+                  >
+                    <i className="fas fa-drum mr-1"></i>
+                    View Beat
+                  </Button>
+                  <Button
+                    onClick={() => window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'melody' }))}
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-500 text-xs"
+                  >
+                    <i className="fas fa-music mr-1"></i>
+                    View Melody
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* AI Generation */}
             <div className="bg-studio-panel border border-gray-600 rounded-lg p-4">

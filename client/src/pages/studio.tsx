@@ -1,4 +1,4 @@
-import { useState, createContext, useContext } from "react";
+import { useState, createContext, useContext, useEffect } from "react";
 import Header from "@/components/studio/Header";
 import Sidebar from "@/components/studio/Sidebar";
 import TransportControls from "@/components/studio/TransportControls";
@@ -49,6 +49,19 @@ export default function Studio() {
   const [studioBpm, setStudioBpm] = useState(120);
   
   const { initialize, isInitialized } = useAudio();
+
+  // Listen for tab navigation events from other components
+  useEffect(() => {
+    const handleTabNavigation = (event: CustomEvent) => {
+      const targetTab = event.detail as Tab;
+      setActiveTab(targetTab);
+    };
+
+    window.addEventListener('navigateToTab', handleTabNavigation as EventListener);
+    return () => {
+      window.removeEventListener('navigateToTab', handleTabNavigation as EventListener);
+    };
+  }, []);
 
   const playCurrentAudio = async () => {
     if (!isInitialized) {
