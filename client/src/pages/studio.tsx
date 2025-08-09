@@ -12,6 +12,7 @@ import LyricLab from "@/components/studio/LyricLab";
 import Mixer from "@/components/studio/Mixer";
 import DynamicLayering from "@/components/studio/DynamicLayering";
 import SongUploader from "@/components/studio/SongUploader";
+import { MIDIController } from "@/components/studio/MIDIController";
 import { useAudio } from "@/hooks/use-audio";
 
 // Global studio audio context for master playback
@@ -34,7 +35,7 @@ export const StudioAudioContext = createContext({
   stopFullSong: () => {},
 });
 
-type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "assistant" | "security" | "lyrics" | "mixer" | "layers" | "upload";
+type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "assistant" | "security" | "lyrics" | "mixer" | "layers" | "upload" | "midi";
 
 export default function Studio() {
   const [activeTab, setActiveTab] = useState<Tab>("beatmaker");
@@ -135,6 +136,8 @@ export default function Studio() {
         return <DynamicLayering />;
       case "upload":
         return <SongUploader />;
+      case "midi":
+        return <MIDIController />;
       default:
         return <BeatMaker />;
     }

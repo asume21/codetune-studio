@@ -58,6 +58,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             {activeTab === "security" && "Scan code for vulnerabilities"}
             {activeTab === "lyrics" && "Write and edit song lyrics"}
             {activeTab === "mixer" && "Mix and master your tracks"}
+            {activeTab === "midi" && "Connect physical MIDI controllers"}
           </div>
         </div>
       </div>
