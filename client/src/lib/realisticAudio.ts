@@ -272,19 +272,36 @@ export class RealisticAudioEngine {
     // Load synth_drum soundfont for drums if not loaded
     if (!this.instruments['drums']) {
       try {
+        // Use standard_kit_1 for better drum sounds
         const drumKit = await Soundfont.instrument(
           this.audioContext!, 
-          'synth_drum',
+          'standard_kit_1' as any,
           {
             format: 'mp3',
-            soundfont: 'MusyngKite'
+            soundfont: 'FluidR3_GM'
           }
         );
         this.instruments['drums'] = drumKit;
-        console.log('Loaded realistic drum kit');
+        console.log('🎵 Loaded realistic drum kit (standard_kit_1)');
       } catch (error) {
-        console.error('Failed to load drum kit:', error);
-        return;
+        console.error('🎵 Failed to load drum kit, trying fallback:', error);
+        
+        // Fallback to synth_drum if standard_kit_1 fails
+        try {
+          const fallbackKit = await Soundfont.instrument(
+            this.audioContext!, 
+            'synth_drum',
+            {
+              format: 'mp3',
+              soundfont: 'MusyngKite'
+            }
+          );
+          this.instruments['drums'] = fallbackKit;
+          console.log('🎵 Loaded realistic drum kit (synth_drum fallback)');
+        } catch (fallbackError) {
+          console.error('🎵 Failed to load fallback drum kit:', fallbackError);
+          return;
+        }
       }
     }
 
