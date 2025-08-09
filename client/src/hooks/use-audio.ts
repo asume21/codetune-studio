@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { audioEngine, AudioEngine } from "@/lib/audio";
+import { realisticAudio } from "@/lib/realisticAudio";
 import { useToast } from "@/hooks/use-toast";
 
 // Global audio state
@@ -28,6 +29,8 @@ interface UseAudioReturn {
   setMasterVolume: (volume: number) => void;
   isInitialized: boolean;
   initialize: () => Promise<void>;
+  useRealisticSounds: boolean;
+  toggleRealisticSounds: () => void;
 }
 
 // Sequencer hook for beat patterns
@@ -80,13 +83,17 @@ export function useMelodyPlayer() {
 
 export function useAudio(): UseAudioReturn {
   const [isInitialized, setIsInitialized] = useState(globalAudioInitialized);
+  const [useRealisticSounds, setUseRealisticSounds] = useState(true);
   const { toast } = useToast();
 
   const initialize = useCallback(async () => {
     if (globalAudioInitialized) return;
 
     try {
+      // Initialize both audio engines
       await audioEngine.initialize();
+      await realisticAudio.initialize();
+      
       globalAudioInitialized = true;
       setIsInitialized(true);
       
@@ -95,7 +102,7 @@ export function useAudio(): UseAudioReturn {
       
       toast({
         title: "Audio System Ready",
-        description: "Audio engine initialized successfully.",
+        description: "Realistic and synthetic audio engines initialized successfully.",
       });
     } catch (error) {
       console.error("Failed to initialize audio:", error);
@@ -126,17 +133,30 @@ export function useAudio(): UseAudioReturn {
         await initialize();
       }
       
-      // Resume audio context if needed
-      if (audioEngine.audioContext?.state === 'suspended') {
-        await audioEngine.audioContext.resume();
+      let noteString: string;
+      if (typeof note === 'number') {
+        // Convert MIDI number to note
+        const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const midiOctave = Math.floor(note / 12) - 1;
+        const noteIndex = note % 12;
+        noteString = noteNames[noteIndex];
+        octave = midiOctave;
+      } else {
+        noteString = note;
       }
-      
-      const frequency = typeof note === 'string' ? getNoteFrequency(note, octave) : note;
-      await audioEngine.playNote(frequency, duration, velocity, instrument, sustainEnabled);
+
+      if (useRealisticSounds && realisticAudio.isReady()) {
+        // Use realistic sampled instruments
+        await realisticAudio.playNote(noteString, octave, duration, instrument, velocity, sustainEnabled);
+      } else {
+        // Fallback to synthetic Web Audio API
+        const frequency = getNoteFrequency(noteString, octave);
+        await audioEngine.playNote(frequency, duration, velocity, instrument, sustainEnabled);
+      }
     } catch (error) {
       console.error("Failed to play note:", error);
     }
-  }, [initialize]);
+  }, [initialize, useRealisticSounds]);
 
   const playDrumSound = useCallback(async (type: string, volume: number = 0.5) => {
     try {
@@ -144,16 +164,17 @@ export function useAudio(): UseAudioReturn {
         await initialize();
       }
       
-      // Resume audio context if needed
-      if (audioEngine.audioContext?.state === 'suspended') {
-        await audioEngine.audioContext.resume();
+      if (useRealisticSounds && realisticAudio.isReady()) {
+        // Use realistic drum samples
+        await realisticAudio.playDrumSound(type);
+      } else {
+        // Fallback to synthetic drums
+        audioEngine.playDrum(type as any, volume);
       }
-      
-      audioEngine.playDrum(type as any, volume);
     } catch (error) {
       console.error("Failed to play drum sound:", error);
     }
-  }, [initialize]);
+  }, [initialize, useRealisticSounds]);
 
   const setMasterVolume = useCallback((volume: number) => {
     try {
@@ -182,11 +203,17 @@ export function useAudio(): UseAudioReturn {
     };
   }, [initialize]);
 
+  const toggleRealisticSounds = useCallback(() => {
+    setUseRealisticSounds(prev => !prev);
+  }, []);
+
   return {
     playNote,
     playDrumSound,
     setMasterVolume,
     isInitialized,
     initialize,
+    useRealisticSounds,
+    toggleRealisticSounds,
   };
 }

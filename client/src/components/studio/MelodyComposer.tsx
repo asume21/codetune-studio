@@ -134,7 +134,7 @@ export default function MelodyComposer() {
   const [isDragging, setIsDragging] = useState(false);
 
   const { toast } = useToast();
-  const { playNote, initialize, isInitialized } = useAudio();
+  const { playNote, initialize, isInitialized, useRealisticSounds, toggleRealisticSounds } = useAudio();
   const { playMelody: playMelodySequence, stopMelody: stopMelodySequence } = useMelodyPlayer();
   const [isMelodyPlaying, setIsMelodyPlaying] = useState(false);
   const { playMelody, stopMelody } = useMelodyPlayer();
@@ -684,6 +684,18 @@ export default function MelodyComposer() {
                 className={`${sustainEnabled ? 'bg-studio-accent hover:bg-blue-500' : 'bg-gray-600 hover:bg-gray-500'} text-white`}
               >
                 {sustainEnabled ? "ON" : "OFF"}
+              </Button>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-300">Realistic Sounds:</label>
+              <Button
+                size="sm"
+                variant={useRealisticSounds ? "default" : "outline"}
+                onClick={toggleRealisticSounds}
+                className={`${useRealisticSounds ? 'bg-green-600 hover:bg-green-500' : 'bg-gray-600 hover:bg-gray-500'} text-white`}
+              >
+                {useRealisticSounds ? "ON" : "OFF"}
               </Button>
             </div>
 
