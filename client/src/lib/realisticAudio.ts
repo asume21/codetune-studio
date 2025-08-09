@@ -689,12 +689,13 @@ export class RealisticAudioEngine {
       bassFilter.frequency.setValueAtTime(100, currentTime); // Higher cutoff
       bassFilter.Q.setValueAtTime(3, currentTime); // Much lower Q to reduce resonance distortion
 
-      // Clean envelope - reduced volume to prevent distortion
-      const bassVol = Math.max(0.001, velocity * 1.2); // Reduced from 2.0 to prevent distortion
+      // Extended clean envelope - longer sustained bass
+      const bassVol = Math.max(0.001, velocity * 1.2);
       bassGain.gain.setValueAtTime(bassVol, currentTime);
-      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.7, currentTime + 0.15);
-      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.4, currentTime + 0.5);
-      bassGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 1.2);
+      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.8, currentTime + 0.2);
+      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.6, currentTime + 0.8);
+      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.3, currentTime + 1.5);
+      bassGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 2.0); // Extended to 2 seconds
 
       // Connect
       bassOsc.connect(bassFilter);
@@ -702,7 +703,7 @@ export class RealisticAudioEngine {
       bassGain.connect(this.audioContext.destination);
 
       bassOsc.start(currentTime);
-      bassOsc.stop(currentTime + 1.2);
+      bassOsc.stop(currentTime + 2.0); // Extended duration
     } catch (error) {
       console.error('🎵 Bass drum error:', error);
     }
