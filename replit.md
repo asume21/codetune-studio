@@ -15,6 +15,9 @@ CodedSwitch is a revolutionary AI-powered web application that embodies the trip
 - **AI-Powered Dynamic Instrument Layering** (NEW): Intelligent instrument layering system that analyzes current arrangements and adds complementary instrumental parts using AI (January 8, 2025)
 - **Song Upload & Analysis** (NEW): Upload existing audio files (MP3, WAV, M4A, OGG) for AI analysis and integration with other studio tools (January 8, 2025)
 - **Real-Time Beat Editing** (FIXED): Beat Maker now supports live pattern editing during playback with instant audio feedback and visual timing indicators (January 8, 2025)
+- **Piano Sound Refinement** (January 9, 2025): Fixed piano low notes with frequency-specific filtering and wave types - high notes now sound "way closer" to realistic
+- **Organ Complete Redesign** (SUCCESS - January 9, 2025): Completely replaced buzzy electronic organ with authentic Hammond drawbar system using pure sine waves, proper harmonic ratios, and cathedral reverb - user confirmed "you nailed the organ"
+- **Piano Roll Note Editing** (NEW - January 9, 2025): Added drag-to-resize functionality for note length editing with visual resize handles and snap-to-grid behavior
 
 # User Preferences
 

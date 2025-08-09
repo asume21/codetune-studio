@@ -719,89 +719,125 @@ export class AudioEngine {
     this.trackOscillators(oscillators, 'guitar', frequency);
   }
 
-  // VIOLIN: Simple, realistic bowed string - focus on natural violin tone
+  // VIOLIN: Authentic bowed string with realistic formants and body resonance
   private playViolinNote(frequency: number, duration: number, velocity: number, currentTime: number) {
     if (!this.audioContext || !this.masterGain) return;
 
     const oscillators: OscillatorNode[] = [];
     const masterGain = this.audioContext.createGain();
     
-    // Single primary oscillator for cleaner sound
-    const stringOsc = this.audioContext.createOscillator();
-    const secondHarmonic = this.audioContext.createOscillator();
+    // Violin string fundamental - sawtooth has more harmonics like real bowed strings
+    const fundamental = this.audioContext.createOscillator();
     
-    // Subtle vibrato - essential for violin character
-    const vibrato = this.audioContext.createOscillator();
+    // Body resonance oscillators - violin body has specific resonant frequencies
+    const bodyResonance1 = this.audioContext.createOscillator();
+    const bodyResonance2 = this.audioContext.createOscillator();
     
-    // Gains
-    const stringGain = this.audioContext.createGain();
-    const harmonicGain = this.audioContext.createGain();
-    const vibratoGain = this.audioContext.createGain();
+    // Bow noise for realistic attack
+    const bowNoise = this.audioContext.createBufferSource();
     
-    // Single filter for violin character
-    const violinFilter = this.audioContext.createBiquadFilter();
+    // Gains for each component
+    const fundGain = this.audioContext.createGain();
+    const body1Gain = this.audioContext.createGain();
+    const body2Gain = this.audioContext.createGain();
+    const noiseGain = this.audioContext.createGain();
     
-    // String oscillator - triangle for warm fundamental
-    stringOsc.type = 'triangle';
-    stringOsc.frequency.setValueAtTime(frequency, currentTime);
+    // Violin formant filters - these give violin its characteristic timbre
+    const formant1 = this.audioContext.createBiquadFilter(); // Main body resonance
+    const formant2 = this.audioContext.createBiquadFilter(); // Upper formant
+    const airFilter = this.audioContext.createBiquadFilter(); // Air cavity resonance
     
-    // Just one harmonic for clarity
-    secondHarmonic.type = 'sine';
-    secondHarmonic.frequency.setValueAtTime(frequency * 2, currentTime);
+    // Violin string - sawtooth for rich harmonics
+    fundamental.type = 'sawtooth';
+    fundamental.frequency.setValueAtTime(frequency, currentTime);
     
-    // Gentle vibrato - 5 Hz is more natural
-    vibrato.type = 'sine';
-    vibrato.frequency.setValueAtTime(5, currentTime);
-    vibratoGain.gain.setValueAtTime(frequency * 0.02, currentTime); // Very subtle
+    // Body resonances - key frequencies for violin body (around 440-880 Hz range)
+    bodyResonance1.type = 'sine';
+    bodyResonance1.frequency.setValueAtTime(440, currentTime); // A string resonance
     
-    // Violin body filter - key to violin sound
-    violinFilter.type = 'bandpass';
-    violinFilter.frequency.setValueAtTime(frequency * 2.5, currentTime);
-    violinFilter.Q.setValueAtTime(2, currentTime);
+    bodyResonance2.type = 'sine';
+    bodyResonance2.frequency.setValueAtTime(880, currentTime); // Higher body resonance
     
-    // Natural violin envelope - gradual bow contact
-    const stringVol = Math.max(0.001, velocity * 0.7);
-    stringGain.gain.setValueAtTime(0.001, currentTime);
-    stringGain.gain.exponentialRampToValueAtTime(stringVol * 0.6, currentTime + 0.15);
-    stringGain.gain.exponentialRampToValueAtTime(stringVol, currentTime + 0.3);
-    if (duration > 0.8) {
-      stringGain.gain.setValueAtTime(stringVol * 0.9, currentTime + duration - 0.2);
+    // Bow noise for realistic attack texture
+    const noiseLength = Math.floor(this.audioContext.sampleRate * 0.1);
+    const noiseBuffer = this.audioContext.createBuffer(1, noiseLength, this.audioContext.sampleRate);
+    const noiseData = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < noiseLength; i++) {
+      noiseData[i] = (Math.random() * 2 - 1) * 0.1; // Bow scraping noise
     }
-    stringGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    bowNoise.buffer = noiseBuffer;
     
-    // Harmonic envelope
-    const harmonicVol = Math.max(0.001, velocity * 0.3);
-    harmonicGain.gain.setValueAtTime(0.001, currentTime);
-    harmonicGain.gain.exponentialRampToValueAtTime(harmonicVol, currentTime + 0.2);
-    harmonicGain.gain.exponentialRampToValueAtTime(harmonicVol * 0.7, currentTime + duration * 0.6);
-    harmonicGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    // Violin formant filtering - this is crucial for realistic violin timbre
+    formant1.type = 'bandpass';
+    formant1.frequency.setValueAtTime(600, currentTime); // Main violin formant
+    formant1.Q.setValueAtTime(3, currentTime);
     
-    // Connect vibrato to main frequency
-    vibrato.connect(vibratoGain);
-    vibratoGain.connect(stringOsc.frequency);
+    formant2.type = 'bandpass';
+    formant2.frequency.setValueAtTime(1400, currentTime); // Brightness formant
+    formant2.Q.setValueAtTime(2, currentTime);
     
-    // Connect string through filter
-    stringOsc.connect(violinFilter);
-    violinFilter.connect(stringGain);
-    stringGain.connect(masterGain);
+    airFilter.type = 'lowpass';
+    airFilter.frequency.setValueAtTime(frequency * 4, currentTime); // Remove harsh harmonics
+    airFilter.Q.setValueAtTime(0.7, currentTime);
     
-    // Connect harmonic directly
-    secondHarmonic.connect(harmonicGain);
-    harmonicGain.connect(masterGain);
+    // Realistic violin envelope - slow attack, sustained tone, controlled release
+    const fundVol = Math.max(0.001, velocity * 0.6);
+    fundGain.gain.setValueAtTime(0.001, currentTime);
+    fundGain.gain.exponentialRampToValueAtTime(fundVol * 0.3, currentTime + 0.1); // Bow contact
+    fundGain.gain.exponentialRampToValueAtTime(fundVol, currentTime + 0.25); // Full contact
+    fundGain.gain.setValueAtTime(fundVol * 0.95, currentTime + duration - 0.1);
+    fundGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    // Start oscillators
-    stringOsc.start(currentTime);
-    secondHarmonic.start(currentTime);
-    vibrato.start(currentTime);
+    // Body resonance envelopes - these sustain longer
+    const body1Vol = Math.max(0.001, velocity * 0.25);
+    body1Gain.gain.setValueAtTime(0.001, currentTime);
+    body1Gain.gain.exponentialRampToValueAtTime(body1Vol, currentTime + 0.15);
+    body1Gain.gain.setValueAtTime(body1Vol * 0.9, currentTime + duration - 0.05);
+    body1Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    // Stop oscillators
-    stringOsc.stop(currentTime + duration);
-    secondHarmonic.stop(currentTime + duration);
-    vibrato.stop(currentTime + duration);
+    const body2Vol = Math.max(0.001, velocity * 0.2);
+    body2Gain.gain.setValueAtTime(0.001, currentTime);
+    body2Gain.gain.exponentialRampToValueAtTime(body2Vol, currentTime + 0.2);
+    body2Gain.gain.setValueAtTime(body2Vol * 0.8, currentTime + duration - 0.05);
+    body2Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    oscillators.push(stringOsc, secondHarmonic, vibrato);
+    // Bow noise envelope - only at attack
+    const noiseVol = Math.max(0.001, velocity * 0.15);
+    noiseGain.gain.setValueAtTime(noiseVol, currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.08);
+    
+    // Connect violin components through formant filters
+    fundamental.connect(formant1);
+    formant1.connect(formant2);
+    formant2.connect(airFilter);
+    airFilter.connect(fundGain);
+    fundGain.connect(masterGain);
+    
+    // Body resonances connect directly
+    bodyResonance1.connect(body1Gain);
+    body1Gain.connect(masterGain);
+    
+    bodyResonance2.connect(body2Gain);
+    body2Gain.connect(masterGain);
+    
+    // Bow noise
+    bowNoise.connect(noiseGain);
+    noiseGain.connect(masterGain);
+    
+    // Start all components
+    fundamental.start(currentTime);
+    bodyResonance1.start(currentTime);
+    bodyResonance2.start(currentTime);
+    bowNoise.start(currentTime);
+    
+    // Stop all components
+    fundamental.stop(currentTime + duration);
+    bodyResonance1.stop(currentTime + duration);
+    bodyResonance2.stop(currentTime + duration);
+    
+    oscillators.push(fundamental, bodyResonance1, bodyResonance2);
 
-    this.addReverb(masterGain, 0.3); // Natural room reverb
+    this.addReverb(masterGain, 0.4); // Concert hall reverb for violin
     masterGain.connect(this.masterGain);
     this.trackOscillators(oscillators, 'violin', frequency);
   }
