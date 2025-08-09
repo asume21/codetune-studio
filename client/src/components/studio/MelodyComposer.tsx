@@ -169,7 +169,7 @@ export default function MelodyComposer() {
 
     pattern.forEach((noteData, index) => {
       setTimeout(() => {
-        playNote(noteData.note, noteData.octave, duration * 0.7, instrument, 0.6);
+        playNote(noteData.note, noteData.octave, duration * 0.7, instrument);
       }, index * noteSpacing * 1000);
     });
   };
@@ -230,7 +230,7 @@ export default function MelodyComposer() {
         setNotes(prev => [...prev.filter(n => n.track !== selectedTrack), ...newNotes]);
         toast({
           title: "Melody Generated",
-          description: `AI has composed a unique ${randomStyle} melody!`,
+          description: `AI has composed a unique melody!`,
         });
       }
     },
@@ -285,7 +285,7 @@ export default function MelodyComposer() {
         return track && !track.muted;
       });
 
-      playMelodySequence(activeNotes, bpm, tracks);
+      playMelodySequence(activeNotes, bpm);
       setIsPlaying(true);
 
       // Start beat counter
@@ -354,6 +354,9 @@ export default function MelodyComposer() {
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!resizingNote || !isDragging) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
 
     const deltaX = e.clientX - resizingNote.startX;
     const pianoRollWidth = (e.currentTarget as HTMLElement).clientWidth;
@@ -368,21 +371,51 @@ export default function MelodyComposer() {
     ));
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setResizingNote(null);
     setIsDragging(false);
   };
 
   useEffect(() => {
     if (isDragging) {
-      const handleGlobalMouseUp = () => {
+      const handleGlobalMouseMove = (e: MouseEvent) => {
+        if (!resizingNote) return;
+        
+        const deltaX = e.clientX - resizingNote.startX;
+        const pianoRollElement = document.querySelector('.piano-roll-container');
+        if (!pianoRollElement) return;
+        
+        const pianoRollWidth = pianoRollElement.clientWidth;
+        const deltaTime = (deltaX / pianoRollWidth) * (8 * zoom);
+        
+        let newDuration = Math.max(gridSnapSize, resizingNote.startDuration + deltaTime);
+        newDuration = Math.round(newDuration / gridSnapSize) * gridSnapSize;
+
+        setNotes(prev => prev.map((note, i) => 
+          i === resizingNote.index ? { ...note, duration: newDuration } : note
+        ));
+      };
+      
+      const handleGlobalMouseUp = (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
         setResizingNote(null);
         setIsDragging(false);
       };
+      
+      document.addEventListener('mousemove', handleGlobalMouseMove);
       document.addEventListener('mouseup', handleGlobalMouseUp);
-      return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleGlobalMouseMove);
+        document.removeEventListener('mouseup', handleGlobalMouseUp);
+      };
     }
-  }, [isDragging]);
+  }, [isDragging, resizingNote, gridSnapSize, zoom]);
 
   const addTrack = () => {
     // Get all available instruments from all categories
@@ -506,7 +539,7 @@ export default function MelodyComposer() {
       stopMelody();
       setIsMelodyPlaying(false);
     } else if (notes.length > 0) {
-      playMelody(notes, bpm, tracks);
+      playMelody(notes, bpm);
       setIsMelodyPlaying(true);
       // Stop after melody duration
       setTimeout(() => {
@@ -708,7 +741,7 @@ export default function MelodyComposer() {
 
             {/* Multi-track Piano Roll Grid */}
             <div 
-              className="h-80 bg-gray-900 rounded border border-gray-600 relative overflow-hidden cursor-crosshair"
+              className="h-80 bg-gray-900 rounded border border-gray-600 relative overflow-hidden cursor-crosshair piano-roll-container"
               onClick={handlePianoRollClick}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}

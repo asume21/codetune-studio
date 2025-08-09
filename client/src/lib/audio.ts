@@ -780,25 +780,44 @@ export class AudioEngine {
     airFilter.frequency.setValueAtTime(frequency * 4, currentTime); // Remove harsh harmonics
     airFilter.Q.setValueAtTime(0.7, currentTime);
     
-    // Realistic violin envelope - slow attack, sustained tone, controlled release
+    // Realistic violin envelope with proper sustain - Attack, Decay, Sustain, Release (ADSR)
     const fundVol = Math.max(0.001, velocity * 0.6);
+    const attackTime = 0.08; // Faster bow contact
+    const decayTime = 0.15; // Quick settle to sustain
+    const sustainLevel = fundVol * 0.85; // Strong sustain level
+    const releaseTime = Math.min(0.3, duration * 0.3); // Proportional release
+    
     fundGain.gain.setValueAtTime(0.001, currentTime);
-    fundGain.gain.exponentialRampToValueAtTime(fundVol * 0.3, currentTime + 0.1); // Bow contact
-    fundGain.gain.exponentialRampToValueAtTime(fundVol, currentTime + 0.25); // Full contact
-    fundGain.gain.setValueAtTime(fundVol * 0.95, currentTime + duration - 0.1);
+    // Attack
+    fundGain.gain.exponentialRampToValueAtTime(fundVol, currentTime + attackTime);
+    // Decay to sustain
+    fundGain.gain.exponentialRampToValueAtTime(sustainLevel, currentTime + attackTime + decayTime);
+    // Sustain phase - hold steady
+    if (duration > attackTime + decayTime + releaseTime) {
+      fundGain.gain.setValueAtTime(sustainLevel, currentTime + duration - releaseTime);
+    }
+    // Release
     fundGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    // Body resonance envelopes - these sustain longer
-    const body1Vol = Math.max(0.001, velocity * 0.25);
+    // Body resonance envelopes - stronger sustain for richer sound
+    const body1Vol = Math.max(0.001, velocity * 0.3);
+    const body1Sustain = body1Vol * 0.9;
     body1Gain.gain.setValueAtTime(0.001, currentTime);
-    body1Gain.gain.exponentialRampToValueAtTime(body1Vol, currentTime + 0.15);
-    body1Gain.gain.setValueAtTime(body1Vol * 0.9, currentTime + duration - 0.05);
+    body1Gain.gain.exponentialRampToValueAtTime(body1Vol, currentTime + 0.12);
+    body1Gain.gain.exponentialRampToValueAtTime(body1Sustain, currentTime + 0.2);
+    if (duration > 0.5) {
+      body1Gain.gain.setValueAtTime(body1Sustain, currentTime + duration - releaseTime);
+    }
     body1Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    const body2Vol = Math.max(0.001, velocity * 0.2);
+    const body2Vol = Math.max(0.001, velocity * 0.25);
+    const body2Sustain = body2Vol * 0.85;
     body2Gain.gain.setValueAtTime(0.001, currentTime);
-    body2Gain.gain.exponentialRampToValueAtTime(body2Vol, currentTime + 0.2);
-    body2Gain.gain.setValueAtTime(body2Vol * 0.8, currentTime + duration - 0.05);
+    body2Gain.gain.exponentialRampToValueAtTime(body2Vol, currentTime + 0.15);
+    body2Gain.gain.exponentialRampToValueAtTime(body2Sustain, currentTime + 0.25);
+    if (duration > 0.6) {
+      body2Gain.gain.setValueAtTime(body2Sustain, currentTime + duration - releaseTime);
+    }
     body2Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
     // Bow noise envelope - only at attack
