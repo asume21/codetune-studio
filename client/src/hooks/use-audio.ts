@@ -172,11 +172,15 @@ export function useAudio(): UseAudioReturn {
         noteString = note;
       }
 
+      console.log(`Audio Mode Check: useRealisticSounds=${useRealisticSounds}, realisticAudio.isReady()=${realisticAudio.isReady()}`);
+      
       if (useRealisticSounds && realisticAudio.isReady()) {
         // Use realistic sampled instruments
+        console.log(`Playing REALISTIC ${instrument}: ${noteString}${octave}`);
         await realisticAudio.playNote(noteString, octave, duration, instrument, velocity, sustainEnabled);
       } else {
         // Fallback to synthetic Web Audio API
+        console.log(`Playing SYNTHETIC ${instrument}: ${noteString}${octave}`);
         const frequency = getNoteFrequency(noteString, octave);
         await audioEngine.playNote(frequency, duration, velocity, instrument, sustainEnabled);
       }
@@ -231,7 +235,11 @@ export function useAudio(): UseAudioReturn {
   }, [initialize]);
 
   const toggleRealisticSounds = useCallback(() => {
-    setUseRealisticSounds(prev => !prev);
+    setUseRealisticSounds(prev => {
+      const newValue = !prev;
+      console.log(`🎵 Audio Mode Toggled: ${prev ? 'REALISTIC' : 'SYNTHETIC'} → ${newValue ? 'REALISTIC' : 'SYNTHETIC'}`);
+      return newValue;
+    });
   }, []);
 
   return {
