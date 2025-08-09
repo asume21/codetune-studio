@@ -141,22 +141,15 @@ export default function BeatMaker() {
   });
 
   const toggleStep = (track: keyof BeatPattern, step: number) => {
-    setPattern(prev => {
-      const updatedPattern = {
-        ...prev,
-        [track]: prev[track].map((active, index) => 
-          index === step ? !active : active
-        )
-      };
-      
-      // Update studio context immediately for master playback  
-      studioContext.setCurrentPattern?.(updatedPattern);
-      
-      return updatedPattern;
-    });
+    setPattern(prev => ({
+      ...prev,
+      [track]: prev[track].map((active, index) => 
+        index === step ? !active : active
+      )
+    }));
   };
 
-  // Auto-save to studio context whenever pattern changes
+  // Auto-save to studio context whenever pattern changes (moved outside render)
   useEffect(() => {
     studioContext.setCurrentPattern?.(pattern);
   }, [pattern, studioContext]);
