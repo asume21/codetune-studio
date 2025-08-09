@@ -381,10 +381,11 @@ export class RealisticAudioEngine {
       kickGain.gain.exponentialRampToValueAtTime(kickVol * 0.6, currentTime + 0.08);
       kickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.4);
 
-      // Click envelope - very short attack - BOOSTED VOLUME
-      const clickVol = Math.max(0.001, velocity * 0.5);
-      kickClickGain.gain.setValueAtTime(clickVol, currentTime);
-      kickClickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.015);
+      // Softer click envelope - reduced volume and smoother attack to eliminate harsh clicking
+      const clickVol = Math.max(0.001, velocity * 0.15); // Much quieter click
+      kickClickGain.gain.setValueAtTime(0.001, currentTime); // Start from zero to smooth attack
+      kickClickGain.gain.exponentialRampToValueAtTime(clickVol, currentTime + 0.003); // Gentle rise
+      kickClickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.02); // Slightly longer decay
 
       // Connect
       kickOsc.connect(kickFilter);
