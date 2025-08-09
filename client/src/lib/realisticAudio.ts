@@ -290,8 +290,10 @@ export class RealisticAudioEngine {
       // Recreate the professional drum synthesis here
       switch (drumType) {
         case 'kick':
-        case 'bass': // Bass drum is same as kick
           this.playSyntheticKick(currentTime, velocity);
+          break;
+        case 'bass': // Deeper, sub-bass drum
+          this.playSyntheticBassDrum(currentTime, velocity);
           break;
         case 'snare':
           this.playSyntheticSnare(currentTime, velocity);
@@ -579,42 +581,47 @@ export class RealisticAudioEngine {
     if (!this.audioContext) return;
 
     try {
-      // Create multiple noise bursts for clap effect
-      for (let i = 0; i < 4; i++) {
-        const clapNoise = this.audioContext.createBufferSource();
-        const clapGain = this.audioContext.createGain();
-        const clapFilter = this.audioContext.createBiquadFilter();
+      // Create a sharp, punchy clap using filtered white noise with tight envelope
+      const clapNoise = this.audioContext.createBufferSource();
+      const clapGain = this.audioContext.createGain();
+      const clapFilter = this.audioContext.createBiquadFilter();
+      const clapFilter2 = this.audioContext.createBiquadFilter();
 
-        const burstDuration = 0.015;
-        const startTime = currentTime + (i * 0.008); // Staggered bursts
-        const bufferSize = this.audioContext.sampleRate * burstDuration;
-        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-        const data = buffer.getChannelData(0);
+      const duration = 0.08;
+      const bufferSize = this.audioContext.sampleRate * duration;
+      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
 
-        // Generate clap burst noise
-        for (let j = 0; j < bufferSize; j++) {
-          const envelope = Math.pow(1 - (j / bufferSize), 3);
-          data[j] = (Math.random() * 2 - 1) * envelope;
-        }
-
-        clapNoise.buffer = buffer;
-
-        // Bandpass for clap character
-        clapFilter.type = 'bandpass';
-        clapFilter.frequency.setValueAtTime(1500, startTime);
-        clapFilter.Q.setValueAtTime(2, startTime);
-
-        const clapVol = Math.max(0.001, velocity * 0.4 * (1 - i * 0.1)); // Decreasing volume
-        clapGain.gain.setValueAtTime(clapVol, startTime);
-        clapGain.gain.exponentialRampToValueAtTime(0.001, startTime + burstDuration);
-
-        // Connect
-        clapNoise.connect(clapFilter);
-        clapFilter.connect(clapGain);
-        clapGain.connect(this.audioContext.destination);
-
-        clapNoise.start(startTime);
+      // Generate tight clap noise with sharp attack
+      for (let i = 0; i < bufferSize; i++) {
+        const envelope = i < bufferSize * 0.1 ? 1 : Math.pow(1 - ((i - bufferSize * 0.1) / (bufferSize * 0.9)), 4);
+        data[i] = (Math.random() * 2 - 1) * envelope;
       }
+
+      clapNoise.buffer = buffer;
+
+      // Two-stage filtering for crisp clap sound
+      clapFilter.type = 'highpass';
+      clapFilter.frequency.setValueAtTime(800, currentTime);
+      clapFilter.Q.setValueAtTime(1, currentTime);
+
+      clapFilter2.type = 'bandpass';
+      clapFilter2.frequency.setValueAtTime(2200, currentTime);
+      clapFilter2.Q.setValueAtTime(3, currentTime);
+
+      // Sharp attack, quick decay
+      const clapVol = Math.max(0.001, velocity * 0.8);
+      clapGain.gain.setValueAtTime(clapVol, currentTime);
+      clapGain.gain.exponentialRampToValueAtTime(clapVol * 0.3, currentTime + 0.01);
+      clapGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+
+      // Connect through both filters
+      clapNoise.connect(clapFilter);
+      clapFilter.connect(clapFilter2);
+      clapFilter2.connect(clapGain);
+      clapGain.connect(this.audioContext.destination);
+
+      clapNoise.start(currentTime);
     } catch (error) {
       console.error('🎵 Clap error:', error);
     }
@@ -624,42 +631,87 @@ export class RealisticAudioEngine {
     if (!this.audioContext) return;
 
     try {
-      const crashNoise = this.audioContext.createBufferSource();
-      const crashGain = this.audioContext.createGain();
-      const crashFilter = this.audioContext.createBiquadFilter();
+      // Create multiple oscillators for realistic cymbal harmonics
+      const fundamentalFreq = 320;
+      const harmonics = [1, 1.5, 2.1, 2.8, 3.7, 4.9, 6.2, 8.1];
+      const duration = 2.0;
 
-      const duration = 1.5; // Long crash decay
-      const bufferSize = this.audioContext.sampleRate * duration;
-      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-      const data = buffer.getChannelData(0);
+      harmonics.forEach((harmonic, index) => {
+        const crashOsc = this.audioContext.createOscillator();
+        const crashGain = this.audioContext.createGain();
+        const crashFilter = this.audioContext.createBiquadFilter();
 
-      // Generate crash cymbal noise with shimmer
-      for (let i = 0; i < bufferSize; i++) {
-        const envelope = Math.pow(1 - (i / bufferSize), 0.5); // Slow decay
-        const shimmer = Math.sin(i * 0.01) * 0.3 + 0.7; // Add shimmer
-        data[i] = (Math.random() * 2 - 1) * envelope * shimmer;
-      }
+        // Use triangle wave for metallic character
+        crashOsc.type = 'triangle';
+        crashOsc.frequency.setValueAtTime(fundamentalFreq * harmonic, currentTime);
+        
+        // Add slight frequency modulation for shimmer
+        crashOsc.frequency.exponentialRampToValueAtTime(
+          fundamentalFreq * harmonic * 1.05, 
+          currentTime + 0.1
+        );
+        crashOsc.frequency.exponentialRampToValueAtTime(
+          fundamentalFreq * harmonic * 0.98, 
+          currentTime + duration
+        );
 
-      crashNoise.buffer = buffer;
+        // High-pass filter for brightness
+        crashFilter.type = 'highpass';
+        crashFilter.frequency.setValueAtTime(3000 + (index * 500), currentTime);
+        crashFilter.Q.setValueAtTime(0.5, currentTime);
 
-      // High-pass for cymbal brightness
-      crashFilter.type = 'highpass';
-      crashFilter.frequency.setValueAtTime(5000, currentTime);
-      crashFilter.Q.setValueAtTime(0.7, currentTime);
+        // Volume envelope - different decay for each harmonic
+        const harmVol = Math.max(0.001, velocity * 0.15 / (index + 1));
+        crashGain.gain.setValueAtTime(harmVol, currentTime);
+        crashGain.gain.exponentialRampToValueAtTime(harmVol * 0.5, currentTime + 0.1);
+        crashGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * (0.8 + index * 0.1));
 
-      const crashVol = Math.max(0.001, velocity * 0.9);
-      crashGain.gain.setValueAtTime(crashVol, currentTime);
-      crashGain.gain.exponentialRampToValueAtTime(crashVol * 0.3, currentTime + 0.2);
-      crashGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+        // Connect
+        crashOsc.connect(crashFilter);
+        crashFilter.connect(crashGain);
+        crashGain.connect(this.audioContext.destination);
 
-      // Connect
-      crashNoise.connect(crashFilter);
-      crashFilter.connect(crashGain);
-      crashGain.connect(this.audioContext.destination);
-
-      crashNoise.start(currentTime);
+        crashOsc.start(currentTime);
+        crashOsc.stop(currentTime + duration * (0.8 + index * 0.1));
+      });
     } catch (error) {
       console.error('🎵 Crash cymbal error:', error);
+    }
+  }
+
+  private playSyntheticBassDrum(currentTime: number, velocity: number): void {
+    if (!this.audioContext) return;
+
+    try {
+      const bassOsc = this.audioContext.createOscillator();
+      const bassGain = this.audioContext.createGain();
+      const bassFilter = this.audioContext.createBiquadFilter();
+
+      // Much lower frequency than kick for sub-bass feel
+      bassOsc.type = 'sine';
+      bassOsc.frequency.setValueAtTime(45, currentTime); // Lower than kick
+      bassOsc.frequency.exponentialRampToValueAtTime(25, currentTime + 0.2);
+
+      // Very tight low-pass filter for pure sub-bass
+      bassFilter.type = 'lowpass';
+      bassFilter.frequency.setValueAtTime(80, currentTime);
+      bassFilter.Q.setValueAtTime(10, currentTime);
+
+      // Longer, deeper envelope than kick
+      const bassVol = Math.max(0.001, velocity * 1.4);
+      bassGain.gain.setValueAtTime(bassVol, currentTime);
+      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.7, currentTime + 0.12);
+      bassGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.6);
+
+      // Connect
+      bassOsc.connect(bassFilter);
+      bassFilter.connect(bassGain);
+      bassGain.connect(this.audioContext.destination);
+
+      bassOsc.start(currentTime);
+      bassOsc.stop(currentTime + 0.6);
+    } catch (error) {
+      console.error('🎵 Bass drum error:', error);
     }
   }
 }
