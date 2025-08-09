@@ -681,21 +681,20 @@ export class RealisticAudioEngine {
 
       // Much lower frequency than kick for sub-bass feel
       bassOsc.type = 'sine';
-      bassOsc.frequency.setValueAtTime(50, currentTime); // Slightly higher to reduce distortion
-      bassOsc.frequency.exponentialRampToValueAtTime(30, currentTime + 0.3);
+      bassOsc.frequency.setValueAtTime(50, currentTime);
+      bassOsc.frequency.exponentialRampToValueAtTime(35, currentTime + 0.2);
 
       // Gentler low-pass filter to reduce distortion
       bassFilter.type = 'lowpass';
-      bassFilter.frequency.setValueAtTime(100, currentTime); // Higher cutoff
-      bassFilter.Q.setValueAtTime(3, currentTime); // Much lower Q to reduce resonance distortion
+      bassFilter.frequency.setValueAtTime(100, currentTime);
+      bassFilter.Q.setValueAtTime(2, currentTime); // Even lower Q
 
-      // Extended clean envelope - longer sustained bass
-      const bassVol = Math.max(0.001, velocity * 1.2);
+      // Shorter duration to prevent overlap distortion when played rapidly
+      const bassVol = Math.max(0.001, velocity * 1.1);
       bassGain.gain.setValueAtTime(bassVol, currentTime);
-      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.8, currentTime + 0.2);
-      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.6, currentTime + 0.8);
-      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.3, currentTime + 1.5);
-      bassGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 2.0); // Extended to 2 seconds
+      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.6, currentTime + 0.15);
+      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.2, currentTime + 0.5);
+      bassGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.8); // Shortened to 0.8s to prevent overlap
 
       // Connect
       bassOsc.connect(bassFilter);
@@ -703,7 +702,7 @@ export class RealisticAudioEngine {
       bassGain.connect(this.audioContext.destination);
 
       bassOsc.start(currentTime);
-      bassOsc.stop(currentTime + 2.0); // Extended duration
+      bassOsc.stop(currentTime + 0.8); // Shorter duration
     } catch (error) {
       console.error('🎵 Bass drum error:', error);
     }
