@@ -1,0 +1,79 @@
+
+
+Aug 9, 10:28 AM - 10:32 AM
+MDT
+
+Menu
+
+Aug 9 10:29:47 AM
+==> Cloning from https://github.com/asume21/codetune-studio
+Aug 9 10:29:53 AM
+==> Checking out commit f9179dad521b4b53acc36aff22ad7836825dc554 in branch main
+Aug 9 10:29:54 AM
+==> Downloading cache...
+Aug 9 10:30:11 AM
+==> Transferred 216MB in 9s. Extraction took 6s.
+Aug 9 10:31:06 AM
+==> Using Node.js version 22.16.0 (default)
+Aug 9 10:31:06 AM
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+Aug 9 10:31:06 AM
+==> Running build command 'npm install && npm run build'...
+Aug 9 10:31:11 AM
+Aug 9 10:31:11 AM
+up to date, audited 610 packages in 4s
+Aug 9 10:31:11 AM
+Aug 9 10:31:11 AM
+83 packages are looking for funding
+Aug 9 10:31:11 AM
+  run `npm fund` for details
+Aug 9 10:31:11 AM
+Aug 9 10:31:11 AM
+7 vulnerabilities (2 low, 5 moderate)
+Aug 9 10:31:11 AM
+Aug 9 10:31:11 AM
+To address issues that do not require attention, run:
+Aug 9 10:31:11 AM
+  npm audit fix
+Aug 9 10:31:11 AM
+Aug 9 10:31:11 AM
+To address all issues (including breaking changes), run:
+Aug 9 10:31:11 AM
+  npm audit fix --force
+Aug 9 10:31:11 AM
+Aug 9 10:31:11 AM
+Run `npm audit` for details.
+Aug 9 10:31:11 AM
+Aug 9 10:31:11 AM
+> rest-express@1.0.0 build
+Aug 9 10:31:11 AM
+> NODE_ENV=production vite build --config vite.config.prod.js && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+Aug 9 10:31:11 AM
+Aug 9 10:31:11 AM
+vite v5.4.19 building for production...
+Aug 9 10:31:12 AM
+transforming...
+Aug 9 10:31:13 AM
+✓ 9 modules transformed.
+Aug 9 10:31:13 AM
+x Build failed in 734ms
+Aug 9 10:31:13 AM
+error during build:
+Aug 9 10:31:13 AM
+[vite:load-fallback] Could not load /opt/render/project/src/client/src/components/ui/toaster (imported by client/src/App.tsx): ENOENT: no such file or directory, open '/opt/render/project/src/client/src/components/ui/toaster'
+Aug 9 10:31:13 AM
+    at async open (node:internal/fs/promises:633:25)
+Aug 9 10:31:13 AM
+    at async Object.readFile (node:internal/fs/promises:1237:14)
+Aug 9 10:31:13 AM
+    at async Object.load (file:///opt/render/project/src/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:65341:25)
+Aug 9 10:31:13 AM
+    at async PluginDriver.hookFirstAndGetPlugin (file:///opt/render/project/src/node_modules/rollup/dist/es/shared/node-entry.js:22233:28)
+Aug 9 10:31:13 AM
+    at async file:///opt/render/project/src/node_modules/rollup/dist/es/shared/node-entry.js:21237:33
+Aug 9 10:31:13 AM
+    at async Queue.work (file:///opt/render/project/src/node_modules/rollup/dist/es/shared/node-entry.js:22461:32)
+Aug 9 10:31:13 AM
+==> Build failed 😞
+Aug 9 10:31:13 AM
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
