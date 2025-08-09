@@ -77,23 +77,23 @@ export class AudioEngine {
       if (instrument.includes('piano') && !instrument.includes('organ')) {
         this.playPianoNote(frequency, duration, velocity, currentTime, sustainEnabled);
       } else if (instrument.includes('grand')) {
-        this.playGrandPianoNote(frequency, duration, velocity, currentTime, sustainEnabled);
+        this.playGrandPianoNote(frequency, duration, velocity, currentTime);
       } else if (instrument.includes('organ')) {
-        this.playOrganNote(frequency, duration, velocity, currentTime, sustainEnabled);
+        this.playOrganNote(frequency, duration, velocity, currentTime);
       } else if (instrument.includes('guitar')) {
         this.playGuitarNote(frequency, duration, velocity, currentTime, sustainEnabled);
       } else if (instrument.includes('violin')) {
-        this.playViolinNote(frequency, duration, velocity, currentTime, sustainEnabled);
+        this.playViolinNote(frequency, duration, velocity, currentTime);
       } else if (instrument.includes('ukulele')) {
-        this.playUkuleleNote(frequency, duration, velocity, currentTime, sustainEnabled);
+        this.playUkuleleNote(frequency, duration, velocity, currentTime);
       } else if (instrument.includes('flute') && !instrument.includes('pan')) {
-        this.playFluteNote(frequency, duration, velocity, currentTime, sustainEnabled);
+        this.playFluteNote(frequency, duration, velocity, currentTime);
       } else if (instrument.includes('panflute')) {
-        this.playPanFluteNote(frequency, duration, velocity, currentTime, sustainEnabled);
+        this.playPanFluteNote(frequency, duration, velocity, currentTime);
       } else if (instrument.includes('recorder')) {
-        this.playRecorderNote(frequency, duration, velocity, currentTime, sustainEnabled);
+        this.playRecorderNote(frequency, duration, velocity, currentTime);
       } else {
-        this.playGenericNote(frequency, duration, velocity, currentTime, sustainEnabled);
+        this.playGenericNote(frequency, duration, velocity, currentTime);
       }
     } catch (error) {
       console.error("Failed to play note:", error);
