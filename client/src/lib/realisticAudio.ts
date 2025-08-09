@@ -114,7 +114,12 @@ export class RealisticAudioEngine {
           soundfontName as any, // Type assertion for soundfont-player compatibility
           {
             format: 'mp3', // Use MP3 for better browser compatibility
-            soundfont: 'MusyngKite' // High-quality soundfont
+            soundfont: 'MusyngKite', // High-quality soundfont
+            nameToUrl: (name: string, soundfont: string, format: string) => {
+              // Ensure HTTPS URLs for production compatibility
+              const baseUrl = `https://gleitz.github.io/midi-js-soundfonts/${soundfont}`;
+              return `${baseUrl}/${name}-${format}.js`;
+            }
           }
         );
         
@@ -142,7 +147,12 @@ export class RealisticAudioEngine {
         soundfontName as any, // Type assertion for soundfont-player compatibility
         {
           format: 'mp3',
-          soundfont: 'MusyngKite'
+          soundfont: 'MusyngKite',
+          nameToUrl: (name: string, soundfont: string, format: string) => {
+            // Ensure HTTPS URLs for production compatibility
+            const baseUrl = `https://gleitz.github.io/midi-js-soundfonts/${soundfont}`;
+            return `${baseUrl}/${name}-${format}.js`;
+          }
         }
       );
       
