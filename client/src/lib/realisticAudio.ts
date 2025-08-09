@@ -72,13 +72,43 @@ export class RealisticAudioEngine {
       // Create Web Audio context
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       
-      // Resume context if suspended (required for browser autoplay policies)
+      console.log('🎵 Realistic audio context created, state:', this.audioContext.state);
+      console.log('🎵 Environment:', process.env.NODE_ENV || 'development');
+      
+      // Handle suspended context (required for browser autoplay policies)
       if (this.audioContext.state === 'suspended') {
-        await this.audioContext.resume();
+        console.log('🎵 Audio context suspended, attempting to resume...');
+        
+        // Add a click listener to resume context on next user interaction
+        const resumeAudio = async () => {
+          if (this.audioContext && this.audioContext.state === 'suspended') {
+            try {
+              await this.audioContext.resume();
+              console.log('🎵 Audio context resumed successfully');
+            } catch (error) {
+              console.error('🎵 Failed to resume audio context:', error);
+            }
+          }
+          document.removeEventListener('click', resumeAudio, true);
+          document.removeEventListener('keydown', resumeAudio, true);
+          document.removeEventListener('touchstart', resumeAudio, true);
+        };
+        
+        // Listen for user interactions to resume audio
+        document.addEventListener('click', resumeAudio, true);
+        document.addEventListener('keydown', resumeAudio, true);
+        document.addEventListener('touchstart', resumeAudio, true);
+        
+        // Try to resume immediately in case we already have permission
+        try {
+          await this.audioContext.resume();
+          console.log('🎵 Audio context resumed immediately');
+        } catch (error) {
+          console.log('🎵 Audio context needs user interaction to resume');
+        }
       }
 
-      console.log('🎵 Realistic audio context started');
-      console.log('🎵 Environment:', process.env.NODE_ENV || 'development');
+      console.log('🎵 Realistic audio context started, final state:', this.audioContext.state);
 
       // Load essential instruments first (piano, guitar, and a few more)
       await this.loadInstruments([

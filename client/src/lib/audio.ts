@@ -17,13 +17,50 @@ export class AudioEngine {
     if (this.isInitialized) return;
     
     try {
-      this.audioContext = new AudioContext();
+      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      console.log('🎵 Synthetic audio context created, state:', this.audioContext.state);
+      
+      // Handle suspended context (required for browser autoplay policies)
+      if (this.audioContext.state === 'suspended') {
+        console.log('🎵 Synthetic audio context suspended, attempting to resume...');
+        
+        // Add a click listener to resume context on next user interaction
+        const resumeAudio = async () => {
+          if (this.audioContext && this.audioContext.state === 'suspended') {
+            try {
+              await this.audioContext.resume();
+              console.log('🎵 Synthetic audio context resumed successfully');
+            } catch (error) {
+              console.error('🎵 Failed to resume synthetic audio context:', error);
+            }
+          }
+          document.removeEventListener('click', resumeAudio, true);
+          document.removeEventListener('keydown', resumeAudio, true);
+          document.removeEventListener('touchstart', resumeAudio, true);
+        };
+        
+        // Listen for user interactions to resume audio
+        document.addEventListener('click', resumeAudio, true);
+        document.addEventListener('keydown', resumeAudio, true);
+        document.addEventListener('touchstart', resumeAudio, true);
+        
+        // Try to resume immediately in case we already have permission
+        try {
+          await this.audioContext.resume();
+          console.log('🎵 Synthetic audio context resumed immediately');
+        } catch (error) {
+          console.log('🎵 Synthetic audio context needs user interaction to resume');
+        }
+      }
+      
       this.masterGain = this.audioContext.createGain();
       this.masterGain.gain.value = 0.3;
       this.masterGain.connect(this.audioContext.destination);
       
       await this.createReverb();
       this.isInitialized = true;
+      console.log('🎵 Synthetic audio engine initialized successfully');
     } catch (error) {
       console.error("Failed to initialize audio:", error);
       throw error;
