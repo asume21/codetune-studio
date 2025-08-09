@@ -100,193 +100,383 @@ export class AudioEngine {
     }
   }
 
-  // PIANO: Sharp percussive attack with bright harmonics - sounds like hitting metal keys
+  // PIANO: Authentic acoustic piano with hammer strike, string resonance, and natural decay
   private playPianoNote(frequency: number, duration: number, velocity: number, currentTime: number) {
     if (!this.audioContext || !this.masterGain) return;
 
     const oscillators: OscillatorNode[] = [];
     const masterGain = this.audioContext.createGain();
     
-    // VERY bright and sharp - like a toy piano or bell
-    const bright1 = this.audioContext.createOscillator();
-    const bright2 = this.audioContext.createOscillator();
-    const bright3 = this.audioContext.createOscillator();
-    const attack = this.audioContext.createOscillator();
+    // Piano string harmonics - acoustic piano has rich harmonic series
+    const fundamental = this.audioContext.createOscillator();
+    const harmonic2 = this.audioContext.createOscillator();
+    const harmonic3 = this.audioContext.createOscillator();
+    const harmonic4 = this.audioContext.createOscillator();
+    const harmonic5 = this.audioContext.createOscillator();
     
-    const gain1 = this.audioContext.createGain();
-    const gain2 = this.audioContext.createGain();
-    const gain3 = this.audioContext.createGain();
-    const attackGain = this.audioContext.createGain();
+    // Hammer strike simulation
+    const hammerStrike = this.audioContext.createBufferSource();
+    const hammerTransient = this.audioContext.createOscillator();
     
-    const brightFilter = this.audioContext.createBiquadFilter();
+    // String sympathetic resonance
+    const stringResonance = this.audioContext.createOscillator();
     
-    // Extremely bright and metallic
-    bright1.type = 'sawtooth';
-    bright1.frequency.setValueAtTime(frequency, currentTime);
+    // Gains for each component
+    const fundGain = this.audioContext.createGain();
+    const harm2Gain = this.audioContext.createGain();
+    const harm3Gain = this.audioContext.createGain();
+    const harm4Gain = this.audioContext.createGain();
+    const harm5Gain = this.audioContext.createGain();
+    const hammerGain = this.audioContext.createGain();
+    const transientGain = this.audioContext.createGain();
+    const resonanceGain = this.audioContext.createGain();
     
-    bright2.type = 'square';
-    bright2.frequency.setValueAtTime(frequency * 4, currentTime);
+    // Filters for piano tone shaping
+    const pianoFilter = this.audioContext.createBiquadFilter();
+    const brightnessFilter = this.audioContext.createBiquadFilter();
     
-    bright3.type = 'triangle';
-    bright3.frequency.setValueAtTime(frequency * 7, currentTime);
+    // Piano harmonics - natural harmonic series
+    fundamental.type = 'triangle'; // Warm fundamental
+    fundamental.frequency.setValueAtTime(frequency, currentTime);
     
-    // Sharp attack transient
-    attack.type = 'square';
-    attack.frequency.setValueAtTime(frequency * 20, currentTime);
+    harmonic2.type = 'sine';
+    harmonic2.frequency.setValueAtTime(frequency * 2, currentTime);
     
-    brightFilter.type = 'highpass';
-    brightFilter.frequency.setValueAtTime(frequency * 2, currentTime);
-    brightFilter.Q.setValueAtTime(8, currentTime);
+    harmonic3.type = 'sine';
+    harmonic3.frequency.setValueAtTime(frequency * 3, currentTime);
     
-    // INSTANT attack, very quick decay - percussive
-    const vol1 = Math.max(0.001, velocity * 1.5);
-    gain1.gain.setValueAtTime(vol1, currentTime);
-    gain1.gain.exponentialRampToValueAtTime(vol1 * 0.2, currentTime + 0.05);
-    gain1.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.7);
+    harmonic4.type = 'sine';
+    harmonic4.frequency.setValueAtTime(frequency * 4, currentTime);
     
-    const vol2 = Math.max(0.001, velocity * 0.8);
-    gain2.gain.setValueAtTime(vol2, currentTime);
-    gain2.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.3);
+    harmonic5.type = 'sine';
+    harmonic5.frequency.setValueAtTime(frequency * 5, currentTime);
     
-    const vol3 = Math.max(0.001, velocity * 0.5);
-    gain3.gain.setValueAtTime(vol3, currentTime);
-    gain3.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.2);
+    // Hammer strike noise
+    const hammerLength = Math.floor(this.audioContext.sampleRate * 0.005); // 5ms
+    const hammerBuffer = this.audioContext.createBuffer(1, hammerLength, this.audioContext.sampleRate);
+    const hammerData = hammerBuffer.getChannelData(0);
+    for (let i = 0; i < hammerLength; i++) {
+      hammerData[i] = (Math.random() * 2 - 1) * Math.exp(-i / hammerLength * 8);
+    }
+    hammerStrike.buffer = hammerBuffer;
     
-    const attackVol = Math.max(0.001, velocity * 1.0);
-    attackGain.gain.setValueAtTime(attackVol, currentTime);
-    attackGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.01);
+    // Hammer transient
+    hammerTransient.type = 'square';
+    hammerTransient.frequency.setValueAtTime(frequency * 8, currentTime);
     
-    bright1.connect(brightFilter);
-    brightFilter.connect(gain1);
-    gain1.connect(masterGain);
+    // String sympathetic resonance
+    stringResonance.type = 'triangle';
+    stringResonance.frequency.setValueAtTime(frequency * 1.003, currentTime); // Slightly detuned
     
-    bright2.connect(gain2);
-    gain2.connect(masterGain);
+    // Piano tone filtering
+    pianoFilter.type = 'lowpass';
+    pianoFilter.frequency.setValueAtTime(frequency * 6, currentTime);
+    pianoFilter.Q.setValueAtTime(1, currentTime);
     
-    bright3.connect(gain3);
-    gain3.connect(masterGain);
+    // Brightness control
+    brightnessFilter.type = 'peaking';
+    brightnessFilter.frequency.setValueAtTime(frequency * 3, currentTime);
+    brightnessFilter.Q.setValueAtTime(2, currentTime);
+    brightnessFilter.gain.setValueAtTime(3, currentTime);
     
-    attack.connect(attackGain);
-    attackGain.connect(masterGain);
+    // Piano envelope - quick attack, natural decay
+    const fundVol = Math.max(0.001, velocity * 0.8);
+    fundGain.gain.setValueAtTime(fundVol, currentTime);
+    fundGain.gain.exponentialRampToValueAtTime(fundVol * 0.7, currentTime + 0.1);
+    fundGain.gain.exponentialRampToValueAtTime(fundVol * 0.5, currentTime + duration * 0.3);
+    fundGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    bright1.start(currentTime);
-    bright2.start(currentTime);
-    bright3.start(currentTime);
-    attack.start(currentTime);
+    // Harmonics with piano-like distribution
+    const harm2Vol = Math.max(0.001, velocity * 0.6);
+    harm2Gain.gain.setValueAtTime(harm2Vol, currentTime);
+    harm2Gain.gain.exponentialRampToValueAtTime(harm2Vol * 0.6, currentTime + 0.08);
+    harm2Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.8);
     
-    bright1.stop(currentTime + duration);
-    bright2.stop(currentTime + duration);
-    bright3.stop(currentTime + duration);
-    attack.stop(currentTime + duration);
+    const harm3Vol = Math.max(0.001, velocity * 0.4);
+    harm3Gain.gain.setValueAtTime(harm3Vol, currentTime);
+    harm3Gain.gain.exponentialRampToValueAtTime(harm3Vol * 0.5, currentTime + 0.06);
+    harm3Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.6);
     
-    oscillators.push(bright1, bright2, bright3, attack);
+    const harm4Vol = Math.max(0.001, velocity * 0.3);
+    harm4Gain.gain.setValueAtTime(harm4Vol, currentTime);
+    harm4Gain.gain.exponentialRampToValueAtTime(harm4Vol * 0.4, currentTime + 0.04);
+    harm4Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.4);
+    
+    const harm5Vol = Math.max(0.001, velocity * 0.2);
+    harm5Gain.gain.setValueAtTime(harm5Vol, currentTime);
+    harm5Gain.gain.exponentialRampToValueAtTime(harm5Vol * 0.3, currentTime + 0.03);
+    harm5Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.3);
+    
+    // Hammer components
+    const hammerVol = Math.max(0.001, velocity * 0.3);
+    hammerGain.gain.setValueAtTime(hammerVol, currentTime);
+    hammerGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.01);
+    
+    const transientVol = Math.max(0.001, velocity * 0.2);
+    transientGain.gain.setValueAtTime(transientVol, currentTime);
+    transientGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.005);
+    
+    // String resonance
+    const resonanceVol = Math.max(0.001, velocity * 0.3);
+    resonanceGain.gain.setValueAtTime(0.001, currentTime);
+    resonanceGain.gain.exponentialRampToValueAtTime(resonanceVol, currentTime + 0.02);
+    resonanceGain.gain.exponentialRampToValueAtTime(resonanceVol * 0.8, currentTime + 0.2);
+    resonanceGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    
+    // Connect fundamental through filters
+    fundamental.connect(pianoFilter);
+    pianoFilter.connect(brightnessFilter);
+    brightnessFilter.connect(fundGain);
+    fundGain.connect(masterGain);
+    
+    // Connect harmonics
+    harmonic2.connect(harm2Gain);
+    harm2Gain.connect(masterGain);
+    
+    harmonic3.connect(harm3Gain);
+    harm3Gain.connect(masterGain);
+    
+    harmonic4.connect(harm4Gain);
+    harm4Gain.connect(masterGain);
+    
+    harmonic5.connect(harm5Gain);
+    harm5Gain.connect(masterGain);
+    
+    // Connect hammer components
+    hammerStrike.connect(hammerGain);
+    hammerGain.connect(masterGain);
+    
+    hammerTransient.connect(transientGain);
+    transientGain.connect(masterGain);
+    
+    // Connect string resonance
+    stringResonance.connect(resonanceGain);
+    resonanceGain.connect(masterGain);
+    
+    // Start all components
+    fundamental.start(currentTime);
+    harmonic2.start(currentTime);
+    harmonic3.start(currentTime);
+    harmonic4.start(currentTime);
+    harmonic5.start(currentTime);
+    hammerStrike.start(currentTime);
+    hammerTransient.start(currentTime);
+    stringResonance.start(currentTime);
+    
+    // Stop all components
+    fundamental.stop(currentTime + duration);
+    harmonic2.stop(currentTime + duration);
+    harmonic3.stop(currentTime + duration);
+    harmonic4.stop(currentTime + duration);
+    harmonic5.stop(currentTime + duration);
+    hammerTransient.stop(currentTime + duration);
+    stringResonance.stop(currentTime + duration);
+    
+    oscillators.push(fundamental, harmonic2, harmonic3, harmonic4, harmonic5, hammerTransient, stringResonance);
 
-    this.addReverb(masterGain, 0.1); // Very dry and sharp
+    this.addReverb(masterGain, 0.3); // Natural room reverb
     masterGain.connect(this.masterGain);
     this.trackOscillators(oscillators, 'piano', frequency);
   }
 
-  // GRAND PIANO: Deep, rumbling bass with slow warm attack - sounds like thunder
+  // GRAND PIANO: Premium concert grand with rich harmonics, long sustain, and warm tone
   private playGrandPianoNote(frequency: number, duration: number, velocity: number, currentTime: number) {
     if (!this.audioContext || !this.masterGain) return;
 
     const oscillators: OscillatorNode[] = [];
     const masterGain = this.audioContext.createGain();
     
-    // DEEP bass-heavy sound with rich undertones
-    const deepBass = this.audioContext.createOscillator();
-    const subBass = this.audioContext.createOscillator();
-    const warmth = this.audioContext.createOscillator();
-    const resonance = this.audioContext.createOscillator();
-    const body = this.audioContext.createOscillator();
+    // Grand piano harmonic series - richer than upright piano
+    const fundamental = this.audioContext.createOscillator();
+    const harmonic2 = this.audioContext.createOscillator();
+    const harmonic3 = this.audioContext.createOscillator();
+    const harmonic4 = this.audioContext.createOscillator();
+    const harmonic5 = this.audioContext.createOscillator();
+    const harmonic6 = this.audioContext.createOscillator();
     
-    const bassGain = this.audioContext.createGain();
-    const subGain = this.audioContext.createGain();
-    const warmGain = this.audioContext.createGain();
-    const resGain = this.audioContext.createGain();
-    const bodyGain = this.audioContext.createGain();
+    // Grand piano soundboard resonance
+    const soundboard1 = this.audioContext.createOscillator();
+    const soundboard2 = this.audioContext.createOscillator();
     
-    const bassFilter = this.audioContext.createBiquadFilter();
+    // Hammer mechanism - softer than upright
+    const hammerStrike = this.audioContext.createBufferSource();
     
-    // Deep, rich bass tones
-    deepBass.type = 'triangle';
-    deepBass.frequency.setValueAtTime(frequency, currentTime);
+    // Gains for each component
+    const fundGain = this.audioContext.createGain();
+    const harm2Gain = this.audioContext.createGain();
+    const harm3Gain = this.audioContext.createGain();
+    const harm4Gain = this.audioContext.createGain();
+    const harm5Gain = this.audioContext.createGain();
+    const harm6Gain = this.audioContext.createGain();
+    const soundboard1Gain = this.audioContext.createGain();
+    const soundboard2Gain = this.audioContext.createGain();
+    const hammerGain = this.audioContext.createGain();
     
-    subBass.type = 'sine';
-    subBass.frequency.setValueAtTime(frequency * 0.5, currentTime); // Sub-octave
+    // Filters for grand piano tone
+    const grandFilter = this.audioContext.createBiquadFilter();
+    const warmthFilter = this.audioContext.createBiquadFilter();
+    const soundboardFilter = this.audioContext.createBiquadFilter();
     
-    warmth.type = 'triangle';
-    warmth.frequency.setValueAtTime(frequency * 1.5, currentTime);
+    // Grand piano harmonics - warmer and richer
+    fundamental.type = 'triangle';
+    fundamental.frequency.setValueAtTime(frequency, currentTime);
     
-    resonance.type = 'sine';
-    resonance.frequency.setValueAtTime(frequency * 0.25, currentTime); // Very low resonance
+    harmonic2.type = 'sine';
+    harmonic2.frequency.setValueAtTime(frequency * 2, currentTime);
     
-    body.type = 'triangle';
-    body.frequency.setValueAtTime(frequency * 0.125, currentTime); // Ultra low body
+    harmonic3.type = 'sine';
+    harmonic3.frequency.setValueAtTime(frequency * 3, currentTime);
     
-    bassFilter.type = 'lowpass';
-    bassFilter.frequency.setValueAtTime(frequency * 1.5, currentTime); // Very warm filtering
-    bassFilter.Q.setValueAtTime(2, currentTime);
+    harmonic4.type = 'sine';
+    harmonic4.frequency.setValueAtTime(frequency * 4, currentTime);
     
-    // VERY slow attack, long sustain - opposite of piano
-    const bassVol = Math.max(0.001, velocity * 1.2);
-    bassGain.gain.setValueAtTime(0.001, currentTime);
-    bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.3, currentTime + 0.3);
-    bassGain.gain.exponentialRampToValueAtTime(bassVol, currentTime + 0.8);
-    bassGain.gain.setValueAtTime(bassVol * 0.9, currentTime + duration - 0.2);
-    bassGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    harmonic5.type = 'sine';
+    harmonic5.frequency.setValueAtTime(frequency * 5, currentTime);
     
-    const subVol = Math.max(0.001, velocity * 0.8);
-    subGain.gain.setValueAtTime(0.001, currentTime);
-    subGain.gain.exponentialRampToValueAtTime(subVol, currentTime + 0.5);
-    subGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    harmonic6.type = 'sine';
+    harmonic6.frequency.setValueAtTime(frequency * 6, currentTime);
     
-    const warmVol = Math.max(0.001, velocity * 0.6);
-    warmGain.gain.setValueAtTime(0.001, currentTime);
-    warmGain.gain.exponentialRampToValueAtTime(warmVol, currentTime + 0.4);
-    warmGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    // Large soundboard resonance
+    soundboard1.type = 'triangle';
+    soundboard1.frequency.setValueAtTime(frequency * 0.997, currentTime); // Slightly detuned
     
-    const resVol = Math.max(0.001, velocity * 0.7);
-    resGain.gain.setValueAtTime(0.001, currentTime);
-    resGain.gain.exponentialRampToValueAtTime(resVol, currentTime + 0.2);
-    resGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    soundboard2.type = 'triangle';
+    soundboard2.frequency.setValueAtTime(frequency * 1.003, currentTime); // Slightly detuned
     
-    const bodyVol = Math.max(0.001, velocity * 0.5);
-    bodyGain.gain.setValueAtTime(0.001, currentTime);
-    bodyGain.gain.exponentialRampToValueAtTime(bodyVol, currentTime + 0.1);
-    bodyGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    // Softer hammer for grand piano
+    const hammerLength = Math.floor(this.audioContext.sampleRate * 0.003); // 3ms - softer than upright
+    const hammerBuffer = this.audioContext.createBuffer(1, hammerLength, this.audioContext.sampleRate);
+    const hammerData = hammerBuffer.getChannelData(0);
+    for (let i = 0; i < hammerLength; i++) {
+      hammerData[i] = (Math.random() * 2 - 1) * 0.5 * Math.exp(-i / hammerLength * 6);
+    }
+    hammerStrike.buffer = hammerBuffer;
     
-    deepBass.connect(bassFilter);
-    bassFilter.connect(bassGain);
-    bassGain.connect(masterGain);
+    // Grand piano tone shaping
+    grandFilter.type = 'lowpass';
+    grandFilter.frequency.setValueAtTime(frequency * 8, currentTime); // More open than upright
+    grandFilter.Q.setValueAtTime(0.8, currentTime);
     
-    subBass.connect(subGain);
-    subGain.connect(masterGain);
+    // Warmth enhancement
+    warmthFilter.type = 'peaking';
+    warmthFilter.frequency.setValueAtTime(frequency * 2, currentTime);
+    warmthFilter.Q.setValueAtTime(1.5, currentTime);
+    warmthFilter.gain.setValueAtTime(2, currentTime);
     
-    warmth.connect(warmGain);
-    warmGain.connect(masterGain);
+    // Soundboard filtering
+    soundboardFilter.type = 'bandpass';
+    soundboardFilter.frequency.setValueAtTime(frequency * 1.5, currentTime);
+    soundboardFilter.Q.setValueAtTime(1, currentTime);
     
-    resonance.connect(resGain);
-    resGain.connect(masterGain);
+    // Grand piano envelope - longer sustain than upright
+    const fundVol = Math.max(0.001, velocity * 0.9);
+    fundGain.gain.setValueAtTime(fundVol, currentTime);
+    fundGain.gain.exponentialRampToValueAtTime(fundVol * 0.8, currentTime + 0.2);
+    fundGain.gain.exponentialRampToValueAtTime(fundVol * 0.6, currentTime + duration * 0.4);
+    fundGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    body.connect(bodyGain);
-    bodyGain.connect(masterGain);
+    // Richer harmonic distribution
+    const harm2Vol = Math.max(0.001, velocity * 0.7);
+    harm2Gain.gain.setValueAtTime(harm2Vol, currentTime);
+    harm2Gain.gain.exponentialRampToValueAtTime(harm2Vol * 0.7, currentTime + 0.15);
+    harm2Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.9);
     
-    deepBass.start(currentTime);
-    subBass.start(currentTime);
-    warmth.start(currentTime);
-    resonance.start(currentTime);
-    body.start(currentTime);
+    const harm3Vol = Math.max(0.001, velocity * 0.5);
+    harm3Gain.gain.setValueAtTime(harm3Vol, currentTime);
+    harm3Gain.gain.exponentialRampToValueAtTime(harm3Vol * 0.6, currentTime + 0.12);
+    harm3Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.7);
     
-    deepBass.stop(currentTime + duration);
-    subBass.stop(currentTime + duration);
-    warmth.stop(currentTime + duration);
-    resonance.stop(currentTime + duration);
-    body.stop(currentTime + duration);
+    const harm4Vol = Math.max(0.001, velocity * 0.4);
+    harm4Gain.gain.setValueAtTime(harm4Vol, currentTime);
+    harm4Gain.gain.exponentialRampToValueAtTime(harm4Vol * 0.5, currentTime + 0.1);
+    harm4Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.6);
     
-    oscillators.push(deepBass, subBass, warmth, resonance, body);
+    const harm5Vol = Math.max(0.001, velocity * 0.3);
+    harm5Gain.gain.setValueAtTime(harm5Vol, currentTime);
+    harm5Gain.gain.exponentialRampToValueAtTime(harm5Vol * 0.4, currentTime + 0.08);
+    harm5Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.5);
+    
+    const harm6Vol = Math.max(0.001, velocity * 0.2);
+    harm6Gain.gain.setValueAtTime(harm6Vol, currentTime);
+    harm6Gain.gain.exponentialRampToValueAtTime(harm6Vol * 0.3, currentTime + 0.06);
+    harm6Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * 0.4);
+    
+    // Soundboard resonance - distinctive of grand pianos
+    const soundboard1Vol = Math.max(0.001, velocity * 0.4);
+    soundboard1Gain.gain.setValueAtTime(0.001, currentTime);
+    soundboard1Gain.gain.exponentialRampToValueAtTime(soundboard1Vol, currentTime + 0.05);
+    soundboard1Gain.gain.exponentialRampToValueAtTime(soundboard1Vol * 0.8, currentTime + 0.3);
+    soundboard1Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    
+    const soundboard2Vol = Math.max(0.001, velocity * 0.35);
+    soundboard2Gain.gain.setValueAtTime(0.001, currentTime);
+    soundboard2Gain.gain.exponentialRampToValueAtTime(soundboard2Vol, currentTime + 0.07);
+    soundboard2Gain.gain.exponentialRampToValueAtTime(soundboard2Vol * 0.7, currentTime + 0.35);
+    soundboard2Gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+    
+    // Softer hammer
+    const hammerVol = Math.max(0.001, velocity * 0.2);
+    hammerGain.gain.setValueAtTime(hammerVol, currentTime);
+    hammerGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.008);
+    
+    // Connect fundamental through filters
+    fundamental.connect(grandFilter);
+    grandFilter.connect(warmthFilter);
+    warmthFilter.connect(fundGain);
+    fundGain.connect(masterGain);
+    
+    // Connect harmonics
+    harmonic2.connect(harm2Gain);
+    harm2Gain.connect(masterGain);
+    
+    harmonic3.connect(harm3Gain);
+    harm3Gain.connect(masterGain);
+    
+    harmonic4.connect(harm4Gain);
+    harm4Gain.connect(masterGain);
+    
+    harmonic5.connect(harm5Gain);
+    harm5Gain.connect(masterGain);
+    
+    harmonic6.connect(harm6Gain);
+    harm6Gain.connect(masterGain);
+    
+    // Connect soundboard through filter
+    soundboard1.connect(soundboardFilter);
+    soundboardFilter.connect(soundboard1Gain);
+    soundboard1Gain.connect(masterGain);
+    
+    soundboard2.connect(soundboard2Gain);
+    soundboard2Gain.connect(masterGain);
+    
+    // Connect hammer
+    hammerStrike.connect(hammerGain);
+    hammerGain.connect(masterGain);
+    
+    // Start all components
+    fundamental.start(currentTime);
+    harmonic2.start(currentTime);
+    harmonic3.start(currentTime);
+    harmonic4.start(currentTime);
+    harmonic5.start(currentTime);
+    harmonic6.start(currentTime);
+    soundboard1.start(currentTime);
+    soundboard2.start(currentTime);
+    hammerStrike.start(currentTime);
+    
+    // Stop all components
+    fundamental.stop(currentTime + duration);
+    harmonic2.stop(currentTime + duration);
+    harmonic3.stop(currentTime + duration);
+    harmonic4.stop(currentTime + duration);
+    harmonic5.stop(currentTime + duration);
+    harmonic6.stop(currentTime + duration);
+    soundboard1.stop(currentTime + duration);
+    soundboard2.stop(currentTime + duration);
+    
+    oscillators.push(fundamental, harmonic2, harmonic3, harmonic4, harmonic5, harmonic6, soundboard1, soundboard2);
 
-    this.addReverb(masterGain, 0.7); // Massive cathedral reverb
+    this.addReverb(masterGain, 0.5); // Concert hall reverb
     masterGain.connect(this.masterGain);
     this.trackOscillators(oscillators, 'grand', frequency);
   }
