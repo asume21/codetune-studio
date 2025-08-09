@@ -1245,7 +1245,18 @@ export class AudioEngine {
     }
   }
 
-  static getNoteFrequency(note: string, octave: number = 4): number {
+  static getNoteFrequency(note: string | number, octave: number = 4): number {
+    // If note is already a number (frequency), return it directly
+    if (typeof note === 'number') {
+      return note;
+    }
+
+    // Ensure note is a string
+    if (typeof note !== 'string') {
+      console.warn('Invalid note type:', typeof note, note);
+      return 440; // Default to A4
+    }
+
     const noteMap: { [key: string]: number } = {
       'C': 261.63, 'C#': 277.18, 'Db': 277.18,
       'D': 293.66, 'D#': 311.13, 'Eb': 311.13,

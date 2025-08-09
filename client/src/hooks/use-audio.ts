@@ -7,7 +7,7 @@ let globalAudioInitialized = false;
 const audioInitCallbacks: (() => void)[] = [];
 
 interface UseAudioReturn {
-  playNote: (note: string, octave?: number, duration?: number, instrument?: string) => void;
+  playNote: (note: string | number, octave?: number, duration?: number, instrument?: string) => void;
   playDrumSound: (type: string, volume?: number) => void;
   setMasterVolume: (volume: number) => void;
   isInitialized: boolean;
@@ -56,7 +56,7 @@ export function useAudio(): UseAudioReturn {
     };
   }, []);
 
-  const playNote = useCallback(async (note: string, octave: number = 4, duration: number = 0.5, instrument: string = 'piano', velocity: number = 0.7) => {
+  const playNote = useCallback(async (note: string | number, octave: number = 4, duration: number = 0.5, instrument: string = 'piano', velocity: number = 0.7) => {
     try {
       if (!globalAudioInitialized) {
         await initialize();
