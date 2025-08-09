@@ -290,6 +290,7 @@ export class RealisticAudioEngine {
       // Recreate the professional drum synthesis here
       switch (drumType) {
         case 'kick':
+        case 'bass': // Bass drum is same as kick
           this.playSyntheticKick(currentTime, velocity);
           break;
         case 'snare':
@@ -298,8 +299,17 @@ export class RealisticAudioEngine {
         case 'hihat':
           this.playSyntheticHihat(currentTime, velocity);
           break;
+        case 'openhat':
+          this.playSyntheticOpenHat(currentTime, velocity);
+          break;
         case 'tom':
           this.playSyntheticTom(currentTime, velocity);
+          break;
+        case 'clap':
+          this.playSyntheticClap(currentTime, velocity);
+          break;
+        case 'crash':
+          this.playSyntheticCrash(currentTime, velocity);
           break;
         default:
           console.warn(`🎵 Unknown drum type: ${drumType}`);
@@ -521,6 +531,135 @@ export class RealisticAudioEngine {
       tomOsc.stop(currentTime + 0.4);
     } catch (error) {
       console.error('🎵 Tom drum error:', error);
+    }
+  }
+
+  private playSyntheticOpenHat(currentTime: number, velocity: number): void {
+    if (!this.audioContext) return;
+
+    try {
+      const openhatNoise = this.audioContext.createBufferSource();
+      const openhatGain = this.audioContext.createGain();
+      const openhatFilter = this.audioContext.createBiquadFilter();
+
+      const duration = 0.25; // Longer than closed hi-hat
+      const bufferSize = this.audioContext.sampleRate * duration;
+      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      // Generate open hi-hat noise with slower envelope
+      for (let i = 0; i < bufferSize; i++) {
+        const envelope = Math.pow(1 - (i / bufferSize), 2); // Slower decay than closed hat
+        data[i] = (Math.random() * 2 - 1) * envelope;
+      }
+
+      openhatNoise.buffer = buffer;
+
+      // High-pass for metallic character
+      openhatFilter.type = 'highpass';
+      openhatFilter.frequency.setValueAtTime(8000, currentTime);
+      openhatFilter.Q.setValueAtTime(1, currentTime);
+
+      const openhatVol = Math.max(0.001, velocity * 0.8);
+      openhatGain.gain.setValueAtTime(openhatVol, currentTime);
+      openhatGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+
+      // Connect
+      openhatNoise.connect(openhatFilter);
+      openhatFilter.connect(openhatGain);
+      openhatGain.connect(this.audioContext.destination);
+
+      openhatNoise.start(currentTime);
+    } catch (error) {
+      console.error('🎵 Open hi-hat error:', error);
+    }
+  }
+
+  private playSyntheticClap(currentTime: number, velocity: number): void {
+    if (!this.audioContext) return;
+
+    try {
+      // Create multiple noise bursts for clap effect
+      for (let i = 0; i < 4; i++) {
+        const clapNoise = this.audioContext.createBufferSource();
+        const clapGain = this.audioContext.createGain();
+        const clapFilter = this.audioContext.createBiquadFilter();
+
+        const burstDuration = 0.015;
+        const startTime = currentTime + (i * 0.008); // Staggered bursts
+        const bufferSize = this.audioContext.sampleRate * burstDuration;
+        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+        const data = buffer.getChannelData(0);
+
+        // Generate clap burst noise
+        for (let j = 0; j < bufferSize; j++) {
+          const envelope = Math.pow(1 - (j / bufferSize), 3);
+          data[j] = (Math.random() * 2 - 1) * envelope;
+        }
+
+        clapNoise.buffer = buffer;
+
+        // Bandpass for clap character
+        clapFilter.type = 'bandpass';
+        clapFilter.frequency.setValueAtTime(1500, startTime);
+        clapFilter.Q.setValueAtTime(2, startTime);
+
+        const clapVol = Math.max(0.001, velocity * 0.4 * (1 - i * 0.1)); // Decreasing volume
+        clapGain.gain.setValueAtTime(clapVol, startTime);
+        clapGain.gain.exponentialRampToValueAtTime(0.001, startTime + burstDuration);
+
+        // Connect
+        clapNoise.connect(clapFilter);
+        clapFilter.connect(clapGain);
+        clapGain.connect(this.audioContext.destination);
+
+        clapNoise.start(startTime);
+      }
+    } catch (error) {
+      console.error('🎵 Clap error:', error);
+    }
+  }
+
+  private playSyntheticCrash(currentTime: number, velocity: number): void {
+    if (!this.audioContext) return;
+
+    try {
+      const crashNoise = this.audioContext.createBufferSource();
+      const crashGain = this.audioContext.createGain();
+      const crashFilter = this.audioContext.createBiquadFilter();
+
+      const duration = 1.5; // Long crash decay
+      const bufferSize = this.audioContext.sampleRate * duration;
+      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      // Generate crash cymbal noise with shimmer
+      for (let i = 0; i < bufferSize; i++) {
+        const envelope = Math.pow(1 - (i / bufferSize), 0.5); // Slow decay
+        const shimmer = Math.sin(i * 0.01) * 0.3 + 0.7; // Add shimmer
+        data[i] = (Math.random() * 2 - 1) * envelope * shimmer;
+      }
+
+      crashNoise.buffer = buffer;
+
+      // High-pass for cymbal brightness
+      crashFilter.type = 'highpass';
+      crashFilter.frequency.setValueAtTime(5000, currentTime);
+      crashFilter.Q.setValueAtTime(0.7, currentTime);
+
+      const crashVol = Math.max(0.001, velocity * 0.9);
+      crashGain.gain.setValueAtTime(crashVol, currentTime);
+      crashGain.gain.exponentialRampToValueAtTime(crashVol * 0.3, currentTime + 0.2);
+      crashGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+
+      // Connect
+      crashNoise.connect(crashFilter);
+      crashFilter.connect(crashGain);
+      crashGain.connect(this.audioContext.destination);
+
+      crashNoise.start(currentTime);
+    } catch (error) {
+      console.error('🎵 Crash cymbal error:', error);
     }
   }
 }
