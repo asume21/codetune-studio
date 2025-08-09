@@ -49,35 +49,9 @@ const defaultTracks = [
 export default function BeatMaker() {
   const studioContext = useContext(StudioAudioContext);
   const [bpm, setBpm] = useState(120);
-  
-  // Update playback speed in real-time when BPM changes during playback
-  useEffect(() => {
-    if (isPlaying && intervalRef.current) {
-      // Clear current interval
-      clearInterval(intervalRef.current);
-      
-      // Restart with new BPM immediately
-      const stepDuration = (60 / bpm / 4) * 1000;
-      intervalRef.current = setInterval(() => {
-        setCurrentStep(prev => {
-          const step = prev % 16;
-          
-          // Play sounds for active steps
-          Object.entries(pattern).forEach(([track, steps]) => {
-            if (steps && steps[step]) {
-              playDrumSound(track);
-            }
-          });
-          
-          return prev + 1;
-        });
-      }, stepDuration);
-    }
-  }, [bpm]);
-  const [selectedDrumKit, setSelectedDrumKit] = useState('acoustic');
-  const [isPlaying, setIsPlaying] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [playbackInterval, setPlaybackInterval] = useState<NodeJS.Timeout | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedDrumKit, setSelectedDrumKit] = useState('acoustic');
 
   // Initialize pattern with default structure
   const [pattern, setPattern] = useState<BeatPattern>({
@@ -91,7 +65,6 @@ export default function BeatMaker() {
     crash: Array(16).fill(false),
   });
 
-
   const { toast } = useToast();
   const { playDrumSound, initialize, isInitialized } = useAudio();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -102,6 +75,31 @@ export default function BeatMaker() {
       initialize();
     }
   }, [initialize, isInitialized]);
+
+  // Real-time pattern updates for live editing
+  useEffect(() => {
+    if (isPlaying && intervalRef.current) {
+      // When pattern changes during playback, the useEffect will restart the interval
+      // This ensures real-time editing works immediately
+      clearInterval(intervalRef.current);
+      
+      const stepDuration = (60 / bpm / 4) * 1000;
+      intervalRef.current = setInterval(() => {
+        setCurrentStep(prev => {
+          const step = prev % 16;
+          
+          // Play sounds for active steps using CURRENT pattern state
+          Object.entries(pattern).forEach(([track, steps]) => {
+            if (steps && steps[step]) {
+              playDrumSound(track);
+            }
+          });
+          
+          return prev + 1;
+        });
+      }, stepDuration);
+    }
+  }, [bpm, pattern, isPlaying, playDrumSound]); // Pattern dependency enables real-time updates
 
   const generateBeatMutation = useMutation({
     mutationFn: async (data: { style: string; bpm: number }) => {
@@ -143,17 +141,24 @@ export default function BeatMaker() {
   });
 
   const toggleStep = (track: keyof BeatPattern, step: number) => {
-    setPattern(prev => ({
-      ...prev,
-      [track]: prev[track].map((active, index) => 
-        index === step ? !active : active
-      )
-    }));
+    setPattern(prev => {
+      const updatedPattern = {
+        ...prev,
+        [track]: prev[track].map((active, index) => 
+          index === step ? !active : active
+        )
+      };
+      
+      // Update studio context immediately for master playback  
+      studioContext.setCurrentPattern?.(updatedPattern);
+      
+      return updatedPattern;
+    });
   };
 
   // Auto-save to studio context whenever pattern changes
   useEffect(() => {
-    studioContext.setCurrentPattern(pattern);
+    studioContext.setCurrentPattern?.(pattern);
   }, [pattern, studioContext]);
 
   const handleGenerateAI = () => {
@@ -267,10 +272,15 @@ export default function BeatMaker() {
             </div>
             <Button
               onClick={playPattern}
-              className={`${isPlaying ? 'bg-red-600 hover:bg-red-500 animate-pulse' : 'bg-studio-success hover:bg-green-500'}`}
+              className={`${isPlaying ? 'bg-red-600 hover:bg-red-500' : 'bg-studio-success hover:bg-green-500'}`}
             >
               <i className={`fas ${isPlaying ? 'fa-stop' : 'fa-play'} mr-2`}></i>
-              {isPlaying ? 'Stop (Real-time Edit Mode)' : 'Play Beat Only'}
+              {isPlaying ? 'Stop (Live Edit Mode)' : 'Play Beat Only'}
+              {isPlaying && (
+                <span className="ml-2 text-xs bg-yellow-500 text-black px-2 py-1 rounded animate-pulse">
+                  LIVE
+                </span>
+              )}
             </Button>
             <Button onClick={stopPattern} className="bg-red-600 hover:bg-red-500">
               <i className="fas fa-stop mr-2"></i>
@@ -279,6 +289,9 @@ export default function BeatMaker() {
             <div className="text-xs text-gray-400 px-2">
               <div>{isPlaying ? '🎵 LIVE EDITING: Click steps to hear changes instantly!' : 'Individual beat preview'}</div>
               <div>Use master controls for full song</div>
+              {isPlaying && (
+                <div className="text-yellow-400 animate-pulse">Step: {(currentStep % 16) + 1}/16</div>
+              )}
             </div>
             <Button
               onClick={handleGenerateAI}
@@ -328,10 +341,42 @@ export default function BeatMaker() {
           <div className="bg-studio-panel border border-gray-600 rounded-lg p-6">
             <div className="mb-4">
               <h3 className="text-lg font-medium mb-2">Drum Pattern Sequencer</h3>
-              <div className="flex items-center justify-between text-sm text-gray-400">
+              <div className="flex items-center justify-between text-sm text-gray-400 mb-3">
                 <span>Click squares to add drum hits • 16 steps per pattern</span>
                 <span>BPM: {bpm}</span>
               </div>
+              
+              {/* Visual Time Indicator */}
+              {isPlaying && (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
+                    <span>Beat Progress</span>
+                    <span>Step {(currentStep % 16) + 1} of 16</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                    <div 
+                      className="bg-yellow-400 h-2 rounded-full transition-all duration-75 relative"
+                      style={{ width: `${((currentStep % 16) + 1) / 16 * 100}%` }}
+                    >
+                      <div className="absolute right-0 top-0 w-1 h-2 bg-yellow-300 animate-pulse rounded-full"></div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-16 gap-px">
+                    {Array.from({ length: 16 }, (_, i) => (
+                      <div 
+                        key={i}
+                        className={`h-1 rounded-sm transition-all duration-75 ${
+                          i === (currentStep % 16) 
+                            ? 'bg-yellow-400 animate-pulse' 
+                            : i < (currentStep % 16) 
+                              ? 'bg-yellow-600' 
+                              : 'bg-gray-600'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="space-y-4">
@@ -360,7 +405,7 @@ export default function BeatMaker() {
                             : "bg-gray-700 hover:bg-gray-600 border-gray-500 text-gray-400 hover:border-gray-400"
                         } ${
                           isPlaying && (currentStep % 16) === index 
-                            ? "ring-3 ring-yellow-400 ring-opacity-90 animate-pulse" 
+                            ? "ring-4 ring-yellow-400 ring-opacity-100 shadow-lg shadow-yellow-400/50 animate-pulse scale-110" 
                             : ""
                         }`}
                         title={`${track.name} - Step ${index + 1} (Click to toggle)`}
