@@ -77,7 +77,8 @@ export class RealisticAudioEngine {
         await this.audioContext.resume();
       }
 
-      console.log('Realistic audio context started');
+      console.log('🎵 Realistic audio context started');
+      console.log('🎵 Environment:', process.env.NODE_ENV || 'development');
 
       // Load essential instruments first (piano, guitar, and a few more)
       await this.loadInstruments([
@@ -107,7 +108,7 @@ export class RealisticAudioEngine {
 
       try {
         const soundfontName = this.instrumentLibrary[name];
-        console.log(`Loading realistic ${name} instrument (${soundfontName})`);
+        console.log(`🎵 Loading realistic ${name} instrument (${soundfontName})`);
         
         const instrument = await Soundfont.instrument(
           this.audioContext!, 
@@ -124,9 +125,9 @@ export class RealisticAudioEngine {
         );
         
         this.instruments[name] = instrument;
-        console.log(`Loaded realistic ${name} instrument successfully`);
+        console.log(`🎵 Loaded realistic ${name} instrument successfully`);
       } catch (error) {
-        console.error(`Failed to load ${name} instrument:`, error);
+        console.error(`🎵 Failed to load ${name} instrument:`, error);
       }
     });
 
