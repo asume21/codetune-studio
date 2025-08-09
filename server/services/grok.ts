@@ -483,13 +483,27 @@ function generateRandomCodeMusic(language: string, style: string, interpretation
     frequency: 261.63 * Math.pow(2, Math.floor(Math.random() * 2))
   }));
   
+  // Generate a basic drum pattern based on code complexity
+  const drumPattern = {
+    kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
+    snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+    hihat: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+    bass: [true, false, true, false, false, false, true, false, true, false, true, false, false, false, true, false],
+    tom: Array.from({length: 16}, () => Math.random() < 0.1),
+    openhat: Array.from({length: 16}, () => Math.random() < 0.05),
+    clap: Array.from({length: 16}, () => Math.random() < 0.1),
+    crash: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
+  };
+  
   return {
     melody,
+    drumPattern,
     rhythm: rhythms[Math.floor(Math.random() * rhythms.length)],
     style,
     interpretation,
     language,
-    explanation: `${interpretation} ${style} interpretation of ${language} code structure`
+    explanation: `${interpretation} ${style} interpretation of ${language} code structure`,
+    bpm: Math.floor(Math.random() * 40) + 100 // 100-140 BPM
   };
 }
 

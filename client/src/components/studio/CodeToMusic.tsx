@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/hooks/use-audio";
+import { StudioAudioContext } from "@/pages/studio";
 
 export default function CodeToMusic() {
   const [language, setLanguage] = useState("javascript");
@@ -40,7 +41,8 @@ export default function CodeToMusic() {
   const compiledMusic = musicData; // Assuming musicData is the compiled music
 
   const { toast } = useToast();
-  const { initialize, isInitialized } = useAudio();
+  const { initialize, isInitialized, playNote } = useAudio();
+  const studioContext = useContext(StudioAudioContext);
 
   const compileMutation = useMutation({
     mutationFn: async (data: { code: string; language: string }) => {
@@ -49,6 +51,27 @@ export default function CodeToMusic() {
     },
     onSuccess: (data) => {
       setMusicData(data);
+      
+      // Update studio context with generated music
+      if (data.melody) {
+        studioContext.setCurrentMelody(data.melody);
+      }
+      
+      // Create a basic drum pattern from the music data
+      const generatedPattern = {
+        kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
+        snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+        hihat: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+        bass: [true, false, true, false, false, false, true, false, true, false, true, false, false, false, true, false],
+        tom: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+        openhat: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+        clap: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+        crash: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
+      };
+      
+      studioContext.setCurrentPattern(generatedPattern);
+      studioContext.setCurrentCodeMusic(data);
+      
       toast({
         title: "Compilation Complete",
         description: "Code has been converted to music successfully.",
@@ -118,15 +141,38 @@ export default function CodeToMusic() {
               )}
             </Button>
             <Button
-              onClick={() => {
-                if (compiledMusic && isInitialized) {
+              onClick={async () => {
+                if (musicData && isInitialized) {
+                  // Play the generated melody if it exists
+                  if (musicData.melody && Array.isArray(musicData.melody)) {
+                    let noteIndex = 0;
+                    const playNextNote = () => {
+                      if (noteIndex < musicData.melody.length) {
+                        const note = musicData.melody[noteIndex];
+                        if (note.note) {
+                          // Extract note name and octave from note like "C4", "D4", etc.
+                          const noteName = note.note.replace(/\d/, '');
+                          const octave = parseInt(note.note.replace(/[A-G]#?/, '')) || 4;
+                          playNote(noteName, octave, note.duration || 0.5, 'piano', 0.7);
+                        }
+                        noteIndex++;
+                        setTimeout(playNextNote, (note.duration || 0.5) * 1000);
+                      }
+                    };
+                    playNextNote();
+                  }
+                  
+                  // Also trigger full song playback through studio context
+                  await studioContext.playFullSong();
+                  
                   toast({ title: "Playing Code Music", description: "Playing your compiled code as music." });
-                } else if (!compiledMusic) {
+                } else if (!musicData) {
                   toast({ title: "No Music", description: "Please compile code first.", variant: "destructive" });
                 } else {
                   toast({ title: "Audio Not Ready", description: "Please start audio first.", variant: "destructive" });
                 }
               }}
+              disabled={!musicData || !isInitialized}
               className="bg-studio-success hover:bg-green-500"
             >
               <i className="fas fa-play mr-2"></i>
