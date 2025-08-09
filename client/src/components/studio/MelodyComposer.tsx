@@ -637,13 +637,18 @@ export default function MelodyComposer() {
     if (isMelodyPlaying) {
       stopMelody();
       setIsMelodyPlaying(false);
+      console.log("Stopping melody playback");
     } else if (notes.length > 0) {
-      playMelody(notes, String(bpm));
+      console.log(`Playing melody with ${notes.length} notes across ${tracks.length} tracks`);
+      playMelody(notes, String(bpm), tracks); // Pass tracks for instrument mapping
       setIsMelodyPlaying(true);
-      // Stop after melody duration
+      
+      // Calculate actual melody duration based on latest note end time
+      const maxEndTime = Math.max(...notes.map(note => (note.start || 0) + (note.duration || 0.5)));
       setTimeout(() => {
         setIsMelodyPlaying(false);
-      }, notes.length * (60 / bpm) * 1000); // This duration calculation is a simplification
+        console.log("Melody playback completed");
+      }, maxEndTime * 1000 + 1000); // Add 1 second buffer
     } else {
       toast({
         title: "No Melody",
