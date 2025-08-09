@@ -1,0 +1,22 @@
+🎵 Using synthetic drums for realistic mode (soundfont drums are broken)
+🎵 Playing synthetic drum in realistic mode: kick
+🎵 Failed to play synthetic drum: 
+ReferenceError {}
+
+🎵 Using synthetic drums for realistic mode (soundfont drums are broken)
+🎵 Playing synthetic drum in realistic mode: bass
+🎵 Unknown drum type: bass
+🎵 Using synthetic drums for realistic mode (soundfont drums are broken)
+🎵 Playing synthetic drum in realistic mode: kick
+🎵 Failed to play synthetic drum: 
+ReferenceError {}
+message: "velocity is not defined"
+stack: "ReferenceError: velocity is not defined↵ at RealisticAudioEngine.playDrumSound (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/src/lib/realisticAudio.ts:237:47)↵ at https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/src/hooks/use-audio.ts:166:30↵ at onClick (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/src/components/studio/BeatMaker.tsx:603:23)↵ at HTMLUnknownElement.callCallback2 (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-NFC5BX5N.js?v=49226fd1:3674:22)↵ at Object.invokeGuardedCallbackDev (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-NFC5BX5N.js?v=49226fd1:3699:24)↵ at invokeGuardedCallback (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-NFC5BX5N.js?v=49226fd1:3733:39)↵ at invokeGuardedCallbackAndCatchFirstError (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-NFC5BX5N.js?v=49226fd1:3736:33)↵ at executeDispatch (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-NFC5BX5N.js?v=49226fd1:7014:11)↵ at processDispatchQueueItemsInOrder (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-NFC5BX5N.js?v=49226fd1:7034:15)↵ at processDispatchQueue (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-NFC5BX5N.js?v=49226fd1:7043:13)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+at t.value (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://492ea1fe-f072-4363-8482-c32d710592ce-00-3ubz238pw5xmg.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400

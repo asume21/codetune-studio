@@ -202,7 +202,7 @@ export function useAudio(): UseAudioReturn {
       
       if (useRealisticSounds && realisticAudio.isReady()) {
         // Use realistic drum samples
-        await realisticAudio.playDrumSound(type);
+        await realisticAudio.playDrumSound(type, volume);
       } else {
         // Fallback to synthetic drums
         audioEngine.playDrum(type as any, volume);

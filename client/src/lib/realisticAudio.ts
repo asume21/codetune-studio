@@ -264,7 +264,7 @@ export class RealisticAudioEngine {
     }
   }
 
-  async playDrumSound(drumType: string): Promise<void> {
+  async playDrumSound(drumType: string, velocity: number = 0.7): Promise<void> {
     if (!this.isInitialized) {
       await this.initialize();
     }
