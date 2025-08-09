@@ -36,13 +36,13 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
       // Master playback - combine all content
       await studioContext.playFullSong();
       
-      // For now, play a combined pattern as demonstration
-      const fullSongPattern = {
+      // Use the current pattern from studio context or default
+      const currentPattern = studioContext.currentPattern || {
         kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
         snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
         hihat: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
       };
-      playPattern(fullSongPattern, studioContext.bpm);
+      playPattern(currentPattern, studioContext.bpm || 120);
       setIsPlaying(true);
     }
   };

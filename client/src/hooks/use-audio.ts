@@ -36,17 +36,57 @@ interface UseAudioReturn {
 // Sequencer hook for beat patterns
 export function useSequencer() {
   const { playDrumSound } = useAudio();
+  let sequenceTimeouts: NodeJS.Timeout[] = [];
+  let isSequencePlaying = false;
   
   return {
-    playPattern: (pattern: any[]) => {
-      pattern.forEach((step, index) => {
-        if (step.active) {
-          setTimeout(() => {
-            playDrumSound(step.sound || 'kick', step.velocity || 0.7);
-          }, index * 125); // 125ms per step for 120 BPM
+    playPattern: (pattern: any, bpm: number = 120) => {
+      // Clear any existing timeouts
+      sequenceTimeouts.forEach(timeout => clearTimeout(timeout));
+      sequenceTimeouts = [];
+      isSequencePlaying = true;
+      
+      // Handle both array patterns and object patterns
+      if (Array.isArray(pattern)) {
+        // Legacy array format
+        pattern.forEach((step, index) => {
+          if (step.active) {
+            const timeout = setTimeout(() => {
+              if (!isSequencePlaying) return;
+              playDrumSound(step.sound || 'kick', step.velocity || 0.7);
+            }, index * (60000 / (bpm * 4))); // Calculate timing based on BPM
+            sequenceTimeouts.push(timeout);
+          }
+        });
+      } else if (pattern && typeof pattern === 'object') {
+        // Object format with tracks (kick, snare, etc.)
+        const stepDuration = 60000 / (bpm * 4); // 16th note duration in ms
+        const totalSteps = 16; // Standard 16-step pattern
+        
+        for (let step = 0; step < totalSteps; step++) {
+          const timeout = setTimeout(() => {
+            if (!isSequencePlaying) return;
+            
+            // Play all active tracks for this step
+            Object.entries(pattern).forEach(([trackName, steps]: [string, any]) => {
+              if (Array.isArray(steps) && steps[step]) {
+                playDrumSound(trackName, 0.7);
+              }
+            });
+          }, step * stepDuration);
+          
+          sequenceTimeouts.push(timeout);
         }
-      });
-    }
+      }
+    },
+    
+    stopPattern: () => {
+      isSequencePlaying = false;
+      sequenceTimeouts.forEach(timeout => clearTimeout(timeout));
+      sequenceTimeouts = [];
+    },
+    
+    isPlaying: isSequencePlaying
   };
 }
 
