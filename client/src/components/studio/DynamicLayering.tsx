@@ -45,7 +45,7 @@ export default function DynamicLayering() {
   const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
 
   const { toast } = useToast();
-  const { playNote, initialize, isInitialized } = useAudio();
+  const { playFrequency, initialize, isInitialized } = useAudio();
   const studioContext = useContext(StudioAudioContext);
 
   const generateLayersMutation = useMutation({
@@ -116,7 +116,7 @@ export default function DynamicLayering() {
     // Play the layer's notes in sequence
     for (const note of layer.notes) {
       setTimeout(() => {
-        playNote(note.frequency, note.duration, note.velocity);
+        playFrequency(note.frequency, note.duration, layer.instrument, note.velocity);
       }, note.start * 1000);
     }
 
@@ -139,7 +139,7 @@ export default function DynamicLayering() {
     generatedLayers.forEach(layer => {
       layer.notes.forEach(note => {
         setTimeout(() => {
-          playNote(note.frequency, note.duration, note.velocity * layer.volume);
+          playFrequency(note.frequency, note.duration, layer.instrument, note.velocity * layer.volume);
         }, note.start * 1000);
       });
     });

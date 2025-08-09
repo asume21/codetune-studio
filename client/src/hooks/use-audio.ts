@@ -70,6 +70,19 @@ export function useAudio(): UseAudioReturn {
     }
   }, [initialize]);
 
+  const playFrequency = useCallback(async (frequency: number, duration: number = 0.5, instrument: string = 'piano', velocity: number = 0.7) => {
+    try {
+      if (!globalAudioInitialized) {
+        await initialize();
+      }
+      
+      await audioEngine.resumeContext();
+      audioEngine.playNote(frequency, duration, instrument, velocity);
+    } catch (error) {
+      console.error("Failed to play frequency:", error);
+    }
+  }, [initialize]);
+
   const playDrumSound = useCallback(async (type: string, volume: number = 0.5) => {
     try {
       if (!globalAudioInitialized) {
@@ -112,6 +125,7 @@ export function useAudio(): UseAudioReturn {
 
   return {
     playNote,
+    playFrequency,
     playDrumSound,
     setMasterVolume,
     isInitialized,

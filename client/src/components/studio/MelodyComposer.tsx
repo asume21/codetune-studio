@@ -165,7 +165,7 @@ export default function MelodyComposer() {
 
     pattern.forEach((noteData, index) => {
       setTimeout(() => {
-        playNote(getNoteFrequency(noteData.note, noteData.octave), duration * 0.7, instrument, 0.6);
+        playNote(noteData.note, noteData.octave, duration * 0.7, instrument, 0.6);
       }, index * noteSpacing * 1000);
     });
   };
@@ -330,7 +330,7 @@ export default function MelodyComposer() {
 
     setNotes([...notes, newNote]);
     const currentTrack = tracks.find(t => t.id === selectedTrack);
-    playNote(getNoteFrequency(note, octave), gridSnapSize, currentTrack?.instrument || 'piano');
+    playNote(note, octave, gridSnapSize, currentTrack?.instrument || 'piano');
   };
 
   const removeNote = (index: number) => {
@@ -765,7 +765,7 @@ export default function MelodyComposer() {
                       if (arpeggioMode) {
                         playArpeggio(key.note, currentOctave, currentTrack?.instrument || 'piano');
                       } else {
-                        playNote(getNoteFrequency(key.note, currentOctave), gridSnapSize, currentTrack?.instrument || 'piano');
+                        playNote(key.note, currentOctave, gridSnapSize, currentTrack?.instrument || 'piano');
                       }
                     }}
                     className={`piano-key w-8 h-32 border border-gray-400 rounded-b ${key.color} text-black text-xs flex items-end justify-center pb-2 hover:bg-gray-200`}
@@ -787,7 +787,7 @@ export default function MelodyComposer() {
                       if (arpeggioMode) {
                         playArpeggio(key.note, currentOctave, currentTrack?.instrument || 'piano');
                       } else {
-                        playNote(getNoteFrequency(key.note, currentOctave), gridSnapSize, currentTrack?.instrument || 'piano');
+                        playNote(key.note, currentOctave, gridSnapSize, currentTrack?.instrument || 'piano');
                       }
                     }}
                     className={`piano-key w-4 h-20 border border-gray-700 rounded-b ${key.color} text-white text-xs flex items-end justify-center pb-1 ${

@@ -105,8 +105,8 @@ export class AudioEngine {
       console.warn('Invalid frequency for piano note:', frequency);
       return;
     }
-    if (!isFinite(duration) || duration <= 0) {
-      console.warn('Invalid duration for piano note:', duration);
+    if (typeof duration !== 'number' || !isFinite(duration) || duration <= 0) {
+      console.warn('Invalid duration for piano note (expected number, got):', typeof duration, duration);
       return;
     }
     if (!isFinite(velocity) || velocity < 0 || velocity > 1) {
