@@ -143,29 +143,35 @@ export default function CodeToMusic() {
             <Button
               onClick={async () => {
                 if (musicData && isInitialized) {
-                  // Play the generated melody if it exists
-                  if (musicData.melody && Array.isArray(musicData.melody)) {
+                  console.log("Playing music data:", musicData);
+                  
+                  // Check if melody is an array of playable notes
+                  if (musicData.melody && Array.isArray(musicData.melody) && musicData.melody.length > 0) {
                     let noteIndex = 0;
                     const playNextNote = () => {
                       if (noteIndex < musicData.melody.length) {
                         const note = musicData.melody[noteIndex];
-                        if (note.note) {
+                        if (note && note.note) {
                           // Extract note name and octave from note like "C4", "D4", etc.
                           const noteName = note.note.replace(/\d/, '');
                           const octave = parseInt(note.note.replace(/[A-G]#?/, '')) || 4;
+                          console.log(`Playing note ${note.note} -> ${noteName}${octave} for ${note.duration || 0.5}s`);
                           playNote(noteName, octave, note.duration || 0.5, 'piano', 0.7);
                         }
                         noteIndex++;
-                        setTimeout(playNextNote, (note.duration || 0.5) * 1000);
+                        if (noteIndex < musicData.melody.length) {
+                          setTimeout(playNextNote, (musicData.melody[noteIndex - 1]?.duration || 0.5) * 1000);
+                        }
                       }
                     };
                     playNextNote();
+                    toast({ title: "Playing Melody", description: `Playing ${musicData.melody.length} notes from compiled code.` });
+                  } else {
+                    // If no proper melody, just trigger the drum pattern playback
+                    console.log("No playable melody found, playing drum pattern only");
+                    await studioContext.playFullSong();
+                    toast({ title: "Playing Rhythm", description: "Playing drum pattern from compiled code." });
                   }
-                  
-                  // Also trigger full song playback through studio context
-                  await studioContext.playFullSong();
-                  
-                  toast({ title: "Playing Code Music", description: "Playing your compiled code as music." });
                 } else if (!musicData) {
                   toast({ title: "No Music", description: "Please compile code first.", variant: "destructive" });
                 } else {

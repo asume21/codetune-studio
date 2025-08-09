@@ -451,7 +451,17 @@ export async function codeToMusic(code: string, language: string): Promise<any> 
           - Map code structure to ${randomStyle} elements
           - Use ${randomInstruments} for instrumentation
           - Make it ${randomInterpretation} in feel
-          - Include: melody, rhythm, harmony, structure
+          - RETURN ACTUAL PLAYABLE NOTES in this exact format:
+          {
+            "melody": [
+              {"note": "C4", "start": 0, "duration": 0.5, "frequency": 261.63},
+              {"note": "D4", "start": 0.5, "duration": 0.25, "frequency": 293.66},
+              {"note": "E4", "start": 0.75, "duration": 1.0, "frequency": 329.63}
+            ],
+            "title": "Brief title",
+            "description": "Brief description"
+          }
+          - melody MUST be an array of note objects with note, start, duration, frequency
           - Must be different from previous conversions`
         }
       ],
@@ -461,7 +471,19 @@ export async function codeToMusic(code: string, language: string): Promise<any> 
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
     
-    if (!result.melody) {
+    // Check if melody is an array of playable notes (not just description text)
+    if (!result.melody || !Array.isArray(result.melody) || result.melody.length === 0) {
+      console.log("AI returned invalid melody format, using fallback");
+      return generateRandomCodeMusic(language, randomStyle, randomInterpretation);
+    }
+    
+    // Validate that melody contains proper note objects
+    const hasValidNotes = result.melody.every(note => 
+      note && typeof note === 'object' && note.note && typeof note.start === 'number'
+    );
+    
+    if (!hasValidNotes) {
+      console.log("AI melody notes are invalid, using fallback");
       return generateRandomCodeMusic(language, randomStyle, randomInterpretation);
     }
     
