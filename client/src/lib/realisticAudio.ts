@@ -269,72 +269,21 @@ export class RealisticAudioEngine {
       await this.initialize();
     }
 
-    // Load synth_drum soundfont for drums if not loaded
+    // Load drum kit - use the synthetic engine instead of broken soundfont
     if (!this.instruments['drums']) {
-      try {
-        // Use standard_kit_1 for better drum sounds
-        const drumKit = await Soundfont.instrument(
-          this.audioContext!, 
-          'standard_kit_1' as any,
-          {
-            format: 'mp3',
-            soundfont: 'FluidR3_GM'
-          }
-        );
-        this.instruments['drums'] = drumKit;
-        console.log('🎵 Loaded realistic drum kit (standard_kit_1)');
-      } catch (error) {
-        console.error('🎵 Failed to load drum kit, trying fallback:', error);
-        
-        // Fallback to synth_drum if standard_kit_1 fails
-        try {
-          const fallbackKit = await Soundfont.instrument(
-            this.audioContext!, 
-            'synth_drum',
-            {
-              format: 'mp3',
-              soundfont: 'MusyngKite'
-            }
-          );
-          this.instruments['drums'] = fallbackKit;
-          console.log('🎵 Loaded realistic drum kit (synth_drum fallback)');
-        } catch (fallbackError) {
-          console.error('🎵 Failed to load fallback drum kit:', fallbackError);
-          return;
-        }
-      }
+      console.log('🎵 Using synthetic drums for realistic mode (soundfont drums are broken)');
+      // Don't load any drum soundfont - we'll use the synthetic engine
     }
 
-    // Map drum types to MIDI note numbers for drum kit
-    const drumMap: { [key: string]: { note: number, duration: number } } = {
-      'kick': { note: 36, duration: 0.3 }, // Bass Drum 1
-      'bass': { note: 35, duration: 0.4 }, // Bass Drum 2  
-      'snare': { note: 38, duration: 0.2 }, // Acoustic Snare
-      'hihat': { note: 42, duration: 0.1 }, // Closed Hi-Hat
-      'openhat': { note: 46, duration: 0.3 }, // Open Hi-Hat
-      'clap': { note: 39, duration: 0.15 }, // Hand Clap
-      'crash': { note: 49, duration: 1.0 }, // Crash Cymbal 1
-      'tom': { note: 41, duration: 0.4 }, // Low Floor Tom
-      'ride': { note: 51, duration: 0.6 } // Ride Cymbal 1
-    };
-
-    const drumInfo = drumMap[drumType];
-    if (!drumInfo) {
-      console.warn(`Unknown drum type: ${drumType}`);
-      return;
-    }
-
-    const drumKit = this.instruments['drums'];
-    if (drumKit) {
-      try {
-        drumKit.play(drumInfo.note, this.audioContext!.currentTime, {
-          duration: drumInfo.duration,
-          gain: 0.8
-        });
-        console.log(`Playing realistic drum: ${drumType} (MIDI ${drumInfo.note})`);
-      } catch (error) {
-        console.error(`Error playing drum ${drumType}:`, error);
-      }
+    // Use synthetic drum engine for "realistic" mode since soundfonts are broken
+    console.log(`🎵 Playing synthetic drum in realistic mode: ${drumType}`);
+    
+    // Import the synthetic audio engine
+    if (typeof window !== 'undefined' && (window as any).syntheticAudioEngine) {
+      const syntheticEngine = (window as any).syntheticAudioEngine;
+      syntheticEngine.playDrum(drumType, velocity);
+    } else {
+      console.warn('🎵 Synthetic audio engine not available');
     }
   }
 

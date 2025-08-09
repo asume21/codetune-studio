@@ -121,6 +121,11 @@ export function useAudio(): UseAudioReturn {
       await audioEngine.initialize();
       await realisticAudio.initialize();
       
+      // Make synthetic engine globally available for realistic mode fallback
+      if (typeof window !== 'undefined') {
+        (window as any).syntheticAudioEngine = audioEngine;
+      }
+      
       globalAudioInitialized = true;
       setIsInitialized(true);
       
