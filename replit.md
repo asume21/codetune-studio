@@ -23,6 +23,7 @@ CodedSwitch is a revolutionary AI-powered web application that embodies the trip
 - **Click-and-Hold Note Playback** (COMPLETED - January 9, 2025): Implemented immediate note playback on mousedown with intelligent sustain - quick clicks play without sustain, holding for 150ms+ triggers sustained playback with user's sustain settings - NOW WORKS ON ALL PIANO KEYS AND PIANO ROLL
 - **Universal Mousedown System** (NEW - January 9, 2025): All piano keys (white and black) now respond to mousedown with hold-for-sustain behavior - quick clicks are percussive, held clicks (150ms+) add sustain - includes onMouseLeave handling for edge cases
 - **Component Isolation Architecture** (PROGRESS - January 9, 2025): Drum sounds completely isolated with unique variables in audio engine - beat maker and melody composer now have separate interaction handlers to prevent interference
+- **AI Melody Format Fix** (NEW - January 9, 2025): Fixed AI melody generation to separate note names from octaves (C, D, E instead of C4, D4, E4) and added octave variations (3, 4, 5) for more interesting AI-generated melodies
 
 # User Preferences
 
