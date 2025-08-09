@@ -123,6 +123,10 @@ export default function MelodyComposer() {
   const [zoom, setZoom] = useState(1);
   const [arpeggioMode, setArpeggioMode] = useState(false);
   const [arpeggioPattern, setArpeggioPattern] = useState('up');
+  
+  // Note resizing state
+  const [resizingNote, setResizingNote] = useState<{ index: number; startX: number; startDuration: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const { toast } = useToast();
   const { playNote, initialize, isInitialized } = useAudio();
@@ -336,6 +340,49 @@ export default function MelodyComposer() {
   const removeNote = (index: number) => {
     setNotes(notes.filter((_, i) => i !== index));
   };
+
+  // Note resizing handlers
+  const handleResizeStart = (e: React.MouseEvent, index: number) => {
+    e.stopPropagation();
+    setResizingNote({
+      index,
+      startX: e.clientX,
+      startDuration: notes[index].duration
+    });
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!resizingNote || !isDragging) return;
+
+    const deltaX = e.clientX - resizingNote.startX;
+    const pianoRollWidth = (e.currentTarget as HTMLElement).clientWidth;
+    const deltaTime = (deltaX / pianoRollWidth) * (8 * zoom);
+    
+    let newDuration = Math.max(gridSnapSize, resizingNote.startDuration + deltaTime);
+    // Snap to grid
+    newDuration = Math.round(newDuration / gridSnapSize) * gridSnapSize;
+
+    setNotes(prev => prev.map((note, i) => 
+      i === resizingNote.index ? { ...note, duration: newDuration } : note
+    ));
+  };
+
+  const handleMouseUp = () => {
+    setResizingNote(null);
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      const handleGlobalMouseUp = () => {
+        setResizingNote(null);
+        setIsDragging(false);
+      };
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
+    }
+  }, [isDragging]);
 
   const addTrack = () => {
     // Get all available instruments from all categories
@@ -646,7 +693,7 @@ export default function MelodyComposer() {
                   Piano Roll Editor - {tracks.find(t => t.id === selectedTrack)?.name} 
                 </h3>
                 <p className="text-sm text-gray-400 mt-1">
-                  Click on the grid to add notes • Click existing notes to delete them
+                  Click on the grid to add notes • Click existing notes to delete them • Drag the right edge of notes to resize
                 </p>
               </div>
               <div className="text-right">
@@ -663,6 +710,8 @@ export default function MelodyComposer() {
             <div 
               className="h-80 bg-gray-900 rounded border border-gray-600 relative overflow-hidden cursor-crosshair"
               onClick={handlePianoRollClick}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
             >
               {/* Vertical grid lines (beats) */}
               <div className="absolute inset-0 pointer-events-none">
@@ -716,7 +765,7 @@ export default function MelodyComposer() {
                 return (
                   <div
                     key={index}
-                    className={`absolute rounded h-4 cursor-pointer hover:opacity-80 group z-10 ${track.color} ${track.muted ? 'opacity-50' : 'opacity-90'}`}
+                    className={`absolute rounded cursor-pointer hover:opacity-80 group z-10 ${track.color} ${track.muted ? 'opacity-50' : 'opacity-90'} select-none`}
                     style={{
                       left: `${(note.start / (8 * zoom)) * 100}%`,
                       width: `${Math.max((note.duration / (8 * zoom)) * 100, 1)}%`,
@@ -729,8 +778,23 @@ export default function MelodyComposer() {
                       removeNote(index);
                     }}
                   >
+                    {/* Note content */}
+                    <div className="w-full h-full rounded flex items-center justify-between px-1">
+                      <span className="text-xs font-medium text-white opacity-80 truncate">
+                        {note.note}{note.octave}
+                      </span>
+                      
+                      {/* Resize handle */}
+                      <div
+                        className="w-2 h-full bg-white bg-opacity-30 cursor-ew-resize hover:bg-opacity-50 flex-shrink-0 group-hover:bg-opacity-70"
+                        onMouseDown={(e) => handleResizeStart(e, index)}
+                        title="Drag to resize note"
+                      />
+                    </div>
+
+                    {/* Tooltip */}
                     <div className="hidden group-hover:block absolute -top-8 left-0 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap z-30">
-                      {track.name}: {note.note}{note.octave} - Click to delete
+                      {track.name}: {note.note}{note.octave} - Duration: {note.duration.toFixed(2)}s - Click to delete • Drag right edge to resize
                     </div>
                   </div>
                 );
