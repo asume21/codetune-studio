@@ -135,8 +135,13 @@ export class AudioEngine {
     const pianoFilter = this.audioContext.createBiquadFilter();
     const brightnessFilter = this.audioContext.createBiquadFilter();
     
-    // Piano harmonics - natural harmonic series
-    fundamental.type = 'triangle'; // Warm fundamental
+    // Piano harmonics - adjust for frequency range
+    if (frequency < 150) {
+      // Low notes - more percussive, less string-like
+      fundamental.type = 'square'; // More percussive for bass
+    } else {
+      fundamental.type = 'triangle'; // Warm for mid/high
+    }
     fundamental.frequency.setValueAtTime(frequency, currentTime);
     
     harmonic2.type = 'sine';
@@ -168,16 +173,26 @@ export class AudioEngine {
     stringResonance.type = 'triangle';
     stringResonance.frequency.setValueAtTime(frequency * 1.003, currentTime); // Slightly detuned
     
-    // Piano tone filtering
+    // Piano tone filtering - adjust for frequency range
     pianoFilter.type = 'lowpass';
-    pianoFilter.frequency.setValueAtTime(frequency * 6, currentTime);
-    pianoFilter.Q.setValueAtTime(1, currentTime);
+    if (frequency < 150) {
+      // Low notes - tighter filtering, less string resonance
+      pianoFilter.frequency.setValueAtTime(frequency * 4, currentTime);
+      pianoFilter.Q.setValueAtTime(2, currentTime);
+    } else {
+      pianoFilter.frequency.setValueAtTime(frequency * 6, currentTime);
+      pianoFilter.Q.setValueAtTime(1, currentTime);
+    }
     
     // Brightness control
     brightnessFilter.type = 'peaking';
     brightnessFilter.frequency.setValueAtTime(frequency * 3, currentTime);
     brightnessFilter.Q.setValueAtTime(2, currentTime);
-    brightnessFilter.gain.setValueAtTime(3, currentTime);
+    if (frequency < 150) {
+      brightnessFilter.gain.setValueAtTime(1, currentTime); // Less bright for low notes
+    } else {
+      brightnessFilter.gain.setValueAtTime(3, currentTime);
+    }
     
     // Piano envelope - quick attack, natural decay
     const fundVol = Math.max(0.001, velocity * 0.8);
@@ -488,100 +503,141 @@ export class AudioEngine {
     const oscillators: OscillatorNode[] = [];
     const masterGain = this.audioContext.createGain();
     
-    // BUZZY electronic sound with strong vibrato
-    const buzz1 = this.audioContext.createOscillator();
-    const buzz2 = this.audioContext.createOscillator();
-    const nasal = this.audioContext.createOscillator();
-    const vibrato = this.audioContext.createOscillator();
-    const electronic = this.audioContext.createOscillator();
+    // Organ drawbar harmonics - classic Hammond organ style
+    const fundamental = this.audioContext.createOscillator(); // 16' drawbar
+    const octave = this.audioContext.createOscillator();      // 8' drawbar  
+    const fifth = this.audioContext.createOscillator();       // 5 1/3' drawbar
+    const fourth = this.audioContext.createOscillator();      // 4' drawbar
+    const third = this.audioContext.createOscillator();       // 2 2/3' drawbar
+    const second = this.audioContext.createOscillator();      // 2' drawbar
     
-    const buzz1Gain = this.audioContext.createGain();
-    const buzz2Gain = this.audioContext.createGain();
-    const nasalGain = this.audioContext.createGain();
-    const vibratoGain = this.audioContext.createGain();
-    const electronicGain = this.audioContext.createGain();
+    // Wind/breath sound for realism
+    const windNoise = this.audioContext.createBufferSource();
     
-    const nasalFilter = this.audioContext.createBiquadFilter();
+    // Gains for each drawbar
+    const fundGain = this.audioContext.createGain();
+    const octaveGain = this.audioContext.createGain();
+    const fifthGain = this.audioContext.createGain();
+    const fourthGain = this.audioContext.createGain();
+    const thirdGain = this.audioContext.createGain();
+    const secondGain = this.audioContext.createGain();
+    const windGain = this.audioContext.createGain();
     
-    // Heavy buzzy square waves
-    buzz1.type = 'square';
-    buzz1.frequency.setValueAtTime(frequency, currentTime);
+    // Organ tone filtering
+    const organFilter = this.audioContext.createBiquadFilter();
     
-    buzz2.type = 'square';
-    buzz2.frequency.setValueAtTime(frequency * 1.01, currentTime); // Slight detune for thickness
+    // Organ drawbar frequencies (Hammond organ ratios)
+    fundamental.type = 'sine'; // Pure tones like organ pipes
+    fundamental.frequency.setValueAtTime(frequency * 0.5, currentTime); // Sub-octave
     
-    // Nasal resonance
-    nasal.type = 'sawtooth';
-    nasal.frequency.setValueAtTime(frequency * 2, currentTime);
+    octave.type = 'sine';
+    octave.frequency.setValueAtTime(frequency, currentTime); // Main pitch
     
-    // Strong vibrato
-    vibrato.type = 'sine';
-    vibrato.frequency.setValueAtTime(6.5, currentTime);
-    vibratoGain.gain.setValueAtTime(frequency * 0.3, currentTime); // Deep vibrato
+    fifth.type = 'sine';
+    fifth.frequency.setValueAtTime(frequency * 1.498, currentTime); // Perfect fifth
     
-    // Electronic harmonics
-    electronic.type = 'square';
-    electronic.frequency.setValueAtTime(frequency * 4, currentTime);
+    fourth.type = 'sine';
+    fourth.frequency.setValueAtTime(frequency * 2, currentTime); // Octave up
     
-    // Nasal filter - very resonant
-    nasalFilter.type = 'bandpass';
-    nasalFilter.frequency.setValueAtTime(frequency * 3, currentTime);
-    nasalFilter.Q.setValueAtTime(15, currentTime); // Very nasal
+    third.type = 'sine';
+    third.frequency.setValueAtTime(frequency * 2.997, currentTime); // Fifth above octave
     
-    // Instant on, constant volume, instant off - like electronic switch
-    const buzz1Vol = Math.max(0.001, velocity * 1.0);
-    buzz1Gain.gain.setValueAtTime(buzz1Vol, currentTime);
-    buzz1Gain.gain.setValueAtTime(buzz1Vol, currentTime + duration - 0.01);
-    buzz1Gain.gain.linearRampToValueAtTime(0, currentTime + duration); // Linear cutoff
+    second.type = 'sine';
+    second.frequency.setValueAtTime(frequency * 4, currentTime); // Two octaves up
     
-    const buzz2Vol = Math.max(0.001, velocity * 0.95);
-    buzz2Gain.gain.setValueAtTime(buzz2Vol, currentTime);
-    buzz2Gain.gain.setValueAtTime(buzz2Vol, currentTime + duration - 0.01);
-    buzz2Gain.gain.linearRampToValueAtTime(0, currentTime + duration);
+    // Wind noise for pipe organ character
+    const windLength = Math.floor(this.audioContext.sampleRate * duration);
+    const windBuffer = this.audioContext.createBuffer(1, windLength, this.audioContext.sampleRate);
+    const windData = windBuffer.getChannelData(0);
+    for (let i = 0; i < windLength; i++) {
+      windData[i] = (Math.random() * 2 - 1) * 0.02; // Very subtle wind
+    }
+    windNoise.buffer = windBuffer;
     
-    const nasalVol = Math.max(0.001, velocity * 0.6);
-    nasalGain.gain.setValueAtTime(nasalVol, currentTime);
-    nasalGain.gain.setValueAtTime(nasalVol, currentTime + duration - 0.01);
-    nasalGain.gain.linearRampToValueAtTime(0, currentTime + duration);
+    // Organ filtering - warm and full
+    organFilter.type = 'lowpass';
+    organFilter.frequency.setValueAtTime(frequency * 8, currentTime);
+    organFilter.Q.setValueAtTime(0.7, currentTime);
     
-    const electronicVol = Math.max(0.001, velocity * 0.4);
-    electronicGain.gain.setValueAtTime(electronicVol, currentTime);
-    electronicGain.gain.setValueAtTime(electronicVol, currentTime + duration - 0.01);
-    electronicGain.gain.linearRampToValueAtTime(0, currentTime + duration);
+    // Organ envelope - instant attack, sustained, quick release
+    const fundVol = Math.max(0.001, velocity * 0.6);
+    fundGain.gain.setValueAtTime(fundVol, currentTime);
+    fundGain.gain.setValueAtTime(fundVol * 0.95, currentTime + duration - 0.05);
+    fundGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    // Apply vibrato to main oscillators
-    vibrato.connect(vibratoGain);
-    vibratoGain.connect(buzz1.frequency);
-    vibratoGain.connect(buzz2.frequency);
+    const octaveVol = Math.max(0.001, velocity * 0.8); // Main drawbar
+    octaveGain.gain.setValueAtTime(octaveVol, currentTime);
+    octaveGain.gain.setValueAtTime(octaveVol * 0.95, currentTime + duration - 0.05);
+    octaveGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    buzz1.connect(buzz1Gain);
-    buzz1Gain.connect(masterGain);
+    const fifthVol = Math.max(0.001, velocity * 0.5);
+    fifthGain.gain.setValueAtTime(fifthVol, currentTime);
+    fifthGain.gain.setValueAtTime(fifthVol * 0.9, currentTime + duration - 0.05);
+    fifthGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    buzz2.connect(buzz2Gain);
-    buzz2Gain.connect(masterGain);
+    const fourthVol = Math.max(0.001, velocity * 0.4);
+    fourthGain.gain.setValueAtTime(fourthVol, currentTime);
+    fourthGain.gain.setValueAtTime(fourthVol * 0.9, currentTime + duration - 0.05);
+    fourthGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    nasal.connect(nasalFilter);
-    nasalFilter.connect(nasalGain);
-    nasalGain.connect(masterGain);
+    const thirdVol = Math.max(0.001, velocity * 0.3);
+    thirdGain.gain.setValueAtTime(thirdVol, currentTime);
+    thirdGain.gain.setValueAtTime(thirdVol * 0.85, currentTime + duration - 0.05);
+    thirdGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    electronic.connect(electronicGain);
-    electronicGain.connect(masterGain);
+    const secondVol = Math.max(0.001, velocity * 0.25);
+    secondGain.gain.setValueAtTime(secondVol, currentTime);
+    secondGain.gain.setValueAtTime(secondVol * 0.8, currentTime + duration - 0.05);
+    secondGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    buzz1.start(currentTime);
-    buzz2.start(currentTime);
-    nasal.start(currentTime);
-    vibrato.start(currentTime);
-    electronic.start(currentTime);
+    const windVol = Math.max(0.001, velocity * 0.1);
+    windGain.gain.setValueAtTime(windVol, currentTime);
+    windGain.gain.exponentialRampToValueAtTime(windVol * 0.7, currentTime + duration * 0.8);
+    windGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
     
-    buzz1.stop(currentTime + duration);
-    buzz2.stop(currentTime + duration);
-    nasal.stop(currentTime + duration);
-    vibrato.stop(currentTime + duration);
-    electronic.stop(currentTime + duration);
+    // Connect all drawbars through filter
+    fundamental.connect(organFilter);
+    organFilter.connect(fundGain);
+    fundGain.connect(masterGain);
     
-    oscillators.push(buzz1, buzz2, nasal, vibrato, electronic);
+    octave.connect(octaveGain);
+    octaveGain.connect(masterGain);
+    
+    fifth.connect(fifthGain);
+    fifthGain.connect(masterGain);
+    
+    fourth.connect(fourthGain);
+    fourthGain.connect(masterGain);
+    
+    third.connect(thirdGain);
+    thirdGain.connect(masterGain);
+    
+    second.connect(secondGain);
+    secondGain.connect(masterGain);
+    
+    windNoise.connect(windGain);
+    windGain.connect(masterGain);
+    
+    // Start all oscillators
+    fundamental.start(currentTime);
+    octave.start(currentTime);
+    fifth.start(currentTime);
+    fourth.start(currentTime);
+    third.start(currentTime);
+    second.start(currentTime);
+    windNoise.start(currentTime);
+    
+    // Stop all oscillators
+    fundamental.stop(currentTime + duration);
+    octave.stop(currentTime + duration);
+    fifth.stop(currentTime + duration);
+    fourth.stop(currentTime + duration);
+    third.stop(currentTime + duration);
+    second.stop(currentTime + duration);
+    
+    oscillators.push(fundamental, octave, fifth, fourth, third, second);
 
-    this.addReverb(masterGain, 0.3); // Moderate reverb
+    this.addReverb(masterGain, 0.6); // Cathedral reverb for organ
     masterGain.connect(this.masterGain);
     this.trackOscillators(oscillators, 'organ', frequency);
   }
