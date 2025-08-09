@@ -631,49 +631,41 @@ export class RealisticAudioEngine {
     if (!this.audioContext) return;
 
     try {
-      // Create multiple oscillators for realistic cymbal harmonics
-      const fundamentalFreq = 320;
-      const harmonics = [1, 1.5, 2.1, 2.8, 3.7, 4.9, 6.2, 8.1];
-      const duration = 2.0;
+      // Create a realistic crash using filtered white noise (like the hi-hat but longer)
+      const crashNoise = this.audioContext.createBufferSource();
+      const crashGain = this.audioContext.createGain();
+      const crashFilter = this.audioContext.createBiquadFilter();
 
-      harmonics.forEach((harmonic, index) => {
-        const crashOsc = this.audioContext.createOscillator();
-        const crashGain = this.audioContext.createGain();
-        const crashFilter = this.audioContext.createBiquadFilter();
+      const duration = 1.2; // Shorter than UFO version but still long crash
+      const bufferSize = this.audioContext.sampleRate * duration;
+      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
 
-        // Use triangle wave for metallic character
-        crashOsc.type = 'triangle';
-        crashOsc.frequency.setValueAtTime(fundamentalFreq * harmonic, currentTime);
-        
-        // Add slight frequency modulation for shimmer
-        crashOsc.frequency.exponentialRampToValueAtTime(
-          fundamentalFreq * harmonic * 1.05, 
-          currentTime + 0.1
-        );
-        crashOsc.frequency.exponentialRampToValueAtTime(
-          fundamentalFreq * harmonic * 0.98, 
-          currentTime + duration
-        );
+      // Generate crash noise with natural decay
+      for (let i = 0; i < bufferSize; i++) {
+        const envelope = Math.pow(1 - (i / bufferSize), 0.3); // Natural crash decay
+        data[i] = (Math.random() * 2 - 1) * envelope;
+      }
 
-        // High-pass filter for brightness
-        crashFilter.type = 'highpass';
-        crashFilter.frequency.setValueAtTime(3000 + (index * 500), currentTime);
-        crashFilter.Q.setValueAtTime(0.5, currentTime);
+      crashNoise.buffer = buffer;
 
-        // Volume envelope - different decay for each harmonic
-        const harmVol = Math.max(0.001, velocity * 0.15 / (index + 1));
-        crashGain.gain.setValueAtTime(harmVol, currentTime);
-        crashGain.gain.exponentialRampToValueAtTime(harmVol * 0.5, currentTime + 0.1);
-        crashGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration * (0.8 + index * 0.1));
+      // High-pass filter for bright metallic crash
+      crashFilter.type = 'highpass';
+      crashFilter.frequency.setValueAtTime(4000, currentTime);
+      crashFilter.Q.setValueAtTime(0.3, currentTime);
 
-        // Connect
-        crashOsc.connect(crashFilter);
-        crashFilter.connect(crashGain);
-        crashGain.connect(this.audioContext.destination);
+      // Crash envelope
+      const crashVol = Math.max(0.001, velocity * 1.0);
+      crashGain.gain.setValueAtTime(crashVol, currentTime);
+      crashGain.gain.exponentialRampToValueAtTime(crashVol * 0.4, currentTime + 0.2);
+      crashGain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
 
-        crashOsc.start(currentTime);
-        crashOsc.stop(currentTime + duration * (0.8 + index * 0.1));
-      });
+      // Connect
+      crashNoise.connect(crashFilter);
+      crashFilter.connect(crashGain);
+      crashGain.connect(this.audioContext.destination);
+
+      crashNoise.start(currentTime);
     } catch (error) {
       console.error('🎵 Crash cymbal error:', error);
     }
@@ -690,18 +682,19 @@ export class RealisticAudioEngine {
       // Much lower frequency than kick for sub-bass feel
       bassOsc.type = 'sine';
       bassOsc.frequency.setValueAtTime(45, currentTime); // Lower than kick
-      bassOsc.frequency.exponentialRampToValueAtTime(25, currentTime + 0.2);
+      bassOsc.frequency.exponentialRampToValueAtTime(25, currentTime + 0.4);
 
       // Very tight low-pass filter for pure sub-bass
       bassFilter.type = 'lowpass';
       bassFilter.frequency.setValueAtTime(80, currentTime);
       bassFilter.Q.setValueAtTime(10, currentTime);
 
-      // Longer, deeper envelope than kick
+      // MUCH longer, deeper envelope than kick - extended duration
       const bassVol = Math.max(0.001, velocity * 1.4);
       bassGain.gain.setValueAtTime(bassVol, currentTime);
-      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.7, currentTime + 0.12);
-      bassGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.6);
+      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.8, currentTime + 0.15);
+      bassGain.gain.exponentialRampToValueAtTime(bassVol * 0.5, currentTime + 0.5);
+      bassGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 1.2); // Much longer - 1.2 seconds
 
       // Connect
       bassOsc.connect(bassFilter);
@@ -709,7 +702,7 @@ export class RealisticAudioEngine {
       bassGain.connect(this.audioContext.destination);
 
       bassOsc.start(currentTime);
-      bassOsc.stop(currentTime + 0.6);
+      bassOsc.stop(currentTime + 1.2); // Extended duration
     } catch (error) {
       console.error('🎵 Bass drum error:', error);
     }
