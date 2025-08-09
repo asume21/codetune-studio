@@ -99,6 +99,20 @@ export class AudioEngine {
 
   private playPianoNote(frequency: number, duration: number, preset: any, velocity: number, currentTime: number, instrument: string = 'piano') {
     if (!this.audioContext || !this.masterGain) return;
+    
+    // Validate input parameters
+    if (!isFinite(frequency) || frequency <= 0) {
+      console.warn('Invalid frequency for piano note:', frequency);
+      return;
+    }
+    if (!isFinite(duration) || duration <= 0) {
+      console.warn('Invalid duration for piano note:', duration);
+      return;
+    }
+    if (!isFinite(velocity) || velocity < 0 || velocity > 1) {
+      console.warn('Invalid velocity for piano note:', velocity);
+      velocity = Math.max(0, Math.min(1, velocity || 0.7));
+    }
 
     const oscillators: OscillatorNode[] = [];
     const masterGain = this.audioContext.createGain();
@@ -162,27 +176,37 @@ export class AudioEngine {
       const gain = this.audioContext!.createGain();
       const filter = this.audioContext!.createBiquadFilter();
       
+      // Validate harmonic frequency
+      const safeFreq = isFinite(harmonic.freq) && harmonic.freq > 0 ? harmonic.freq : frequency;
+      
       osc.type = harmonic.wave;
-      osc.frequency.setValueAtTime(harmonic.freq, currentTime);
+      osc.frequency.setValueAtTime(Math.min(safeFreq, 20000), currentTime); // Cap at 20kHz
       
       // Add slight detuning for realism
       const detune = (Math.random() - 0.5) * 10;
-      osc.detune.setValueAtTime(detune, currentTime);
+      osc.detune.setValueAtTime(isFinite(detune) ? detune : 0, currentTime);
       
       // Piano hammer strike simulation
       const attack = 0.002 + Math.random() * 0.003;
       const initialVolume = Math.max(0.001, harmonic.amp * velocity * 0.15);
       
+      // Ensure all values are finite and valid
+      const safeInitialVolume = isFinite(initialVolume) && initialVolume > 0 ? Math.max(0.001, initialVolume) : 0.001;
+      const safeAttackTime = isFinite(attack) && attack > 0 ? attack : 0.005;
+      const safeDuration = isFinite(duration) && duration > 0 ? duration : 0.5;
+      const sustainVolume = Math.max(0.001, safeInitialVolume * 0.3);
+      
       gain.gain.setValueAtTime(0.001, currentTime);
-      if (initialVolume > 0.001) {
-        gain.gain.exponentialRampToValueAtTime(initialVolume, currentTime + attack);
-        gain.gain.exponentialRampToValueAtTime(Math.max(0.001, initialVolume * 0.3), currentTime + 0.1);
+      if (safeInitialVolume > 0.001) {
+        gain.gain.exponentialRampToValueAtTime(safeInitialVolume, currentTime + safeAttackTime);
+        gain.gain.exponentialRampToValueAtTime(sustainVolume, currentTime + 0.1);
       }
-      gain.gain.exponentialRampToValueAtTime(0.001, currentTime + duration);
+      gain.gain.exponentialRampToValueAtTime(0.001, currentTime + safeDuration);
       
       // Filter to simulate piano string resonance
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(Math.min(8000, filterCutoff), currentTime);
+      const safeFilterCutoff = isFinite(filterCutoff) && filterCutoff > 0 ? Math.min(8000, filterCutoff) : 2000;
+      filter.frequency.setValueAtTime(safeFilterCutoff, currentTime);
       filter.Q.setValueAtTime(instrument.includes('organ') ? 1 : 2, currentTime);
       
       osc.connect(filter);
