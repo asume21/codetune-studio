@@ -155,8 +155,9 @@ export default function CodeToMusic() {
                           // Extract note name and octave from note like "C4", "D4", etc.
                           const noteName = note.note.replace(/\d/, '');
                           const octave = parseInt(note.note.replace(/[A-G]#?/, '')) || 4;
-                          console.log(`Playing note ${note.note} -> ${noteName}${octave} for ${note.duration || 0.5}s`);
-                          playNote(noteName, octave, note.duration || 0.5, 'piano', 0.7);
+                          const instrument = note.instrument || 'piano'; // Use specified instrument or default to piano
+                          console.log(`Playing note ${note.note} -> ${noteName}${octave} on ${instrument} for ${note.duration || 0.5}s`);
+                          playNote(noteName, octave, note.duration || 0.5, instrument, 0.7);
                         }
                         noteIndex++;
                         if (noteIndex < musicData.melody.length) {
@@ -165,7 +166,15 @@ export default function CodeToMusic() {
                       }
                     };
                     playNextNote();
-                    toast({ title: "Playing Melody", description: `Playing ${musicData.melody.length} notes from compiled code.` });
+                    
+                    // Also play drum pattern if available
+                    if (musicData.drumPattern) {
+                      studioContext.setCurrentPattern(musicData.drumPattern);
+                      await studioContext.playFullSong();
+                    }
+                    
+                    const instrumentCount = [...new Set(musicData.melody.map(note => note.instrument || 'piano'))].length;
+                    toast({ title: "Playing Multi-Instrument Arrangement", description: `Playing ${musicData.melody.length} notes across ${instrumentCount} instruments plus drums.` });
                   } else {
                     // If no proper melody, just trigger the drum pattern playback
                     console.log("No playable melody found, playing drum pattern only");

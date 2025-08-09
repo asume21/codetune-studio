@@ -417,6 +417,16 @@ export async function getRhymeSuggestions(word: string): Promise<string[]> {
   }
 }
 
+// Helper function to get note frequency
+function getNoteFrequency(note: string): number {
+  const noteMap: { [key: string]: number } = {
+    'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'G3': 196.00, 'A3': 220.00, 'B3': 246.94,
+    'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88,
+    'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'F5': 698.46, 'G5': 783.99, 'A5': 880.00, 'B5': 987.77
+  };
+  return noteMap[note] || 261.63; // Default to C4
+}
+
 export async function codeToMusic(code: string, language: string): Promise<any> {
   try {
     const musicalStyles = ["classical symphony", "jazz fusion", "electronic ambient", "rock anthem", "hip-hop groove", "world music", "orchestral cinematic", "minimal techno"];
@@ -451,16 +461,23 @@ export async function codeToMusic(code: string, language: string): Promise<any> 
           - Map code structure to ${randomStyle} elements
           - Use ${randomInstruments} for instrumentation
           - Make it ${randomInterpretation} in feel
-          - RETURN ACTUAL PLAYABLE NOTES in this exact format:
+          - RETURN ACTUAL PLAYABLE NOTES FOR MULTIPLE INSTRUMENTS in this exact format:
           {
             "melody": [
-              {"note": "C4", "start": 0, "duration": 0.5, "frequency": 261.63},
-              {"note": "D4", "start": 0.5, "duration": 0.25, "frequency": 293.66},
-              {"note": "E4", "start": 0.75, "duration": 1.0, "frequency": 329.63}
+              {"note": "C4", "start": 0, "duration": 0.5, "frequency": 261.63, "instrument": "piano"},
+              {"note": "G3", "start": 0, "duration": 1.0, "frequency": 196.00, "instrument": "bass"},
+              {"note": "E4", "start": 0.5, "duration": 0.5, "frequency": 329.63, "instrument": "violin"}
             ],
+            "drumPattern": {
+              "kick": [true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false],
+              "snare": [false,false,false,false,true,false,false,false,false,false,false,false,true,false,false,false],
+              "hihat": [true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]
+            },
             "title": "Brief title",
             "description": "Brief description"
           }
+          - Map code elements to instruments: classes→piano, functions→violin/guitar, variables→bass, loops→drums
+          - Include drum patterns with kick, snare, hihat arrays (16 steps each, true/false)
           - melody MUST be an array of note objects with note, start, duration, frequency
           - Must be different from previous conversions`
         }
@@ -478,7 +495,7 @@ export async function codeToMusic(code: string, language: string): Promise<any> 
     }
     
     // Validate that melody contains proper note objects
-    const hasValidNotes = result.melody.every(note => 
+    const hasValidNotes = result.melody.every((note: any) => 
       note && typeof note === 'object' && note.note && typeof note.start === 'number'
     );
     
@@ -498,12 +515,20 @@ function generateRandomCodeMusic(language: string, style: string, interpretation
   const melodyNotes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4"];
   const rhythms = ["4/4", "3/4", "7/8", "5/4"];
   
-  const melody = Array.from({length: Math.floor(Math.random() * 8) + 4}, (_, i) => ({
-    note: melodyNotes[Math.floor(Math.random() * melodyNotes.length)],
-    start: i * 0.5,
-    duration: [0.25, 0.5, 1.0][Math.floor(Math.random() * 3)],
-    frequency: 261.63 * Math.pow(2, Math.floor(Math.random() * 2))
-  }));
+  const instruments = ['piano', 'violin', 'guitar', 'bass', 'flute', 'trumpet'];
+  
+  // Generate multi-instrument melody (classes→piano, functions→violin/guitar, variables→bass)
+  const melody = Array.from({length: Math.floor(Math.random() * 12) + 8}, (_, i) => {
+    const note = melodyNotes[Math.floor(Math.random() * melodyNotes.length)];
+    const instrument = instruments[Math.floor(Math.random() * instruments.length)];
+    return {
+      note: note,
+      start: i * 0.25,
+      duration: [0.25, 0.5, 1.0][Math.floor(Math.random() * 3)],
+      frequency: getNoteFrequency(note),
+      instrument: instrument
+    };
+  });
   
   // Generate a basic drum pattern based on code complexity
   const drumPattern = {
@@ -524,7 +549,8 @@ function generateRandomCodeMusic(language: string, style: string, interpretation
     style,
     interpretation,
     language,
-    explanation: `${interpretation} ${style} interpretation of ${language} code structure`,
+    title: `${style} Code Symphony`,
+    description: `${interpretation} ${style} interpretation of ${language} code structure with multi-instrument arrangement`,
     bpm: Math.floor(Math.random() * 40) + 100 // 100-140 BPM
   };
 }
