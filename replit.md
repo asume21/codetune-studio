@@ -5,6 +5,8 @@ CodedSwitch is a revolutionary AI-powered web application that embodies the trip
 ## Recent Changes (January 2025)
 - **Audio Engine Overhaul**: Completely redesigned audio synthesis for professional-quality drum and instrument sounds
 - **Enhanced Drum Synthesis**: Multi-oscillator kick drums (1.2s), layered snare with rattle simulation (0.4s), realistic clap bursts, shimmer hi-hats, and fuller tom sounds (0.8s)
+- **Professional Drum Volume Enhancement** (January 9, 2025): Boosted all drum volumes to professional studio levels - kick 1.8x, snare 1.4x, hihat 1.2x, tom 1.4x, clap 1.3x, bass 2.0x, matching crash cymbal quality
+- **Drum Sound Quality Fixes** (January 9, 2025): Fixed crash cymbal from "UFO" oscillators to realistic filtered noise, extended bass drum duration to 1.2s, improved clap with dual filtering
 - **Improved Guitar Synthesis**: Harmonics, attack transients, and body resonance for authentic plucked string sounds
 - **Pattern Stability**: Fixed beat maker pattern mapping issues and added robust error handling
 - **Interface Improvements**: Resolved audio engine initialization and playback consistency
