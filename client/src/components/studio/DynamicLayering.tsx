@@ -185,14 +185,14 @@ export default function DynamicLayering() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="electronic">Electronic</SelectItem>
-                <SelectItem value="orchestral">Orchestral</SelectItem>
-                <SelectItem value="jazz">Jazz</SelectItem>
-                <SelectItem value="rock">Rock</SelectItem>
-                <SelectItem value="ambient">Ambient</SelectItem>
-                <SelectItem value="world">World Music</SelectItem>
-                <SelectItem value="cinematic">Cinematic</SelectItem>
-                <SelectItem value="experimental">Experimental</SelectItem>
+                <SelectItem value="orchestral">Orchestral (Strings, Brass, Woodwinds)</SelectItem>
+                <SelectItem value="electronic">Electronic (Synths, Pads, Piano)</SelectItem>
+                <SelectItem value="jazz">Jazz (Piano, Trumpet, Saxophone)</SelectItem>
+                <SelectItem value="rock">Rock (Guitar, Organ, Strings)</SelectItem>
+                <SelectItem value="ambient">Ambient (Pads, Harp, Choir)</SelectItem>
+                <SelectItem value="world">World (Ethnic Instruments, Flute)</SelectItem>
+                <SelectItem value="cinematic">Cinematic (Full Orchestra)</SelectItem>
+                <SelectItem value="experimental">Experimental (Mixed Instruments)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -249,13 +249,21 @@ export default function DynamicLayering() {
               <i className="fas fa-layer-group text-6xl text-gray-600 mb-4"></i>
               <h3 className="text-xl font-semibold mb-2">No Layers Generated</h3>
               <p className="text-gray-400 mb-6">
-                Click "Generate Layers" to have AI analyze your current arrangement and add intelligent instrumental layers.
+                Click "Generate Layers" to have AI analyze your current arrangement and add intelligent instrumental layers with piano, violin, guitar, flute, trumpet, and other melodic instruments.
               </p>
               <div className="text-sm text-gray-500 space-y-2">
                 <p><strong>Current Arrangement:</strong></p>
                 <p>• Beats: {studioContext.currentPattern ? 'Available' : 'None'}</p>
                 <p>• Melody: {studioContext.currentMelody?.length ? `${studioContext.currentMelody.length} notes` : 'None'}</p>
                 <p>• Lyrics: {studioContext.currentLyrics ? 'Available' : 'None'}</p>
+              </div>
+              <div className="mt-4 p-3 bg-gray-800 rounded-lg">
+                <p className="text-xs text-gray-400 mb-2"><strong>Available Instruments:</strong></p>
+                <div className="flex flex-wrap gap-1 text-xs">
+                  {["Piano", "Violin", "Guitar", "Flute", "Trumpet", "Saxophone", "Organ", "Harp", "Cello", "Synthesizer", "Ambient Pads", "Choir"].map(inst => (
+                    <span key={inst} className="bg-gray-700 text-gray-300 px-2 py-1 rounded">{inst}</span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

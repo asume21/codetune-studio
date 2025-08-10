@@ -562,8 +562,10 @@ export async function generateDynamicLayers(currentArrangement: any, targetStyle
       "atmospheric texture", "percussive accents", "bass reinforcement"
     ];
     const instruments = [
-      "strings", "brass", "woodwinds", "percussion", "synthesizers", 
-      "guitar", "piano", "choir", "ethnic instruments", "electronic pads"
+      "strings", "brass", "woodwinds", "synthesizers", 
+      "guitar", "piano", "choir", "ethnic instruments", "electronic pads",
+      "violin", "cello", "flute", "trumpet", "saxophone", "organ", 
+      "harp", "acoustic guitar", "electric piano", "ambient pads"
     ];
     const approaches = [
       "subtle and supportive", "bold and prominent", "intricate and complex",
@@ -583,12 +585,20 @@ export async function generateDynamicLayers(currentArrangement: any, targetStyle
           role: "system",
           content: `You are an AI music arranger specializing in dynamic instrument layering. Analyze the current musical arrangement and intelligently add ${randomApproach} ${randomLayerType} layers using ${randomInstrument}.
           
+          IMPORTANT: Focus on MELODIC and HARMONIC instruments, NOT percussion/drums. Generate instruments like:
+          - Piano, organ, electric piano
+          - Violin, cello, guitar, harp
+          - Flute, trumpet, saxophone
+          - Synthesizers, ambient pads, choir
+          - Avoid drums, beats, percussion unless specifically requested
+          
           Create layers that:
           - Complement existing elements without competing
           - Add ${randomApproach} character to the arrangement  
-          - Use ${randomInstrument} in creative ways
+          - Use ${randomInstrument} in creative melodic/harmonic ways
           - Maintain musical coherence and balance
           - Each layer must be UNIQUE and contextually appropriate
+          - Generate 2-4 different instrumental layers with varied roles
           
           Return JSON with: layers array containing {instrument, type, notes, volume, pan, effects, role}`
         },
@@ -637,17 +647,25 @@ function generateRandomLayers(layerType: string, instrument: string, approach: s
   const numLayers = Math.min(Math.floor(complexity / 2) + 1, 4); // 1-4 layers based on complexity
   const layers = [];
   
+  // Ensure diverse melodic instruments
+  const melodicInstruments = [
+    "Piano", "Electric Piano", "Violin", "Cello", "Acoustic Guitar", 
+    "Flute", "Trumpet", "Saxophone", "Organ", "Harp", "Ambient Pad", 
+    "String Section", "Choir", "Synthesizer"
+  ];
+  
   for (let i = 0; i < numLayers; i++) {
-    const noteCount = Math.floor(Math.random() * 6) + 2; // 2-8 notes per layer
+    const layerInstrument = melodicInstruments[Math.floor(Math.random() * melodicInstruments.length)];
+    const noteCount = Math.floor(Math.random() * 8) + 4; // 4-12 notes per layer for richer content
     const notes = Array.from({length: noteCount}, (_, idx) => ({
-      frequency: 220 * Math.pow(2, Math.random() * 2), // Random frequencies in a 2-octave range
-      start: idx * (Math.random() * 0.8 + 0.2), // Varied timing
-      duration: Math.random() * 1.5 + 0.3, // 0.3-1.8 second durations
+      frequency: 220 * Math.pow(2, Math.random() * 3), // Expanded 3-octave range
+      start: idx * (Math.random() * 1.2 + 0.3), // More varied timing
+      duration: Math.random() * 2 + 0.5, // 0.5-2.5 second durations
       velocity: Math.random() * 0.4 + 0.3 // 0.3-0.7 velocity range
     }));
     
     layers.push({
-      instrument: `${instrument}-${i + 1}`,
+      instrument: layerInstrument,
       type: layerType,
       notes,
       volume: Math.random() * 0.3 + 0.4, // 0.4-0.7 volume
