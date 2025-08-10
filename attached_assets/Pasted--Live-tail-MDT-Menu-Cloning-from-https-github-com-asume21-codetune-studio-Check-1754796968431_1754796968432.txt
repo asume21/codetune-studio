@@ -1,0 +1,37 @@
+
+
+Live tail
+MDT
+
+Menu
+
+==> Cloning from https://github.com/asume21/codetune-studio
+==> Checking out commit 523492480a108d26902b584b09196136aa42c590 in branch main
+==> Downloading cache...
+==> Transferred 226MB in 9s. Extraction took 6s.
+==> Using Node.js version 22.16.0 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'npm install && npm run build'...
+up to date, audited 590 packages in 3s
+83 packages are looking for funding
+  run `npm fund` for details
+4 vulnerabilities (2 low, 2 moderate)
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+failed to load config from /opt/render/project/src/vite.config.ts
+error during build:
+ReferenceError: aW1wb3J0IHsgZGVmaW5lQ29uZmlnIH0gZnJvbSAndml0ZScKaW1wb3J0IHJlYWN0IGZyb20gJ0B2aXRlanMvcGx1Z2luLXJlYWN0JwppbXBvcnQgcGF0aCBmcm9tICdwYXRoJwppbXBvcnQgcnVudGltZUVycm9yT3ZlcmxheSBmcm9tICdAcmVwbGl0L3ZpdGUtcGx1Z2luLXJ1bnRpbWUtZXJyb3ItbW9kYWwnCgovLyBodHRwczovL3ZpdGVqcy5kZXYvY29uZmlnLwpleHBvcnQgZGVmYXVsdCBkZWZpbmVDb25maWcoewogIHBsdWdpbnM6IFsKICAgIHJlYWN0KCksCiAgICBydW50aW1lRXJyb3JPdmVybGF5KCksCiAgICAuLi4ocHJvY2Vzcy5lbnYuTk9ERV9FTlYgIT09ICJwcm9kdWN0aW9uIiAmJgogICAgcHJvY2Vzcy5lbnYuUkVQTF9JRCAhPT0gdW5kZWZpbmVkCiAgICAgID8gWwogICAgICAgICAgYXdhaXQgaW1wb3J0KCJAcmVwbGl0L3ZpdGUtcGx1Z2luLWNhcnRvZ3JhcGhlciIpLnRoZW4oKG0pID0 is not defined
+    at file:///opt/render/project/src/vite.config.ts.timestamp-1754796600995-ceddcf7a35101.mjs:2:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:274:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:644:26)
+    at async loadConfigFromBundledFile (file:///opt/render/project/src/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:66958:15)
+    at async loadConfigFromFile (file:///opt/render/project/src/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:66799:24)
+    at async resolveConfig (file:///opt/render/project/src/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:66399:24)
+    at async build (file:///opt/render/project/src/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:65487:18)
+    at async CAC.<anonymous> (file:///opt/render/project/src/node_modules/vite/dist/node/cli.js:829:5)
+==> Build failed 😞
