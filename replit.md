@@ -32,6 +32,8 @@ CodedSwitch is a revolutionary AI-powered web application that embodies the trip
 - **Enhanced Visual Playback Cursor** (NEW - January 10, 2025): Added professional playback cursor with glow effects, position indicator, and static position display when stopped - red cursor during playback, yellow cursor when stopped
 - **Professional Settings Menu** (NEW - January 10, 2025): Added comprehensive settings dialog with tempo control (60-200 BPM), master volume, grid snap precision, zoom level, metronome toggle, auto-save toggle, and keyboard shortcuts toggle
 - **Keyboard Shortcuts System** (NEW - January 10, 2025): Implemented professional keyboard shortcuts - Space (play/pause), Ctrl+S (save), Ctrl+R (AI compose), Shift+Del (clear all) - can be disabled in settings
+- **Dynamic Layering Enhancement** (FIXED - January 10, 2025): Improved AI instrument layering to focus on melodic instruments (piano, violin, guitar, flute, trumpet) instead of percussion, expanded instrument library to 20+ options, added visual indicators for available instruments
+- **Song Analysis API Fix** (FIXED - January 10, 2025): Fixed song uploader analysis feature that was failing with 404 errors - moved from direct API calls to unified grok.ts service architecture for consistent AI integration
 
 # User Preferences
 

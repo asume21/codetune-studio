@@ -739,3 +739,28 @@ export async function chatAssistant(message: string, context: string = ""): Prom
     throw new Error("Failed to get AI response: " + (error as Error).message);
   }
 }
+
+export async function analyzeSong(songName: string, analysisPrompt: string): Promise<string> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "grok-2-1212",
+      messages: [
+        {
+          role: "system",
+          content: "You are a Grammy-winning music producer and A&R executive with 20+ years experience. Provide brutally honest but constructive feedback that helps artists improve and succeed commercially. Focus on actionable advice and specific improvement suggestions."
+        },
+        {
+          role: "user",
+          content: analysisPrompt
+        }
+      ],
+      max_tokens: 1500,
+      temperature: 0.8,
+    });
+
+    return response.choices[0].message.content || "Analysis could not be completed.";
+  } catch (error) {
+    console.error("Song analysis AI error:", error);
+    throw new Error("Failed to analyze song: " + (error as Error).message);
+  }
+}

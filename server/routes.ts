@@ -359,36 +359,8 @@ Provide honest, constructive feedback that helps the artist improve while identi
 
       console.log('🎵 Sending enhanced analysis request to AI for:', songName);
       
-      const response = await fetch('https://api.x.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.XAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'grok-beta',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a Grammy-winning music producer and A&R executive with 20+ years experience. Provide brutally honest but constructive feedback that helps artists improve and succeed commercially. Focus on actionable advice and specific improvement suggestions.'
-            },
-            {
-              role: 'user',
-              content: analysisPrompt
-            }
-          ],
-          max_tokens: 1500,
-          temperature: 0.8,
-        }),
-      });
-
-      if (!response.ok) {
-        console.error('🎵 AI API Error:', response.status, response.statusText);
-        throw new Error(`AI API request failed: ${response.status}`);
-      }
-
-      const aiResult = await response.json();
-      const analysis_notes = aiResult.choices[0]?.message?.content || 'Analysis could not be completed.';
+      const { analyzeSong } = await import("./services/grok");
+      const analysis_notes = await analyzeSong(songName, analysisPrompt);
 
       console.log('🎵 Enhanced AI Analysis completed, length:', analysis_notes.length);
 
