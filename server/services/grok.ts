@@ -50,7 +50,7 @@ export async function translateCode(sourceCode: string, sourceLanguage: string, 
   }
 }
 
-export async function generateBeatPattern(style: string, bpm: number): Promise<any> {
+export async function generateBeatPattern(style: string, bpm: number, complexity: number = 5): Promise<any> {
   try {
     const variations = [
       "energetic and driving",
@@ -79,13 +79,14 @@ export async function generateBeatPattern(style: string, bpm: number): Promise<a
         },
         {
           role: "user",
-          content: `Create a fresh ${randomVariation} ${style} beat at ${bpm} BPM. 
+          content: `Create a fresh ${randomVariation} ${style} beat at ${bpm} BPM with complexity level ${complexity}/10. 
           Unique session: ${timestamp}-${randomSeed}
           
           Requirements:
           - Must be different from generic patterns
-          - Use creative drum placement
-          - Consider syncopation and musical fills
+          - Complexity ${complexity}/10: ${complexity <= 3 ? 'Simple, basic patterns' : complexity <= 6 ? 'Moderate complexity with some fills' : 'Complex patterns with advanced fills and syncopation'}
+          - Use creative drum placement appropriate for complexity level
+          - Consider syncopation and musical fills based on complexity
           - Vary the kick and snare patterns
           - Make it ${randomVariation} in feel`
         }
@@ -154,7 +155,7 @@ function generateRandomFallbackPattern(style: string, variation: string): any {
   };
 }
 
-export async function generateMelody(scale: string, style: string, complexity: number, availableTracks?: Array<{id: string, instrument: string, name: string}>): Promise<any> {
+export async function generateMelody(scale: string, style: string, complexity: number = 5, availableTracks?: Array<{id: string, instrument: string, name: string}>): Promise<any> {
   try {
     const melodyMoods = [
       "soaring and uplifting",
@@ -333,7 +334,7 @@ export async function scanCodeVulnerabilities(code: string, language: string): P
   }
 }
 
-export async function generateLyrics(theme: string, genre: string, mood: string): Promise<string> {
+export async function generateLyrics(theme: string, genre: string, mood: string, complexity: number = 5): Promise<string> {
   try {
     const perspectives = ["first person introspective", "storytelling narrative", "conversational direct", "poetic metaphorical", "stream of consciousness"];
     const structures = ["verse-chorus-verse-chorus-bridge-chorus", "verse-pre-chorus-chorus-verse-pre-chorus-chorus-bridge-outro", "intro-verse-chorus-verse-chorus-bridge-final-chorus"];
@@ -356,13 +357,14 @@ export async function generateLyrics(theme: string, genre: string, mood: string)
         },
         {
           role: "user",
-          content: `Create fresh, original ${genre} lyrics about "${theme}" with ${mood} mood.
+          content: `Create fresh, original ${genre} lyrics about "${theme}" with ${mood} mood and complexity level ${complexity}/10.
           Session: ${timestamp}-${seed}
           
           Requirements:
           - ${randomApproach} approach
           - ${randomPerspective} writing style  
           - ${randomStructure} structure
+          - Complexity ${complexity}/10: ${complexity <= 3 ? 'Simple words, basic rhymes, straightforward themes' : complexity <= 6 ? 'Moderate vocabulary, some metaphors, varied rhyme schemes' : 'Advanced vocabulary, complex metaphors, intricate wordplay, layered meanings'}
           - Must be completely unique and different
           - Genre-appropriate language and imagery
           - Emotionally resonant and meaningful`
@@ -427,7 +429,7 @@ function getNoteFrequency(note: string): number {
   return noteMap[note] || 261.63; // Default to C4
 }
 
-export async function codeToMusic(code: string, language: string): Promise<any> {
+export async function codeToMusic(code: string, language: string, complexity: number = 5): Promise<any> {
   try {
     const musicalStyles = ["classical symphony", "jazz fusion", "electronic ambient", "rock anthem", "hip-hop groove", "world music", "orchestral cinematic", "minimal techno"];
     const interpretations = ["mathematical and precise", "organic and flowing", "aggressive and intense", "ethereal and spacious", "rhythmic and percussive", "melodic and harmonic"];
@@ -450,7 +452,7 @@ export async function codeToMusic(code: string, language: string): Promise<any> 
         },
         {
           role: "user",
-          content: `Transform this ${language} code into ${randomStyle} music (${randomInterpretation}):
+          content: `Transform this ${language} code into ${randomStyle} music (${randomInterpretation}) with complexity level ${complexity}/10:
           Session: ${timestamp}-${seed}
           
           Code:
@@ -458,6 +460,7 @@ export async function codeToMusic(code: string, language: string): Promise<any> 
           
           Requirements:
           - Create unique musical interpretation 
+          - Complexity ${complexity}/10: ${complexity <= 3 ? 'Simple melodies, basic drum patterns' : complexity <= 6 ? 'Moderate complexity with some harmonies' : 'Complex arrangements with multiple instruments and advanced rhythms'}
           - Map code structure to ${randomStyle} elements
           - Use ${randomInstruments} for instrumentation
           - Make it ${randomInterpretation} in feel
@@ -685,7 +688,7 @@ function generateRandomLayers(layerType: string, instrument: string, approach: s
   };
 }
 
-export async function generateBeatFromLyrics(lyrics: string, genre: string): Promise<any> {
+export async function generateBeatFromLyrics(lyrics: string, genre: string, complexity: number = 5): Promise<any> {
   try {
     const response = await openai.chat.completions.create({
       model: "grok-2-1212",
@@ -693,16 +696,17 @@ export async function generateBeatFromLyrics(lyrics: string, genre: string): Pro
         {
           role: "system",
           content: `You are a music producer who analyzes lyrics to create matching beat patterns. 
-          Analyze the lyrics for rhythm, flow, syllable density, and mood, then generate a 16-step drum pattern.
+          Analyze the lyrics for rhythm, flow, syllable density, and mood, then generate a 16-step drum pattern with complexity level ${complexity}/10.
           Consider the genre: ${genre}. Return JSON with:
           - beatPattern: object with kick, snare, hihat, openhat arrays (16 boolean values each)
           - bpm: suggested tempo based on lyrical flow
           - analysis: rhythm analysis, flow type, and reasoning
-          - suggestions: production tips for this lyrical style`
+          - suggestions: production tips for this lyrical style
+          - complexity: ${complexity <= 3 ? 'Simple patterns focusing on basic kick and snare' : complexity <= 6 ? 'Moderate patterns with some fills and variations' : 'Complex patterns with intricate fills, ghost notes, and polyrhythms'}`
         },
         {
           role: "user",
-          content: `Analyze these ${genre} lyrics and generate a matching beat pattern:\n\n${lyrics}`
+          content: `Analyze these ${genre} lyrics and generate a matching beat pattern with complexity level ${complexity}/10:\n\n${lyrics}`
         }
       ],
       response_format: { type: "json_object" },

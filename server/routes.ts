@@ -59,9 +59,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Beat Pattern Routes
   app.post("/api/beats/generate", async (req, res) => {
     try {
-      const { style = "hip-hop", bpm = 120 } = req.body;
+      const { style = "hip-hop", bpm = 120, complexity = 5 } = req.body;
 
-      const pattern = await generateBeatPattern(style, bpm);
+      const pattern = await generateBeatPattern(style, bpm, complexity);
 
       const beatPattern = await storage.createBeatPattern(currentUserId, {
         name: `${style} Beat`,
@@ -166,9 +166,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Lyrics Routes
   app.post("/api/lyrics/generate", async (req, res) => {
     try {
-      const { theme = "technology", genre = "hip-hop", mood = "upbeat" } = req.body;
+      const { theme = "technology", genre = "hip-hop", mood = "upbeat", complexity = 5 } = req.body;
 
-      const content = await generateLyrics(theme, genre, mood);
+      const content = await generateLyrics(theme, genre, mood, complexity);
 
       const lyrics = await storage.createLyrics(currentUserId, {
         title: `${theme} ${genre} Song`,
@@ -216,8 +216,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate beat pattern from lyrics
   app.post("/api/lyrics/generate-beat", async (req, res) => {
     try {
-      const { lyrics, genre } = req.body;
-      const beatPattern = await generateBeatFromLyrics(lyrics, genre);
+      const { lyrics, genre, complexity = 5 } = req.body;
+      const beatPattern = await generateBeatFromLyrics(lyrics, genre, complexity);
       res.json({ beatPattern });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -227,8 +227,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Code to Music Routes
   app.post("/api/code-to-music", async (req, res) => {
     try {
-      const { code, language } = req.body;
-      const musicData = await codeToMusic(code, language);
+      const { code, language, complexity = 5 } = req.body;
+      const musicData = await codeToMusic(code, language, complexity);
       res.json(musicData);
     } catch (error) {
       console.error("Code to music error:", error);

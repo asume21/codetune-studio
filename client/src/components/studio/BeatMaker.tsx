@@ -55,6 +55,7 @@ export default function BeatMaker() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedDrumKit, setSelectedDrumKit] = useState('acoustic');
   const [bassDrumDuration, setBassDrumDuration] = useState(0.8);
+  const [complexity, setComplexity] = useState([5]);
 
   // Initialize pattern with default structure or load from studio context
   const [pattern, setPattern] = useState<BeatPattern>(() => {
@@ -177,7 +178,7 @@ export default function BeatMaker() {
   }, [bpm, pattern, isPlaying, playDrumSound]); // Pattern dependency enables real-time updates
 
   const generateBeatMutation = useMutation({
-    mutationFn: async (data: { style: string; bpm: number }) => {
+    mutationFn: async (data: { style: string; bpm: number; complexity?: number }) => {
       const response = await apiRequest("POST", "/api/beats/generate", data);
       return response.json();
     },
@@ -236,6 +237,7 @@ export default function BeatMaker() {
     generateBeatMutation.mutate({
       style: randomStyle,
       bpm,
+      complexity: complexity[0],
     });
   };
 
@@ -357,6 +359,22 @@ export default function BeatMaker() {
                 <span className="text-xs text-gray-400">2.0s</span>
               </div>
               <span className="text-xs text-studio-accent font-mono">{bassDrumDuration.toFixed(1)}s</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <span className="text-sm whitespace-nowrap">AI Complexity:</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-gray-400">Simple</span>
+                <Slider
+                  value={complexity}
+                  onValueChange={setComplexity}
+                  max={10}
+                  min={1}
+                  step={1}
+                  className="w-24"
+                />
+                <span className="text-xs text-gray-400">Complex</span>
+              </div>
+              <span className="text-xs text-studio-accent font-mono">{complexity[0]}/10</span>
             </div>
             <Button
               onClick={playPattern}

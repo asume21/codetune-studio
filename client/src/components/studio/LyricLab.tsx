@@ -5,6 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -56,6 +58,8 @@ Type here or use AI generation...`);
   const [currentWord, setCurrentWord] = useState("");
   const [rhymeSuggestions, setRhymeSuggestions] = useState<RhymeSuggestion[]>([]);
   const [hasGeneratedMusic, setHasGeneratedMusic] = useState(false);
+  const [lyricComplexity, setLyricComplexity] = useState([5]);
+  const [beatComplexity, setBeatComplexity] = useState([5]);
 
   // Check if there's already generated music in studio context and localStorage
   React.useEffect(() => {
@@ -88,7 +92,7 @@ Type here or use AI generation...`);
   const { initialize, isInitialized } = useAudio();
 
   const generateLyricsMutation = useMutation({
-    mutationFn: async (data: { theme: string; genre: string; mood: string }) => {
+    mutationFn: async (data: { theme: string; genre: string; mood: string; complexity?: number }) => {
       // Add randomization to prevent repetitive results
       const genres = ["hip-hop", "pop", "rock", "country", "R&B", "folk", "reggae", "electronic", "jazz", "blues"];
       const moods = ["upbeat", "melancholic", "energetic", "romantic", "rebellious", "peaceful", "intense", "nostalgic"];
@@ -101,7 +105,8 @@ Type here or use AI generation...`);
       const response = await apiRequest("POST", "/api/lyrics/generate", {
         theme: `${data.theme}, ${randomTheme}`,
         genre: randomGenre,
-        mood: randomMood
+        mood: randomMood,
+        complexity: data.complexity
       });
       return response.json();
     },
@@ -141,7 +146,7 @@ Type here or use AI generation...`);
 
   // NEW: Generate beats and melody based on lyrics using xAI Grok
   const generateMusicFromLyricsMutation = useMutation({
-    mutationFn: async (data: { lyrics: string; genre: string; mood: string; title: string }) => {
+    mutationFn: async (data: { lyrics: string; genre: string; mood: string; title: string; complexity?: number }) => {
       const response = await apiRequest("POST", "/api/music/generate-from-lyrics", data);
       return response.json();
     },
@@ -230,7 +235,7 @@ Type here or use AI generation...`);
   });
 
   const generateBeatFromLyricsMutation = useMutation({
-    mutationFn: async (data: { lyrics: string; genre: string }) => {
+    mutationFn: async (data: { lyrics: string; genre: string; complexity?: number }) => {
       const response = await apiRequest("POST", "/api/lyrics/generate-beat", data);
       return response.json();
     },
@@ -269,6 +274,7 @@ Type here or use AI generation...`);
       theme,
       genre,
       mood,
+      complexity: lyricComplexity[0],
     });
   };
 
@@ -551,6 +557,36 @@ Type here or use AI generation...`);
                   </SelectContent>
                 </Select>
                 <div className="space-y-2">
+                  <Label>Lyric Complexity: {lyricComplexity[0]}/10</Label>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-400">Simple</span>
+                    <Slider
+                      value={lyricComplexity}
+                      onValueChange={setLyricComplexity}
+                      max={10}
+                      min={1}
+                      step={1}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-gray-400">Complex</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Beat Complexity: {beatComplexity[0]}/10</Label>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-400">Simple</span>
+                    <Slider
+                      value={beatComplexity}
+                      onValueChange={setBeatComplexity}
+                      max={10}
+                      min={1}
+                      step={1}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-gray-400">Complex</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
                   <Button
                     onClick={handleGenerateAI}
                     disabled={generateLyricsMutation.isPending}
@@ -574,6 +610,7 @@ Type here or use AI generation...`);
                       genre,
                       mood,
                       title,
+                      complexity: beatComplexity[0],
                     })}
                     disabled={generateMusicFromLyricsMutation.isPending || !content.trim()}
                     className="w-full bg-purple-600 hover:bg-purple-500"

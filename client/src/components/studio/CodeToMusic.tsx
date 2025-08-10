@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -38,6 +40,7 @@ export default function CodeToMusic() {
     }
 }`);
   const [musicData, setMusicData] = useState<any>(null);
+  const [complexity, setComplexity] = useState([5]);
   const compiledMusic = musicData; // Assuming musicData is the compiled music
 
   const { toast } = useToast();
@@ -45,7 +48,7 @@ export default function CodeToMusic() {
   const studioContext = useContext(StudioAudioContext);
 
   const compileMutation = useMutation({
-    mutationFn: async (data: { code: string; language: string }) => {
+    mutationFn: async (data: { code: string; language: string; complexity?: number }) => {
       const response = await apiRequest("POST", "/api/code-to-music", data);
       return response.json();
     },
@@ -96,7 +99,7 @@ export default function CodeToMusic() {
       return;
     }
 
-    compileMutation.mutate({ code, language });
+    compileMutation.mutate({ code, language, complexity: complexity[0] });
   };
 
   const languages = [
@@ -248,12 +251,28 @@ export default function CodeToMusic() {
               placeholder="Enter your code here..."
             />
 
-            <div className="bg-gray-800 border border-gray-600 rounded-lg p-3">
+            <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 space-y-3">
               <div className="flex items-center space-x-2 text-sm">
                 <div className="w-2 h-2 bg-studio-success rounded-full"></div>
                 <span>Code analysis complete</span>
                 <div className="flex-1"></div>
                 <span className="text-gray-400">25 lines • 3 functions • 1 class</span>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm">AI Complexity: {complexity[0]}/10</Label>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-400">Simple</span>
+                  <Slider
+                    value={complexity}
+                    onValueChange={setComplexity}
+                    max={10}
+                    min={1}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <span className="text-xs text-gray-400">Complex</span>
+                </div>
+                <p className="text-xs text-gray-400">Controls how intricate the musical arrangement will be</p>
               </div>
             </div>
           </div>

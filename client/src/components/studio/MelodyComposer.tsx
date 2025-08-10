@@ -143,6 +143,7 @@ export default function MelodyComposer() {
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [keyboardShortcutsEnabled, setKeyboardShortcutsEnabled] = useState(true);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [aiComplexity, setAiComplexity] = useState([5]);
 
   const { toast } = useToast();
   const { playNote, initialize, isInitialized, useRealisticSounds, toggleRealisticSounds } = useAudio();
@@ -267,10 +268,8 @@ export default function MelodyComposer() {
     mutationFn: async (data: { scale: string; style: string; complexity: number }) => {
       // Add randomization to prevent repetitive results
       const styles = ["classical", "jazz", "blues", "rock", "electronic", "folk", "ambient", "world", "cinematic", "experimental"];
-      const complexities = [3, 4, 5, 6, 7, 8]; // Vary complexity
       
       const randomStyle = styles[Math.floor(Math.random() * styles.length)];
-      const randomComplexity = complexities[Math.floor(Math.random() * complexities.length)];
       
       // Send ALL available tracks to AI for multi-instrument composition
       const availableTracks = tracks.map(track => ({
@@ -282,7 +281,7 @@ export default function MelodyComposer() {
       const response = await apiRequest("POST", "/api/melodies/generate", {
         ...data,
         style: randomStyle,
-        complexity: randomComplexity,
+        complexity: data.complexity,
         availableTracks: availableTracks
       });
       return response.json();
@@ -337,7 +336,7 @@ export default function MelodyComposer() {
     generateMelodyMutation.mutate({
       scale,
       style: 'orchestral', // Use orchestral style to encourage multi-instrument composition
-      complexity: 6, // Higher complexity for richer arrangements
+      complexity: aiComplexity[0], // Use user-selected complexity
     });
   };
 
@@ -693,7 +692,7 @@ export default function MelodyComposer() {
     generateMelodyMutation.mutate({
       scale,
       style: tracks.find(t => t.id === selectedTrack)?.instrument || 'electronic',
-      complexity: 5,
+      complexity: aiComplexity[0],
     });
   };
 
@@ -923,6 +922,25 @@ export default function MelodyComposer() {
                     <div className="flex justify-between text-xs text-gray-400">
                       <span>0.5x</span>
                       <span>4x</span>
+                    </div>
+                  </div>
+
+                  {/* AI Complexity Setting */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-300">
+                      AI Complexity: {aiComplexity[0]}/10
+                    </Label>
+                    <Slider
+                      value={aiComplexity}
+                      onValueChange={setAiComplexity}
+                      min={1}
+                      max={10}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>Simple</span>
+                      <span>Complex</span>
                     </div>
                   </div>
 
