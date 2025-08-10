@@ -13,7 +13,7 @@ export default defineConfig({
   },
   root: "./client",
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist", "client"),
+    outDir: "../dist/client",
     emptyOutDir: true,
   },
   server: {
