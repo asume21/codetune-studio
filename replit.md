@@ -34,12 +34,14 @@ CodedSwitch is a revolutionary AI-powered web application that embodies the trip
 
 Preferred communication style: Simple, everyday language.
 
-**CRITICAL: NO UNAUTHORIZED FILE CHANGES**
-- User explicitly prohibits making changes to files without clear permission
-- Do not create temporary scripts that modify the GitHub repository
-- Do not alter package.json, vite configs, or server files unless specifically requested
-- Focus on helping with deployment issues without changing existing working code
-- User's local development environment works perfectly - preserve it
+**CRITICAL: BUILD PROTECTION PROTOCOL**
+- SUCCESSFUL BUILD ACHIEVED - Protect at all costs
+- package.json, vite.config.prod.ts, server/index.prod.ts, render.yaml are LOCKED
+- Only modify source files: client/src/*, server/routes.ts, server/services/*, shared/schema.ts
+- Always test locally before GitHub push: npm run build && npm start
+- Use git tags for working state backups before major changes
+- Never edit production configuration files without explicit permission
+- Follow DEPLOYMENT_BEST_PRACTICES.md for all future changes
 
 # System Architecture
 
