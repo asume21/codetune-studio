@@ -104,18 +104,57 @@ export function useMIDI() {
 
   // Handle MIDI messages
   const handleMIDIMessage = useCallback((message: any) => {
-    const [status, note, velocity] = message.data;
+    const [status, data1, data2] = message.data;
     const channel = status & 0x0F;
     const messageType = status & 0xF0;
     
+    // Note On/Off Messages
     if (messageType === 0x90 || messageType === 0x80) {
-      const isNoteOn = messageType === 0x90 && velocity > 0;
+      const isNoteOn = messageType === 0x90 && data2 > 0;
       
       if (isNoteOn) {
-        handleNoteOn(note, velocity, channel);
+        handleNoteOn(data1, data2, channel);
       } else {
-        handleNoteOff(note, channel);
+        handleNoteOff(data1, channel);
       }
+    }
+    // Control Change Messages (CC) - for sliders, knobs, modulation, etc.
+    else if (messageType === 0xB0) {
+      const controlNumber = data1;
+      const controlValue = data2;
+      
+      console.log(`🎛️ MIDI Control Change: CC${controlNumber} = ${controlValue} (Channel ${channel + 1})`);
+      
+      // Common MIDI CC mappings
+      switch (controlNumber) {
+        case 1:   // Modulation Wheel
+          console.log(`🎵 Modulation: ${Math.round((controlValue / 127) * 100)}%`);
+          break;
+        case 7:   // Volume
+          console.log(`🔊 Volume: ${Math.round((controlValue / 127) * 100)}%`);
+          break;
+        case 10:  // Pan
+          console.log(`🔄 Pan: ${Math.round((controlValue / 127) * 100)}%`);
+          break;
+        case 11:  // Expression
+          console.log(`🎭 Expression: ${Math.round((controlValue / 127) * 100)}%`);
+          break;
+        case 64:  // Sustain Pedal
+          console.log(`🦶 Sustain: ${controlValue > 63 ? 'ON' : 'OFF'}`);
+          break;
+        case 74:  // Filter Cutoff (often mapped to sliders)
+          console.log(`🎚️ Filter: ${Math.round((controlValue / 127) * 100)}%`);
+          break;
+        default:
+          console.log(`🎛️ Custom Control CC${controlNumber}: ${controlValue}`);
+          break;
+      }
+    }
+    // Pitch Bend Messages
+    else if (messageType === 0xE0) {
+      const pitchValue = (data2 << 7) | data1; // Combine 14-bit pitch bend value
+      const pitchBendSemitones = ((pitchValue - 8192) / 8192) * 2; // ±2 semitones typical range
+      console.log(`🎵 Pitch Bend: ${pitchBendSemitones.toFixed(2)} semitones`);
     }
   }, [handleNoteOn, handleNoteOff]);
 
