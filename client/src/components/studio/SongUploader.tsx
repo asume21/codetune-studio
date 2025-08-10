@@ -219,6 +219,34 @@ export default function SongUploader() {
         originalSong: song
       });
 
+      // Send analysis to AI Assistant by posting a message
+      const analysisMessage = `📊 **Song Analysis Complete: ${song.name}**
+
+🎵 **Musical Properties:**
+• BPM: ${analysis.estimatedBPM}
+• Key: ${analysis.keySignature} 
+• Genre: ${analysis.genre}
+• Mood: ${analysis.mood}
+
+🎼 **Song Structure:**
+${Object.entries(analysis.structure).map(([section, timing]) => `• ${section}: ${timing}`).join('\n')}
+
+🎺 **Instruments Detected:**
+${analysis.instruments.join(', ')}
+
+🤖 **AI Analysis Notes:**
+${analysis.analysis_notes}
+
+This analysis has been saved and can be used with other studio tools for remixing, layering, and composition inspiration!`;
+
+      // Add message to AI Assistant (this would need to be implemented)
+      // For now, we'll try to trigger it via the global studio context
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('addAIMessage', { 
+          detail: { content: analysisMessage } 
+        }));
+      }
+
     } catch (error) {
       toast({
         title: "Analysis Failed", 

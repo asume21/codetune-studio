@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,10 +19,26 @@ export default function AIAssistant() {
     {
       id: "1",
       type: "ai",
-      content: "Hello! I'm your AI assistant for CodeTune Studio. I can help you with:\n• Code translation and optimization\n• Music composition suggestions\n• Beat pattern generation\n• Vulnerability scanning insights\n• Lyric writing assistance\n\nHow can I help you today?",
+      content: "Hello! I'm your AI assistant for CodedSwitch Studio. I can help you with:\n• Code translation and optimization\n• Music composition suggestions\n• Beat pattern generation\n• Vulnerability scanning insights\n• Lyric writing assistance\n• Song analysis and insights\n\nHow can I help you today?",
       timestamp: new Date(Date.now() - 120000),
     },
   ]);
+
+  // Listen for external messages (like from song analysis)
+  useEffect(() => {
+    const handleAddMessage = (event: CustomEvent) => {
+      const aiMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: event.detail.content,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, aiMessage]);
+    };
+
+    window.addEventListener('addAIMessage', handleAddMessage as EventListener);
+    return () => window.removeEventListener('addAIMessage', handleAddMessage as EventListener);
+  }, []);
   const [inputMessage, setInputMessage] = useState("");
 
   const { toast } = useToast();
