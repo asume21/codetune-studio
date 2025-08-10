@@ -29,6 +29,9 @@ CodedSwitch is a revolutionary AI-powered web application that embodies the trip
 - **Multi-Track AI Generation** (COMPLETED - January 9, 2025): AI now has access to ALL instruments simultaneously through multi-track generation system - creates orchestral compositions across piano, guitar, violin, flute, trumpet, bass, and organ instead of single instrument limitation
 - **Universal Realistic Audio Support** (COMPLETED - January 9, 2025): Expanded realistic soundfont system to support ALL instruments with dedicated General MIDI mappings - piano, guitar, violin, flute, trumpet, bass, organ, and comprehensive instrument fallback logic
 - **MIDI Controller Support** (NEW - January 9, 2025): Added Web MIDI API integration for real-time hardware input from physical MIDI pads and keyboards - supports note on/off, velocity sensitivity, channel-based instrument mapping, and live performance capabilities
+- **Enhanced Visual Playback Cursor** (NEW - January 10, 2025): Added professional playback cursor with glow effects, position indicator, and static position display when stopped - red cursor during playback, yellow cursor when stopped
+- **Professional Settings Menu** (NEW - January 10, 2025): Added comprehensive settings dialog with tempo control (60-200 BPM), master volume, grid snap precision, zoom level, metronome toggle, auto-save toggle, and keyboard shortcuts toggle
+- **Keyboard Shortcuts System** (NEW - January 10, 2025): Implemented professional keyboard shortcuts - Space (play/pause), Ctrl+S (save), Ctrl+R (AI compose), Shift+Del (clear all) - can be disabled in settings
 
 # User Preferences
 

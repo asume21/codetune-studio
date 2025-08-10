@@ -7,6 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAudio, useMelodyPlayer } from "@/hooks/use-audio";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 
 interface Note {
   note: string;
@@ -132,12 +135,65 @@ export default function MelodyComposer() {
   // Note resizing state
   const [resizingNote, setResizingNote] = useState<{ index: number; startX: number; startDuration: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Settings state
+  const [tempo, setTempo] = useState(120); // BPM
+  const [masterVolume, setMasterVolume] = useState(80);
+  const [metronomeEnabled, setMetronomeEnabled] = useState(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [keyboardShortcutsEnabled, setKeyboardShortcutsEnabled] = useState(true);
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
 
   const { toast } = useToast();
   const { playNote, initialize, isInitialized, useRealisticSounds, toggleRealisticSounds } = useAudio();
   const { playMelody: playMelodySequence, stopMelody: stopMelodySequence } = useMelodyPlayer();
   const [isMelodyPlaying, setIsMelodyPlaying] = useState(false);
   const { playMelody, stopMelody } = useMelodyPlayer();
+
+  // Keyboard shortcuts effect
+  useEffect(() => {
+    if (!keyboardShortcutsEnabled) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      switch (e.code) {
+        case 'Space':
+          e.preventDefault();
+          if (isMelodyPlaying) {
+            stopMelody();
+            setIsMelodyPlaying(false);
+            setIsPlaying(false);
+          } else {
+            handlePlayMelody();
+          }
+          break;
+        case 'KeyS':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            handleSave();
+          }
+          break;
+        case 'Delete':
+        case 'Backspace':
+          if (e.shiftKey) {
+            e.preventDefault();
+            clearAllNotes();
+          }
+          break;
+        case 'KeyR':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            generateMelody();
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [keyboardShortcutsEnabled, isMelodyPlaying, handlePlayMelody, handleSave, clearAllNotes, generateMelody, stopMelody]);
 
   // Get appropriate note duration based on instrument type
   const getInstrumentDuration = (instrument: string = 'piano'): number => {
@@ -770,6 +826,165 @@ export default function MelodyComposer() {
               <i className="fas fa-save mr-2"></i>
               Save Project
             </Button>
+
+            {/* Settings Button */}
+            <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="bg-gray-600 hover:bg-gray-500 text-white border-gray-600">
+                  <i className="fas fa-cog mr-2"></i>
+                  Settings
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-gray-800 border-gray-600 text-white max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold text-gray-200">
+                    <i className="fas fa-cog mr-2"></i>
+                    Melody Composer Settings
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6 py-4">
+                  
+                  {/* Tempo Setting */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-300">
+                      Tempo: {tempo} BPM
+                    </Label>
+                    <Slider
+                      value={[tempo]}
+                      onValueChange={(value) => setTempo(value[0])}
+                      min={60}
+                      max={200}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>60 BPM</span>
+                      <span>200 BPM</span>
+                    </div>
+                  </div>
+
+                  {/* Master Volume */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-300">
+                      Master Volume: {masterVolume}%
+                    </Label>
+                    <Slider
+                      value={[masterVolume]}
+                      onValueChange={(value) => setMasterVolume(value[0])}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>0%</span>
+                      <span>100%</span>
+                    </div>
+                  </div>
+
+                  {/* Grid Snap Size */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-300">Grid Snap Size</Label>
+                    <Select value={gridSnapSize.toString()} onValueChange={(value) => setGridSnapSize(parseFloat(value))}>
+                      <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-700 border-gray-600">
+                        <SelectItem value="0.125">32nd Note</SelectItem>
+                        <SelectItem value="0.25">16th Note</SelectItem>
+                        <SelectItem value="0.5">8th Note</SelectItem>
+                        <SelectItem value="1">Quarter Note</SelectItem>
+                        <SelectItem value="2">Half Note</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Zoom Level */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-300">
+                      Zoom Level: {zoom}x
+                    </Label>
+                    <Slider
+                      value={[zoom]}
+                      onValueChange={(value) => setZoom(value[0])}
+                      min={0.5}
+                      max={4}
+                      step={0.25}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>0.5x</span>
+                      <span>4x</span>
+                    </div>
+                  </div>
+
+                  {/* Toggle Settings */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium text-gray-300">Metronome</Label>
+                      <Button
+                        size="sm"
+                        variant={metronomeEnabled ? "default" : "outline"}
+                        onClick={() => setMetronomeEnabled(!metronomeEnabled)}
+                        className={`${metronomeEnabled ? 'bg-green-600 hover:bg-green-500' : 'bg-gray-600 hover:bg-gray-500'} text-white`}
+                      >
+                        {metronomeEnabled ? "ON" : "OFF"}
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium text-gray-300">Auto-Save</Label>
+                      <Button
+                        size="sm"
+                        variant={autoSaveEnabled ? "default" : "outline"}
+                        onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
+                        className={`${autoSaveEnabled ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-600 hover:bg-gray-500'} text-white`}
+                      >
+                        {autoSaveEnabled ? "ON" : "OFF"}
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium text-gray-300">Keyboard Shortcuts</Label>
+                      <Button
+                        size="sm"
+                        variant={keyboardShortcutsEnabled ? "default" : "outline"}
+                        onClick={() => setKeyboardShortcutsEnabled(!keyboardShortcutsEnabled)}
+                        className={`${keyboardShortcutsEnabled ? 'bg-purple-600 hover:bg-purple-500' : 'bg-gray-600 hover:bg-gray-500'} text-white`}
+                      >
+                        {keyboardShortcutsEnabled ? "ON" : "OFF"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Keyboard Shortcuts Info */}
+                  {keyboardShortcutsEnabled && (
+                    <div className="pt-4 border-t border-gray-600">
+                      <h4 className="text-sm font-medium text-gray-300 mb-2">
+                        <i className="fas fa-keyboard mr-1"></i>
+                        Keyboard Shortcuts
+                      </h4>
+                      <div className="text-xs text-gray-400 space-y-1">
+                        <div><kbd className="px-1 bg-gray-700 rounded">Space</kbd> - Play/Pause</div>
+                        <div><kbd className="px-1 bg-gray-700 rounded">Ctrl+S</kbd> - Save Project</div>
+                        <div><kbd className="px-1 bg-gray-700 rounded">Ctrl+R</kbd> - AI Compose</div>
+                        <div><kbd className="px-1 bg-gray-700 rounded">Shift+Del</kbd> - Clear All</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Settings Info */}
+                  <div className="pt-4 border-t border-gray-600">
+                    <p className="text-xs text-gray-400">
+                      <i className="fas fa-info-circle mr-1"></i>
+                      Settings are automatically saved locally. 
+                      Tempo affects AI composition speed. 
+                      Grid snap controls note placement precision.
+                    </p>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
@@ -905,14 +1120,34 @@ export default function MelodyComposer() {
                 })}
               </div>
 
-              {/* Playback cursor */}
+              {/* Enhanced Playback cursor with glow effect */}
               {isPlaying && (
-                <div
-                  className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 pointer-events-none"
-                  style={{
-                    left: `${(currentBeat / (8 * zoom)) * 100}%`,
-                  }}
-                />
+                <div 
+                  className="absolute top-0 bottom-0 z-20 pointer-events-none"
+                  style={{ left: `${(currentBeat / (8 * zoom)) * 100}%` }}
+                >
+                  {/* Main cursor line */}
+                  <div className="w-0.5 h-full bg-red-500 shadow-lg"></div>
+                  {/* Glow effect */}
+                  <div className="absolute -left-1 top-0 w-2 h-full bg-red-500 opacity-30 blur-sm"></div>
+                  {/* Position indicator at top */}
+                  <div className="absolute -top-2 -left-2 w-4 h-2 bg-red-500 rounded-b-sm">
+                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-b-2 border-transparent border-b-red-500"></div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Static position cursor when not playing */}
+              {!isPlaying && currentBeat > 0 && (
+                <div 
+                  className="absolute top-0 bottom-0 z-20 pointer-events-none"
+                  style={{ left: `${(currentBeat / (8 * zoom)) * 100}%` }}
+                >
+                  <div className="w-0.5 h-full bg-yellow-400 opacity-70"></div>
+                  <div className="absolute -top-2 -left-2 w-4 h-2 bg-yellow-400 rounded-b-sm opacity-70">
+                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-b-2 border-transparent border-b-yellow-400"></div>
+                  </div>
+                </div>
               )}
 
               {/* Notes for all tracks */}
