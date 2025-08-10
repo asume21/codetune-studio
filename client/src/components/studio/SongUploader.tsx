@@ -239,9 +239,9 @@ ${analysis.analysis_notes}
 
 This analysis has been saved and can be used with other studio tools for remixing, layering, and composition inspiration!`;
 
-      // Add message to AI Assistant (this would need to be implemented)
-      // For now, we'll try to trigger it via the global studio context
+      // Add message to AI Assistant using custom event
       if (typeof window !== 'undefined') {
+        console.log('🎵 Dispatching AI message event with analysis:', analysisMessage.substring(0, 100) + '...');
         window.dispatchEvent(new CustomEvent('addAIMessage', { 
           detail: { content: analysisMessage } 
         }));

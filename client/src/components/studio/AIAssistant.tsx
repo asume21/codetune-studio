@@ -27,17 +27,25 @@ export default function AIAssistant() {
   // Listen for external messages (like from song analysis)
   useEffect(() => {
     const handleAddMessage = (event: CustomEvent) => {
+      console.log('🎵 AI Assistant received message event:', event.detail);
       const aiMessage: Message = {
         id: Date.now().toString(),
         type: "ai",
         content: event.detail.content,
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, aiMessage]);
+      setMessages(prev => {
+        console.log('🎵 Adding message to AI Assistant, current count:', prev.length);
+        return [...prev, aiMessage];
+      });
     };
 
+    console.log('🎵 AI Assistant event listener registered');
     window.addEventListener('addAIMessage', handleAddMessage as EventListener);
-    return () => window.removeEventListener('addAIMessage', handleAddMessage as EventListener);
+    return () => {
+      console.log('🎵 AI Assistant event listener removed');
+      window.removeEventListener('addAIMessage', handleAddMessage as EventListener);
+    };
   }, []);
   const [inputMessage, setInputMessage] = useState("");
 
