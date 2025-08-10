@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio, useMelodyPlayer } from "@/hooks/use-audio";
+import { useMIDI } from "@/hooks/use-midi";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -150,6 +151,9 @@ export default function MelodyComposer() {
   const { playMelody: playMelodySequence, stopMelody: stopMelodySequence } = useMelodyPlayer();
   const [isMelodyPlaying, setIsMelodyPlaying] = useState(false);
   const { playMelody, stopMelody } = useMelodyPlayer();
+  
+  // MIDI Controller Integration
+  const { isConnected, activeNotes, lastNote, settings } = useMIDI();
 
 
 

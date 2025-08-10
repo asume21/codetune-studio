@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/hooks/use-audio";
+import { useMIDI } from "@/hooks/use-midi";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
 import { StudioAudioContext } from "@/pages/studio";
@@ -110,6 +111,9 @@ export default function BeatMaker() {
 
   const { toast } = useToast();
   const { playDrumSound, initialize, isInitialized } = useAudio();
+  
+  // MIDI Controller Integration  
+  const { isConnected: midiConnected, activeNotes, settings: midiSettings } = useMIDI();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize audio on first interaction
