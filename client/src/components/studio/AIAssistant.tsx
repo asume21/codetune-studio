@@ -29,14 +29,18 @@ export default function AIAssistant() {
     const handleAddMessage = (event: CustomEvent) => {
       console.log('🎵 AI Assistant received message event:', event.detail);
       const aiMessage: Message = {
-        id: Date.now().toString(),
+        id: `analysis-${Date.now()}`,
         type: "ai",
         content: event.detail.content,
         timestamp: new Date(),
       };
       setMessages(prev => {
-        console.log('🎵 Adding message to AI Assistant, current count:', prev.length);
-        return [...prev, aiMessage];
+        console.log('🎵 Adding analysis message to AI Assistant, current count:', prev.length);
+        console.log('🎵 Message content preview:', event.detail.content.substring(0, 100));
+        const newMessages = [...prev, aiMessage];
+        console.log('🎵 New message count:', newMessages.length);
+        console.log('🎵 Last message ID:', aiMessage.id);
+        return newMessages;
       });
     };
 
@@ -46,7 +50,7 @@ export default function AIAssistant() {
       console.log('🎵 AI Assistant event listener removed');
       window.removeEventListener('addAIMessage', handleAddMessage as EventListener);
     };
-  }, []);
+  }, [setMessages]);
   const [inputMessage, setInputMessage] = useState("");
 
   const { toast } = useToast();
@@ -128,16 +132,27 @@ export default function AIAssistant() {
             </Button>
             <Button
               onClick={() => {
-                if (isInitialized) {
-                  toast({ title: "Playing", description: "Starting AI generated content playback." });
-                } else {
-                  toast({ title: "Audio Not Ready", description: "Please start audio first.", variant: "destructive" });
-                }
+                // Test the analysis message system
+                const testMessage = `📊 **Test Analysis: Direct Button Test**
+
+🎵 **Musical Properties:**
+• BPM: 128
+• Key: C Major
+• Genre: Electronic
+• Mood: Energetic
+
+This is a test message to verify the AI Assistant message system is working!`;
+                
+                window.dispatchEvent(new CustomEvent('addAIMessage', { 
+                  detail: { content: testMessage } 
+                }));
+                
+                toast({ title: "Test Message Sent", description: "Check if analysis appears above!" });
               }}
               className="bg-studio-success hover:bg-green-500"
             >
-              <i className="fas fa-play mr-2"></i>
-              Play
+              <i className="fas fa-flask mr-2"></i>
+              Test AI
             </Button>
           </div>
         </div>
@@ -149,7 +164,9 @@ export default function AIAssistant() {
           <div className="flex-1 flex flex-col">
             <ScrollArea className="flex-1 bg-studio-panel border border-gray-600 rounded-lg p-4 mb-4">
               <div className="space-y-4">
-                {messages.map((message) => (
+                {messages.map((message) => {
+                  console.log('🎵 Rendering message:', message.id, message.type, message.content.substring(0, 50));
+                  return (
                   <div key={message.id} className={`flex space-x-3 ${message.type === "user" ? "justify-end" : ""}`}>
                     {message.type === "ai" && (
                       <div className="w-8 h-8 bg-gradient-to-br from-studio-accent to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
@@ -176,7 +193,7 @@ export default function AIAssistant() {
                       </div>
                     )}
                   </div>
-                ))}
+                )})}
 
                 {chatMutation.isPending && (
                   <div className="flex space-x-3">
