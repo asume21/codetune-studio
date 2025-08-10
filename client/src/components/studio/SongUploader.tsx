@@ -84,7 +84,18 @@ export default function SongUploader() {
     try {
       // Convert object storage URL to accessible endpoint
       console.log('🎵 Original song URL:', song.url);
-      const accessibleURL = song.url.replace(/^https:\/\/storage\.googleapis\.com\/[^\/]+\//, '/objects/');
+      
+      // Extract bucket and path from Google Storage URL
+      const match = song.url.match(/https:\/\/storage\.googleapis\.com\/([^\/]+)\/(.*)/);
+      if (!match) {
+        throw new Error('Invalid storage URL format');
+      }
+      
+      const [, bucket, objectPath] = match;
+      console.log(`🎵 Parsed - bucket: ${bucket}, objectPath: ${objectPath}`);
+      
+      // Create accessible URL - we need to strip the .private prefix since our endpoint handles it
+      const accessibleURL = `/objects/${objectPath}`;
       console.log('🎵 Converted accessible URL:', accessibleURL);
       
       const audio = new Audio();

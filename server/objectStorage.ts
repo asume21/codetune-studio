@@ -73,25 +73,33 @@ export class ObjectStorageService {
 
   // Gets the object entity file from the object path.
   async getObjectEntityFile(objectPath: string): Promise<File> {
+    console.log(`🎵 Processing object path: ${objectPath}`);
+    
     if (!objectPath.startsWith("/objects/")) {
       throw new ObjectNotFoundError();
     }
 
-    const parts = objectPath.slice(1).split("/");
-    if (parts.length < 2) {
-      throw new ObjectNotFoundError();
-    }
-
-    const entityId = parts.slice(1).join("/");
-    let entityDir = this.getPrivateObjectDir();
-    if (!entityDir.endsWith("/")) {
-      entityDir = `${entityDir}/`;
-    }
-    const objectEntityPath = `${entityDir}${entityId}`;
-    const { bucketName, objectName } = parseObjectPath(objectEntityPath);
+    // Extract the path after /objects/
+    const relativePath = objectPath.substring("/objects/".length);
+    console.log(`🎵 Relative path extracted: ${relativePath}`);
+    
+    // The private object directory is already the full bucket path
+    const privateDir = this.getPrivateObjectDir(); // e.g., /bucket-name/.private
+    console.log(`🎵 Private object dir: ${privateDir}`);
+    
+    // Combine them to get the full object path
+    const fullObjectPath = `${privateDir}/${relativePath}`;
+    console.log(`🎵 Full object path: ${fullObjectPath}`);
+    
+    const { bucketName, objectName } = parseObjectPath(fullObjectPath);
+    console.log(`🎵 Parsed - bucket: ${bucketName}, object: ${objectName}`);
+    
     const bucket = objectStorageClient.bucket(bucketName);
     const objectFile = bucket.file(objectName);
+    
     const [exists] = await objectFile.exists();
+    console.log(`🎵 Object exists: ${exists}`);
+    
     if (!exists) {
       throw new ObjectNotFoundError();
     }
