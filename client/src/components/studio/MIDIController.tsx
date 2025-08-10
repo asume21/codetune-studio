@@ -73,6 +73,21 @@ export function MIDIController() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        
+        {/* Quick Setup Guide */}
+        <div className="bg-green-900/20 border border-green-600 rounded-lg p-4 mb-4">
+          <h3 className="text-green-400 font-semibold mb-2 flex items-center">
+            <i className="fas fa-check-circle mr-2"></i>
+            Controller Connected! Quick Setup Guide:
+          </h3>
+          <div className="text-sm text-green-200 space-y-1">
+            <p><strong>1. Play Notes:</strong> Your controller is already playing piano - try pressing keys!</p>
+            <p><strong>2. Change Instrument:</strong> Use the settings gear icon below to switch instruments</p>
+            <p><strong>3. Record Melodies:</strong> Go to "Melody Composer" tab to record your playing</p>
+            <p><strong>4. Control Beats:</strong> Use "Beat Maker" tab - some controllers can trigger drums</p>
+            <p><strong>5. Live Performance:</strong> All tabs work with your controller for real-time control</p>
+          </div>
+        </div>
         {/* Control Buttons */}
         <div className="flex items-center space-x-2">
           {!isConnected ? (
