@@ -37,6 +37,18 @@ In this digital symphony we're designing.
 
 [Verse 2]
 Type here or use AI generation...`);
+
+  // Update studio context whenever lyrics content changes
+  React.useEffect(() => {
+    studioContext.setCurrentLyrics(content);
+  }, [content, studioContext]);
+
+  // Load persisted lyrics from studio context on component mount
+  React.useEffect(() => {
+    if (studioContext.currentLyrics && studioContext.currentLyrics !== content) {
+      setContent(studioContext.currentLyrics);
+    }
+  }, [studioContext.currentLyrics]);
   const [genre, setGenre] = useState("hip-hop");
   const [rhymeScheme, setRhymeScheme] = useState("ABAB");
   const [theme, setTheme] = useState("technology, coding");

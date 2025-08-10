@@ -571,9 +571,11 @@ Provide honest, constructive feedback that helps the artist improve while identi
       const musicData = await generateBeatFromLyrics(lyrics, genre);
       
       res.json({
-        beatPattern: musicData.beatPattern,
+        beatPattern: musicData.beatPattern?.beatPattern || musicData.beatPattern,
         melody: musicData.melody,
         codeMusic: musicData.codeMusic,
+        bpm: musicData.bpm,
+        analysis: musicData.analysis,
         message: "Music generated successfully from lyrics"
       });
     } catch (error) {

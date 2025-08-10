@@ -121,13 +121,17 @@ export default function BeatMaker() {
   // Listen for updates to studio context pattern (only once when component mounts or context changes)
   const patternLoadedRef = useRef(false);
   useEffect(() => {
-    if (studioContext.currentPattern && Object.keys(studioContext.currentPattern).length > 0 && !patternLoadedRef.current) {
+    console.log("🥁 Beat Maker: Checking for pattern updates:", studioContext.currentPattern);
+    
+    if (studioContext.currentPattern && Object.keys(studioContext.currentPattern).length > 0) {
       // Check if the pattern has any true values (actual beat data)
       const hasRealData = Object.values(studioContext.currentPattern).some(arr => 
         Array.isArray(arr) && arr.some(val => val === true));
       
+      console.log("🥁 Beat Maker: Pattern has real data:", hasRealData);
+      
       if (hasRealData) {
-        patternLoadedRef.current = true;
+        console.log("🥁 Beat Maker: Loading pattern from studio context");
         setPattern({
           kick: studioContext.currentPattern.kick || Array(16).fill(false),
           bass: studioContext.currentPattern.bass || Array(16).fill(false),
@@ -138,6 +142,11 @@ export default function BeatMaker() {
           clap: studioContext.currentPattern.clap || Array(16).fill(false),
           crash: studioContext.currentPattern.crash || Array(16).fill(false),
         });
+        
+        // Update BPM if provided
+        if (studioContext.currentPattern.bpm) {
+          setBpm(studioContext.currentPattern.bpm);
+        }
       }
     }
   }, [studioContext.currentPattern]);
