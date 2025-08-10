@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,36 +9,41 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { StudioAudioContext } from "@/pages/studio";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import type { UploadResult } from "@uppy/core";
+import type { Song } from "@shared/schema";
 
-interface UploadedSong {
-  id: string;
-  name: string;
-  url: string;
-  duration?: number;
-  size: number;
-  uploadDate: string;
+interface UploadContext {
+  name?: string;
+  fileSize?: number;
+  format?: string;
 }
 
 export default function SongUploader() {
-  const [uploadedSongs, setUploadedSongs] = useState<UploadedSong[]>([]);
-  const [currentSong, setCurrentSong] = useState<UploadedSong | null>(null);
+  const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [uploadContext, setUploadContext] = useState<UploadContext>({});
 
   const { toast } = useToast();
   const studioContext = useContext(StudioAudioContext);
+
+  const { data: songs, isLoading: songsLoading } = useQuery<Song[]>({
+    queryKey: ['/api/songs'],
+    initialData: [],
+  });
 
   const uploadSongMutation = useMutation({
     mutationFn: async (songURL: string) => {
       const response = await apiRequest("POST", "/api/songs/upload", {
         songURL,
-        name: `Uploaded Song ${Date.now()}`
+        name: uploadContext.name || `Uploaded Song ${Date.now()}`,
+        fileSize: uploadContext.fileSize,
+        format: uploadContext.format,
       });
       return response.json();
     },
-    onSuccess: (newSong: UploadedSong) => {
-      setUploadedSongs(prev => [...prev, newSong]);
+    onSuccess: (newSong: Song) => {
       queryClient.invalidateQueries({ queryKey: ['/api/songs'] });
+      setUploadContext({});
       toast({
         title: "Song Uploaded",
         description: `${newSong.name} has been added to your library!`,
@@ -67,6 +72,14 @@ export default function SongUploader() {
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
       const songURL = uploadedFile.uploadURL;
+      
+      // Extract file info from the uploaded file
+      setUploadContext({
+        name: uploadedFile.name || `Uploaded Song ${Date.now()}`,
+        fileSize: uploadedFile.size || 0,
+        format: uploadedFile.name?.split('.').pop()?.toLowerCase() || 'unknown',
+      });
+      
       console.log('🎵 Upload URL received:', songURL);
       
       if (songURL) {
@@ -75,28 +88,16 @@ export default function SongUploader() {
     }
   };
 
-  const playSong = async (song: UploadedSong) => {
+  const playSong = async (song: Song) => {
     if (audioElement) {
       audioElement.pause();
       audioElement.src = '';
     }
 
     try {
-      // Convert object storage URL to accessible endpoint
-      console.log('🎵 Original song URL:', song.url);
-      
-      // Extract bucket and path from Google Storage URL
-      const match = song.url.match(/https:\/\/storage\.googleapis\.com\/([^\/]+)\/(.*)/);
-      if (!match) {
-        throw new Error('Invalid storage URL format');
-      }
-      
-      const [, bucket, objectPath] = match;
-      console.log(`🎵 Parsed - bucket: ${bucket}, objectPath: ${objectPath}`);
-      
-      // Create accessible URL - we need to strip the .private prefix since our endpoint handles it
-      const accessibleURL = `/objects/${objectPath}`;
-      console.log('🎵 Converted accessible URL:', accessibleURL);
+      // Use the accessible URL that's already stored in the song record
+      const accessibleURL = song.accessibleUrl;
+      console.log('🎵 Using accessible URL:', accessibleURL);
       
       const audio = new Audio();
       
@@ -199,10 +200,11 @@ export default function SongUploader() {
     setCurrentSong(null);
   };
 
-  const analyzeSong = async (song: UploadedSong) => {
+  const analyzeSong = async (song: Song) => {
     try {
       const response = await apiRequest("POST", "/api/songs/analyze", {
-        songURL: song.url,
+        songId: song.id,
+        songURL: song.originalUrl,
         songName: song.name
       });
       const analysis = await response.json();
@@ -291,8 +293,8 @@ This analysis has been saved and can be used with other studio tools for remixin
             </div>
           </ObjectUploader>
 
-          {uploadedSongs.length > 0 && (
-            <Badge variant="secondary">{uploadedSongs.length} songs uploaded</Badge>
+          {songs && songs.length > 0 && (
+            <Badge variant="secondary">{songs.length} song{songs.length > 1 ? 's' : ''} uploaded</Badge>
           )}
 
           {isPlaying && currentSong && (
@@ -308,7 +310,14 @@ This analysis has been saved and can be used with other studio tools for remixin
       </div>
 
       <div className="flex-1 p-6 overflow-y-auto">
-        {uploadedSongs.length === 0 ? (
+        {songsLoading ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center">
+              <i className="fas fa-spinner fa-spin text-4xl text-blue-400 mb-4"></i>
+              <p className="text-gray-400">Loading your songs...</p>
+            </div>
+          </div>
+        ) : !songs || songs.length === 0 ? (
           <div className="h-full flex items-center justify-center text-center">
             <div className="max-w-md">
               <i className="fas fa-cloud-upload-alt text-6xl text-gray-600 mb-4"></i>
@@ -330,11 +339,11 @@ This analysis has been saved and can be used with other studio tools for remixin
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Uploaded Songs ({uploadedSongs.length})</h3>
+              <h3 className="text-lg font-semibold">Your Song Library ({songs.length})</h3>
             </div>
 
             <div className="grid gap-4">
-              {uploadedSongs.map((song) => (
+              {songs.map((song) => (
                 <Card key={song.id} className={`border-gray-600 ${currentSong?.id === song.id ? 'ring-2 ring-blue-500' : ''}`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -368,7 +377,7 @@ This analysis has been saved and can be used with other studio tools for remixin
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <span className="text-gray-400">Size:</span>
-                          <div className="font-semibold">{formatFileSize(song.size)}</div>
+                          <div className="font-semibold">{Math.round(song.fileSize / (1024 * 1024) * 10) / 10} MB</div>
                         </div>
                         <div>
                           <span className="text-gray-400">Uploaded:</span>

@@ -282,17 +282,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/songs/upload", async (req, res) => {
     try {
-      const { songURL, name } = req.body;
-      console.log('🎵 Song upload request:', { songURL, name });
+      const { songURL, name, fileSize, duration, format } = req.body;
+      console.log('🎵 Song upload request:', { songURL, name, fileSize, duration, format });
       
-      const song = {
-        id: `song-${Date.now()}`,
+      // Convert the storage URL to accessible URL
+      const objectStorageService = new ObjectStorageService();
+      const accessibleUrl = objectStorageService.normalizeObjectEntityPath(songURL);
+      
+      const song = await storage.createSong(currentUserId, {
         name,
-        url: songURL,
-        size: Math.floor(Math.random() * 10000000), // Mock size
-        uploadDate: new Date().toISOString(),
-        duration: Math.floor(Math.random() * 300) + 60 // Mock duration 1-5 minutes
-      };
+        originalUrl: songURL,
+        accessibleUrl,
+        fileSize: fileSize || 0,
+        duration: duration || null,
+        format: format || null,
+      });
       
       console.log('🎵 Created song record:', song);
       res.json(song);
@@ -304,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/songs/analyze", async (req, res) => {
     try {
-      const { songURL, songName } = req.body;
+      const { songId, songURL, songName } = req.body;
       // Mock analysis result - in real implementation this would analyze the audio file
       const analysis = {
         title: songName,
@@ -324,6 +328,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         instruments: ["drums", "bass", "guitar", "vocals", "synth"],
         analysis_notes: `AI analysis of ${songName}: This song has a ${["driving", "laid-back", "complex", "simple"][Math.floor(Math.random() * 4)]} rhythm with ${["rich", "sparse", "dynamic", "steady"][Math.floor(Math.random() * 4)]} instrumentation.`
       };
+
+      // Save analysis to the song if songId is provided
+      if (songId) {
+        await storage.updateSongAnalysis(songId, {
+          estimatedBPM: analysis.estimatedBPM,
+          keySignature: analysis.keySignature,
+          genre: analysis.genre,
+          mood: analysis.mood,
+          structure: analysis.structure,
+          instruments: analysis.instruments,
+          analysisNotes: analysis.analysis_notes,
+        });
+      }
+
       res.json(analysis);
     } catch (error) {
       console.error("Song analysis error:", error);
@@ -371,6 +389,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(project);
     } catch (error) {
       res.status(500).json({ error: "Failed to update project" });
+    }
+  });
+
+  // Song management routes
+  app.get("/api/songs", async (req, res) => {
+    try {
+      const songs = await storage.getUserSongs(currentUserId);
+      res.json(songs);
+    } catch (error) {
+      console.error("Failed to fetch songs:", error);
+      res.status(500).json({ error: "Failed to fetch songs" });
+    }
+  });
+
+  app.delete("/api/songs/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteSong(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete song:", error);
+      res.status(500).json({ error: "Failed to delete song" });
+    }
+  });
+
+  app.post("/api/songs/:id/play", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.updateSongPlayStats(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to update play stats:", error);
+      res.status(500).json({ error: "Failed to update play stats" });
+    }
+  });
+
+  // Playlist management routes
+  app.get("/api/playlists", async (req, res) => {
+    try {
+      const playlists = await storage.getUserPlaylists(currentUserId);
+      res.json(playlists);
+    } catch (error) {
+      console.error("Failed to fetch playlists:", error);
+      res.status(500).json({ error: "Failed to fetch playlists" });
+    }
+  });
+
+  app.post("/api/playlists", async (req, res) => {
+    try {
+      const data = req.body;
+      const playlist = await storage.createPlaylist(currentUserId, data);
+      res.json(playlist);
+    } catch (error) {
+      console.error("Failed to create playlist:", error);
+      res.status(500).json({ error: "Failed to create playlist" });
+    }
+  });
+
+  app.delete("/api/playlists/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deletePlaylist(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete playlist:", error);
+      res.status(500).json({ error: "Failed to delete playlist" });
+    }
+  });
+
+  app.post("/api/playlists/:playlistId/songs/:songId", async (req, res) => {
+    try {
+      const { playlistId, songId } = req.params;
+      const playlistSong = await storage.addSongToPlaylist(playlistId, songId);
+      res.json(playlistSong);
+    } catch (error) {
+      console.error("Failed to add song to playlist:", error);
+      res.status(500).json({ error: "Failed to add song to playlist" });
+    }
+  });
+
+  app.delete("/api/playlists/:playlistId/songs/:songId", async (req, res) => {
+    try {
+      const { playlistId, songId } = req.params;
+      await storage.removeSongFromPlaylist(playlistId, songId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to remove song from playlist:", error);
+      res.status(500).json({ error: "Failed to remove song from playlist" });
+    }
+  });
+
+  app.get("/api/playlists/:id/songs", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const songs = await storage.getPlaylistSongs(id);
+      res.json(songs);
+    } catch (error) {
+      console.error("Failed to fetch playlist songs:", error);
+      res.status(500).json({ error: "Failed to fetch playlist songs" });
     }
   });
 

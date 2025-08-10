@@ -12,7 +12,12 @@ import {
   type VulnerabilityScan,
   type InsertVulnerabilityScan,
   type Lyrics,
-  type InsertLyrics
+  type InsertLyrics,
+  type Song,
+  type InsertSong,
+  type Playlist,
+  type InsertPlaylist,
+  type PlaylistSong
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -53,6 +58,33 @@ export interface IStorage {
   getLyrics(id: string): Promise<Lyrics | undefined>;
   getUserLyrics(userId: string): Promise<Lyrics[]>;
   createLyrics(userId: string, lyrics: InsertLyrics): Promise<Lyrics>;
+
+  // Songs
+  getSong(id: string): Promise<Song | undefined>;
+  getUserSongs(userId: string): Promise<Song[]>;
+  createSong(userId: string, song: InsertSong): Promise<Song>;
+  updateSong(id: string, data: Partial<Song>): Promise<Song>;
+  deleteSong(id: string): Promise<void>;
+  updateSongPlayStats(id: string): Promise<void>;
+  updateSongAnalysis(id: string, analysis: {
+    estimatedBPM?: number;
+    keySignature?: string;
+    genre?: string;
+    mood?: string;
+    structure?: any;
+    instruments?: string[];
+    analysisNotes?: string;
+  }): Promise<Song>;
+
+  // Playlists
+  getPlaylist(id: string): Promise<Playlist | undefined>;
+  getUserPlaylists(userId: string): Promise<Playlist[]>;
+  createPlaylist(userId: string, playlist: InsertPlaylist): Promise<Playlist>;
+  updatePlaylist(id: string, data: Partial<Playlist>): Promise<Playlist>;
+  deletePlaylist(id: string): Promise<void>;
+  addSongToPlaylist(playlistId: string, songId: string): Promise<PlaylistSong>;
+  removeSongFromPlaylist(playlistId: string, songId: string): Promise<void>;
+  getPlaylistSongs(playlistId: string): Promise<(PlaylistSong & { song: Song })[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -63,6 +95,9 @@ export class MemStorage implements IStorage {
   private melodies: Map<string, Melody>;
   private vulnerabilityScans: Map<string, VulnerabilityScan>;
   private lyrics: Map<string, Lyrics>;
+  private songs: Map<string, Song>;
+  private playlists: Map<string, Playlist>;
+  private playlistSongs: Map<string, PlaylistSong>;
 
   constructor() {
     this.users = new Map();
@@ -72,6 +107,9 @@ export class MemStorage implements IStorage {
     this.melodies = new Map();
     this.vulnerabilityScans = new Map();
     this.lyrics = new Map();
+    this.songs = new Map();
+    this.playlists = new Map();
+    this.playlistSongs = new Map();
 
     // Create default user
     const defaultUser: User = {
@@ -245,6 +283,157 @@ export class MemStorage implements IStorage {
     };
     this.lyrics.set(id, lyrics);
     return lyrics;
+  }
+
+  // Songs
+  async getSong(id: string): Promise<Song | undefined> {
+    return this.songs.get(id);
+  }
+
+  async getUserSongs(userId: string): Promise<Song[]> {
+    return Array.from(this.songs.values()).filter(song => song.userId === userId);
+  }
+
+  async createSong(userId: string, insertSong: InsertSong): Promise<Song> {
+    const id = randomUUID();
+    const song: Song = {
+      ...insertSong,
+      id,
+      userId,
+      uploadDate: new Date(),
+      lastPlayed: null,
+      playCount: 0,
+      estimatedBPM: null,
+      keySignature: null,
+      genre: null,
+      mood: null,
+      structure: null,
+      instruments: null,
+      analysisNotes: null,
+      analyzedAt: null,
+    };
+    this.songs.set(id, song);
+    return song;
+  }
+
+  async updateSong(id: string, data: Partial<Song>): Promise<Song> {
+    const song = this.songs.get(id);
+    if (!song) throw new Error('Song not found');
+    const updated = { ...song, ...data };
+    this.songs.set(id, updated);
+    return updated;
+  }
+
+  async deleteSong(id: string): Promise<void> {
+    this.songs.delete(id);
+  }
+
+  async updateSongPlayStats(id: string): Promise<void> {
+    const song = this.songs.get(id);
+    if (song) {
+      song.lastPlayed = new Date();
+      song.playCount = (song.playCount || 0) + 1;
+      this.songs.set(id, song);
+    }
+  }
+
+  async updateSongAnalysis(id: string, analysis: {
+    estimatedBPM?: number;
+    keySignature?: string;
+    genre?: string;
+    mood?: string;
+    structure?: any;
+    instruments?: string[];
+    analysisNotes?: string;
+  }): Promise<Song> {
+    const song = this.songs.get(id);
+    if (!song) throw new Error('Song not found');
+    const updated = { 
+      ...song, 
+      ...analysis,
+      analyzedAt: new Date()
+    };
+    this.songs.set(id, updated);
+    return updated;
+  }
+
+  // Playlists
+  async getPlaylist(id: string): Promise<Playlist | undefined> {
+    return this.playlists.get(id);
+  }
+
+  async getUserPlaylists(userId: string): Promise<Playlist[]> {
+    return Array.from(this.playlists.values()).filter(playlist => playlist.userId === userId);
+  }
+
+  async createPlaylist(userId: string, insertPlaylist: InsertPlaylist): Promise<Playlist> {
+    const id = randomUUID();
+    const playlist: Playlist = {
+      ...insertPlaylist,
+      id,
+      userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.playlists.set(id, playlist);
+    return playlist;
+  }
+
+  async updatePlaylist(id: string, data: Partial<Playlist>): Promise<Playlist> {
+    const playlist = this.playlists.get(id);
+    if (!playlist) throw new Error('Playlist not found');
+    const updated = { ...playlist, ...data, updatedAt: new Date() };
+    this.playlists.set(id, updated);
+    return updated;
+  }
+
+  async deletePlaylist(id: string): Promise<void> {
+    this.playlists.delete(id);
+    // Remove all playlist songs for this playlist
+    Array.from(this.playlistSongs.values())
+      .filter(ps => ps.playlistId === id)
+      .forEach(ps => this.playlistSongs.delete(ps.id));
+  }
+
+  async addSongToPlaylist(playlistId: string, songId: string): Promise<PlaylistSong> {
+    const id = randomUUID();
+    // Get position as the highest position + 1
+    const existingPlaylistSongs = Array.from(this.playlistSongs.values())
+      .filter(ps => ps.playlistId === playlistId);
+    const position = existingPlaylistSongs.length > 0 
+      ? Math.max(...existingPlaylistSongs.map(ps => ps.position)) + 1 
+      : 1;
+    
+    const playlistSong: PlaylistSong = {
+      id,
+      playlistId,
+      songId,
+      position,
+      addedAt: new Date(),
+    };
+    this.playlistSongs.set(id, playlistSong);
+    return playlistSong;
+  }
+
+  async removeSongFromPlaylist(playlistId: string, songId: string): Promise<void> {
+    const playlistSong = Array.from(this.playlistSongs.values())
+      .find(ps => ps.playlistId === playlistId && ps.songId === songId);
+    if (playlistSong) {
+      this.playlistSongs.delete(playlistSong.id);
+    }
+  }
+
+  async getPlaylistSongs(playlistId: string): Promise<(PlaylistSong & { song: Song })[]> {
+    const playlistSongs = Array.from(this.playlistSongs.values())
+      .filter(ps => ps.playlistId === playlistId)
+      .sort((a, b) => a.position - b.position);
+    
+    return playlistSongs
+      .map(ps => {
+        const song = this.songs.get(ps.songId);
+        return song ? { ...ps, song } : null;
+      })
+      .filter(Boolean) as (PlaylistSong & { song: Song })[];
   }
 }
 
