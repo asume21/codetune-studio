@@ -331,15 +331,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Save analysis to the song if songId is provided
       if (songId) {
-        await storage.updateSongAnalysis(songId, {
-          estimatedBPM: analysis.estimatedBPM,
-          keySignature: analysis.keySignature,
-          genre: analysis.genre,
-          mood: analysis.mood,
-          structure: analysis.structure,
-          instruments: analysis.instruments,
-          analysisNotes: analysis.analysis_notes,
-        });
+        try {
+          await storage.updateSongAnalysis(songId, {
+            estimatedBPM: analysis.estimatedBPM,
+            keySignature: analysis.keySignature,
+            genre: analysis.genre,
+            mood: analysis.mood,
+            structure: analysis.structure,
+            instruments: analysis.instruments,
+            analysisNotes: analysis.analysis_notes,
+            analyzedAt: new Date(),
+          });
+        } catch (error) {
+          console.log(`🎵 Could not save analysis to song ${songId}, but analysis still generated`);
+        }
       }
 
       res.json(analysis);

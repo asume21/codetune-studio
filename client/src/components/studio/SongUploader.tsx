@@ -170,7 +170,27 @@ export default function SongUploader() {
         const onError = (e: Event) => {
           audio.removeEventListener('canplaythrough', onCanPlay);
           audio.removeEventListener('error', onError);
-          reject(e);
+          const error = (e.target as HTMLAudioElement).error;
+          let errorMessage = 'Audio loading failed';
+          
+          if (error) {
+            switch (error.code) {
+              case error.MEDIA_ERR_ABORTED:
+                errorMessage = 'Audio loading aborted';
+                break;
+              case error.MEDIA_ERR_NETWORK:
+                errorMessage = 'Network error while loading audio';
+                break;
+              case error.MEDIA_ERR_DECODE:
+                errorMessage = 'Audio format not supported or corrupted';
+                break;
+              case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                errorMessage = 'Audio format not supported by browser';
+                break;
+            }
+          }
+          
+          reject(new Error(errorMessage));
         };
         
         audio.addEventListener('canplaythrough', onCanPlay);
@@ -188,10 +208,10 @@ export default function SongUploader() {
       });
       
     } catch (error) {
-      console.error('Failed to play song:', error);
+      console.error('Audio playback error:', error instanceof Error ? error.message : 'Unknown error');
       toast({
         title: "Playback Failed",
-        description: `Cannot play ${song.name}. The file may be corrupted or unsupported.`,
+        description: `Cannot play ${song.name}. ${error instanceof Error ? error.message : 'The file may be corrupted or unsupported.'}`,
         variant: "destructive",
       });
       setIsPlaying(false);
