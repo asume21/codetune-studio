@@ -9,4 +9,8 @@ npm install --include=dev
 echo "🔨 Building application..."
 npm run build
 
+# Build the production server
+echo "🔧 Building production server..."
+npx esbuild server/index.prod.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
 echo "✅ Build completed successfully!"
