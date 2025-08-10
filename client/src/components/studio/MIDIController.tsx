@@ -4,6 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 
 export function MIDIController() {
   const { 
@@ -12,10 +17,14 @@ export function MIDIController() {
     connectedDevices, 
     lastNote, 
     activeNotes,
-    initializeMIDI 
+    initializeMIDI,
+    refreshDevices,
+    settings,
+    updateSettings
   } = useMIDI();
   
   const [showDetails, setShowDetails] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   
   if (!isSupported) {
     return (
@@ -64,23 +73,38 @@ export function MIDIController() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Control Buttons */}
+        <div className="flex items-center space-x-2">
+          {!isConnected ? (
+            <Button onClick={initializeMIDI} className="flex-1 bg-studio-accent hover:bg-blue-500">
+              <i className="fas fa-plug mr-2"></i>
+              Connect MIDI
+            </Button>
+          ) : (
+            <Button onClick={refreshDevices} variant="outline" className="flex-1">
+              <i className="fas fa-sync mr-2"></i>
+              Refresh Devices
+            </Button>
+          )}
+          <Button 
+            onClick={() => setShowSettings(!showSettings)} 
+            variant="outline"
+            className="px-3"
+          >
+            <i className="fas fa-cog"></i>
+          </Button>
+        </div>
+
         {/* Connection Status */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-300">Status:</span>
           <div className="flex items-center space-x-2">
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
             <span className="text-sm">
-              {isConnected ? 'Ready for MIDI input' : 'Not connected'}
+              {isConnected ? `Ready (${connectedDevices.length} devices)` : 'Not connected'}
             </span>
           </div>
         </div>
-        
-        {!isConnected && (
-          <Button onClick={initializeMIDI} className="w-full">
-            <i className="fas fa-plug mr-2"></i>
-            Connect MIDI Devices
-          </Button>
-        )}
         
         {/* Connected Devices */}
         {connectedDevices.length > 0 && (
@@ -182,13 +206,196 @@ export function MIDIController() {
           </div>
         )}
         
-        {/* Instructions */}
-        <div className="text-xs text-gray-500 space-y-1">
-          <div>🎹 Connect your MIDI keyboard or pad controller</div>
-          <div>🎵 Play notes to trigger CodedSwitch instruments</div>
-          <div>📻 Use different MIDI channels for different instruments</div>
-          {isConnected && <div>✅ Your controller is ready to play!</div>}
-        </div>
+        {/* MIDI Settings */}
+        {showSettings && (
+          <div className="space-y-4 border-t border-gray-600 pt-4">
+            <h4 className="text-sm font-medium text-gray-300 flex items-center">
+              <i className="fas fa-cog mr-2"></i>
+              MIDI Settings
+            </h4>
+            
+            {/* Input Device Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm text-gray-300">Input Device</Label>
+              <Select value={settings?.inputDevice} onValueChange={(value) => updateSettings({ inputDevice: value })}>
+                <SelectTrigger className="bg-gray-800 border-gray-600">
+                  <SelectValue placeholder="Select MIDI input device" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Connected Devices</SelectItem>
+                  {connectedDevices.filter(d => d.connection === 'input' || d.connection === 'input/output').map((device) => (
+                    <SelectItem key={device.id} value={device.id}>
+                      {device.name} ({device.manufacturer})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Velocity Sensitivity */}
+            <div className="space-y-2">
+              <Label className="text-sm text-gray-300">
+                Velocity Sensitivity: {settings?.velocitySensitivity?.[0] || 100}%
+              </Label>
+              <Slider
+                value={settings?.velocitySensitivity || [100]}
+                onValueChange={(value) => updateSettings({ velocitySensitivity: value })}
+                max={200}
+                min={50}
+                step={10}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>Less sensitive</span>
+                <span>More sensitive</span>
+              </div>
+            </div>
+            
+            {/* Channel Settings */}
+            <div className="space-y-2">
+              <Label className="text-sm text-gray-300">MIDI Channel Mode</Label>
+              <Select value={settings?.channelMode} onValueChange={(value) => updateSettings({ channelMode: value })}>
+                <SelectTrigger className="bg-gray-800 border-gray-600">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="omni">Omni (All Channels)</SelectItem>
+                  <SelectItem value="multi">Multi-Channel Instruments</SelectItem>
+                  <SelectItem value="single">Single Channel</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {settings?.channelMode === 'single' && (
+              <div className="space-y-2">
+                <Label className="text-sm text-gray-300">
+                  Active Channel: {settings?.activeChannel || 1}
+                </Label>
+                <Slider
+                  value={[settings?.activeChannel || 1]}
+                  onValueChange={(value) => updateSettings({ activeChannel: value[0] })}
+                  max={16}
+                  min={1}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+            )}
+            
+            {/* Note Range */}
+            <div className="space-y-2">
+              <Label className="text-sm text-gray-300">Note Range</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs text-gray-400">Lowest Note</Label>
+                  <Slider
+                    value={[settings?.noteRange?.min || 21]}
+                    onValueChange={(value) => updateSettings({ noteRange: { ...settings?.noteRange, min: value[0] } })}
+                    max={127}
+                    min={0}
+                    step={1}
+                    className="w-full"
+                  />
+                  <div className="text-xs text-gray-400 text-center">Note {settings?.noteRange?.min || 21}</div>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-400">Highest Note</Label>
+                  <Slider
+                    value={[settings?.noteRange?.max || 108]}
+                    onValueChange={(value) => updateSettings({ noteRange: { ...settings?.noteRange, max: value[0] } })}
+                    max={127}
+                    min={0}
+                    step={1}
+                    className="w-full"
+                  />
+                  <div className="text-xs text-gray-400 text-center">Note {settings?.noteRange?.max || 108}</div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Advanced Settings */}
+            <Separator className="bg-gray-600" />
+            
+            <div className="space-y-3">
+              <Label className="text-sm text-gray-300">Advanced Options</Label>
+              
+              <div className="flex items-center justify-between">
+                <Label className="text-sm text-gray-400">Enable Sustain Pedal</Label>
+                <Switch
+                  checked={settings?.sustainPedal !== false}
+                  onCheckedChange={(checked) => updateSettings({ sustainPedal: checked })}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <Label className="text-sm text-gray-400">Enable Pitch Bend</Label>
+                <Switch
+                  checked={settings?.pitchBend !== false}
+                  onCheckedChange={(checked) => updateSettings({ pitchBend: checked })}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <Label className="text-sm text-gray-400">Enable Modulation</Label>
+                <Switch
+                  checked={settings?.modulation !== false}
+                  onCheckedChange={(checked) => updateSettings({ modulation: checked })}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <Label className="text-sm text-gray-400">Auto-connect New Devices</Label>
+                <Switch
+                  checked={settings?.autoConnect !== false}
+                  onCheckedChange={(checked) => updateSettings({ autoConnect: checked })}
+                />
+              </div>
+            </div>
+            
+            {/* Reset Settings */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => updateSettings({})}
+              className="w-full text-xs"
+            >
+              <i className="fas fa-undo mr-2"></i>
+              Reset to Default Settings
+            </Button>
+          </div>
+        )}
+        
+        {/* No devices found message */}
+        {isConnected && connectedDevices.length === 0 && (
+          <div className="text-center py-4 text-gray-500">
+            <i className="fas fa-search text-2xl mb-2"></i>
+            <p className="text-sm mb-2">No MIDI devices detected</p>
+            <p className="text-xs mb-3">
+              Make sure your MIDI controller is connected and powered on
+            </p>
+            <Button size="sm" variant="outline" onClick={refreshDevices}>
+              <i className="fas fa-sync mr-2"></i>
+              Scan for Devices
+            </Button>
+          </div>
+        )}
+        
+        {/* Help Section */}
+        {showDetails && (
+          <div className="border-t border-gray-600 pt-4">
+            <h4 className="text-sm font-medium text-gray-300 mb-2">
+              <i className="fas fa-question-circle mr-2"></i>
+              Troubleshooting
+            </h4>
+            <div className="space-y-2 text-xs text-gray-400">
+              <div>• Ensure your MIDI device is connected via USB or MIDI cable</div>
+              <div>• Check that your device is powered on and recognized by your system</div>
+              <div>• Try refreshing devices if your controller doesn't appear</div>
+              <div>• Some devices may require specific drivers or software</div>
+              <div>• Web MIDI works best in Chrome, Edge, or Opera browsers</div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

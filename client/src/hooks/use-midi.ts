@@ -15,6 +15,18 @@ interface MIDINote {
   channel: number;
 }
 
+interface MIDISettings {
+  inputDevice?: string;
+  velocitySensitivity?: number[];
+  channelMode?: string;
+  activeChannel?: number;
+  noteRange?: { min: number; max: number };
+  sustainPedal?: boolean;
+  pitchBend?: boolean;
+  modulation?: boolean;
+  autoConnect?: boolean;
+}
+
 export function useMIDI() {
   const [midiAccess, setMidiAccess] = useState<any | null>(null);
   const [connectedDevices, setConnectedDevices] = useState<MIDIDevice[]>([]);
@@ -22,8 +34,31 @@ export function useMIDI() {
   const [isConnected, setIsConnected] = useState(false);
   const [lastNote, setLastNote] = useState<MIDINote | null>(null);
   const [activeNotes, setActiveNotes] = useState<Set<number>>(new Set());
+  const [settings, setSettings] = useState<MIDISettings>({
+    inputDevice: 'all',
+    velocitySensitivity: [100],
+    channelMode: 'multi',
+    activeChannel: 1,
+    noteRange: { min: 21, max: 108 },
+    sustainPedal: true,
+    pitchBend: true,
+    modulation: true,
+    autoConnect: true
+  });
   
   const { playNote } = useAudio();
+  
+  // Update settings
+  const updateSettings = useCallback((newSettings: Partial<MIDISettings>) => {
+    setSettings(prev => ({ ...prev, ...newSettings }));
+  }, []);
+  
+  // Refresh devices
+  const refreshDevices = useCallback(() => {
+    if (midiAccess) {
+      updateDeviceList(midiAccess);
+    }
+  }, [midiAccess]);
   
   // MIDI note number to note name conversion
   const noteNumberToName = useCallback((noteNumber: number) => {
@@ -193,6 +228,8 @@ export function useMIDI() {
     lastNote,
     activeNotes,
     initializeMIDI,
-    getMIDIChannelInstrument
+    refreshDevices,
+    settings,
+    updateSettings
   };
 }
