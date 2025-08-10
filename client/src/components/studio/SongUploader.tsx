@@ -73,25 +73,106 @@ export default function SongUploader() {
     }
   };
 
-  const playSong = (song: UploadedSong) => {
+  const playSong = async (song: UploadedSong) => {
     if (audioElement) {
       audioElement.pause();
+      audioElement.src = '';
     }
 
-    const audio = new Audio(song.url);
-    audio.addEventListener('loadedmetadata', () => {
-      console.log(`Song duration: ${audio.duration}s`);
-    });
-    
-    audio.addEventListener('ended', () => {
+    try {
+      // Convert object storage URL to accessible endpoint
+      const accessibleURL = song.url.replace(/^https:\/\/storage\.googleapis\.com\/[^\/]+\//, '/objects/');
+      
+      const audio = new Audio();
+      
+      // Add comprehensive error handling
+      audio.addEventListener('error', (e) => {
+        console.error('Audio playback error:', e);
+        const error = (e.target as HTMLAudioElement).error;
+        let errorMessage = 'Unknown error occurred';
+        
+        if (error) {
+          switch (error.code) {
+            case error.MEDIA_ERR_ABORTED:
+              errorMessage = 'Audio playback aborted';
+              break;
+            case error.MEDIA_ERR_NETWORK:
+              errorMessage = 'Network error while loading audio';
+              break;
+            case error.MEDIA_ERR_DECODE:
+              errorMessage = 'Audio format not supported or corrupted';
+              break;
+            case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+              errorMessage = 'Audio format not supported by browser';
+              break;
+          }
+        }
+        
+        toast({
+          title: "Playback Error",
+          description: `Cannot play ${song.name}: ${errorMessage}`,
+          variant: "destructive",
+        });
+        
+        setIsPlaying(false);
+        setCurrentSong(null);
+      });
+
+      audio.addEventListener('loadedmetadata', () => {
+        console.log(`🎵 Song loaded: ${song.name}, duration: ${audio.duration}s`);
+      });
+      
+      audio.addEventListener('ended', () => {
+        setIsPlaying(false);
+        setCurrentSong(null);
+      });
+
+      audio.addEventListener('canplaythrough', () => {
+        console.log(`🎵 Song ready to play: ${song.name}`);
+      });
+
+      // Set source and load
+      audio.src = accessibleURL;
+      audio.load();
+      
+      // Wait for audio to be ready before playing
+      await new Promise((resolve, reject) => {
+        const onCanPlay = () => {
+          audio.removeEventListener('canplaythrough', onCanPlay);
+          audio.removeEventListener('error', onError);
+          resolve(void 0);
+        };
+        
+        const onError = (e: Event) => {
+          audio.removeEventListener('canplaythrough', onCanPlay);
+          audio.removeEventListener('error', onError);
+          reject(e);
+        };
+        
+        audio.addEventListener('canplaythrough', onCanPlay);
+        audio.addEventListener('error', onError);
+      });
+
+      await audio.play();
+      setAudioElement(audio);
+      setCurrentSong(song);
+      setIsPlaying(true);
+      
+      toast({
+        title: "Now Playing",
+        description: `Playing ${song.name}`,
+      });
+      
+    } catch (error) {
+      console.error('Failed to play song:', error);
+      toast({
+        title: "Playback Failed",
+        description: `Cannot play ${song.name}. The file may be corrupted or unsupported.`,
+        variant: "destructive",
+      });
       setIsPlaying(false);
       setCurrentSong(null);
-    });
-
-    audio.play();
-    setAudioElement(audio);
-    setCurrentSong(song);
-    setIsPlaying(true);
+    }
   };
 
   const stopSong = () => {

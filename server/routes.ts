@@ -247,6 +247,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Object serving route for audio files
+  app.get("/objects/:objectPath(*)", async (req, res) => {
+    try {
+      const { ObjectStorageService, ObjectNotFoundError } = await import("./objectStorage.js");
+      const objectStorageService = new ObjectStorageService();
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error: any) {
+      console.error("Error serving object:", error);
+      if (error.name === "ObjectNotFoundError") {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
+
   // Song upload and analysis routes
   app.post("/api/objects/upload", async (req, res) => {
     try {
@@ -360,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Use xAI Grok to analyze lyrics and generate matching music
-      const musicData = await generateBeatFromLyrics(lyrics, genre, mood, title);
+      const musicData = await generateBeatFromLyrics(lyrics, genre);
       
       res.json({
         beatPattern: musicData.beatPattern,
