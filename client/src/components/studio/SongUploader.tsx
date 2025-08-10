@@ -23,6 +23,8 @@ export default function SongUploader() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [uploadContext, setUploadContext] = useState<UploadContext>({});
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   const { toast } = useToast();
   const studioContext = useContext(StudioAudioContext);
@@ -146,11 +148,17 @@ export default function SongUploader() {
 
       audio.addEventListener('loadedmetadata', () => {
         console.log(`🎵 Song loaded: ${song.name}, duration: ${audio.duration}s`);
+        setDuration(audio.duration);
+      });
+      
+      audio.addEventListener('timeupdate', () => {
+        setCurrentTime(audio.currentTime);
       });
       
       audio.addEventListener('ended', () => {
         setIsPlaying(false);
         setCurrentSong(null);
+        setCurrentTime(0);
       });
 
       audio.addEventListener('canplaythrough', () => {
@@ -228,6 +236,30 @@ export default function SongUploader() {
     }
     setIsPlaying(false);
     setCurrentSong(null);
+    setCurrentTime(0);
+  };
+
+  const pauseSong = () => {
+    if (audioElement && isPlaying) {
+      audioElement.pause();
+      setIsPlaying(false);
+    } else if (audioElement && !isPlaying) {
+      audioElement.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const seekTo = (time: number) => {
+    if (audioElement) {
+      audioElement.currentTime = time;
+      setCurrentTime(time);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const analyzeSong = async (song: Song) => {
@@ -324,13 +356,58 @@ This analysis has been saved and can be used with other studio tools for remixin
           )}
 
           {isPlaying && currentSong && (
-            <Button
-              onClick={stopSong}
-              className="bg-red-600 hover:bg-red-500"
-            >
-              <i className="fas fa-stop mr-2"></i>
-              Stop {currentSong.name}
-            </Button>
+            <div className="space-y-3">
+              {/* Visual Timeline */}
+              <div className="bg-gray-800 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-300">Now Playing: {currentSong.name}</span>
+                  <span className="text-sm text-gray-400">
+                    {formatTime(currentTime)} / {formatTime(duration)}
+                  </span>
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="w-full bg-gray-700 rounded-full h-2 mb-3">
+                  <div 
+                    className="bg-blue-500 h-2 rounded-full transition-all duration-100"
+                    style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                  ></div>
+                </div>
+                
+                {/* Seek Bar */}
+                <input
+                  type="range"
+                  min={0}
+                  max={duration || 0}
+                  value={currentTime}
+                  onChange={(e) => seekTo(parseFloat(e.target.value))}
+                  className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                  style={{
+                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${duration > 0 ? (currentTime / duration) * 100 : 0}%, #374151 ${duration > 0 ? (currentTime / duration) * 100 : 0}%, #374151 100%)`
+                  }}
+                />
+                
+                {/* Control Buttons */}
+                <div className="flex items-center justify-center space-x-3 mt-3">
+                  <Button
+                    onClick={pauseSong}
+                    className="bg-blue-600 hover:bg-blue-500"
+                    size="sm"
+                  >
+                    <i className={`fas ${isPlaying ? 'fa-pause' : 'fa-play'} mr-2`}></i>
+                    {isPlaying ? 'Pause' : 'Resume'}
+                  </Button>
+                  <Button
+                    onClick={stopSong}
+                    className="bg-red-600 hover:bg-red-500"
+                    size="sm"
+                  >
+                    <i className="fas fa-stop mr-2"></i>
+                    Stop
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -381,11 +458,11 @@ This analysis has been saved and can be used with other studio tools for remixin
                         <Button
                           size="sm"
                           onClick={() => playSong(song)}
-                          disabled={isPlaying && currentSong?.id === song.id}
+                          disabled={currentSong?.id === song.id}
                           className="bg-green-600 hover:bg-green-500"
                         >
-                          <i className={`fas ${isPlaying && currentSong?.id === song.id ? 'fa-pause' : 'fa-play'} mr-1`}></i>
-                          {isPlaying && currentSong?.id === song.id ? 'Playing' : 'Play'}
+                          <i className="fas fa-play mr-1"></i>
+                          {currentSong?.id === song.id ? 'Selected' : 'Play'}
                         </Button>
                         <Button
                           size="sm"
