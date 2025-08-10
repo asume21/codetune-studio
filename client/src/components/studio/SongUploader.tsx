@@ -36,8 +36,8 @@ export default function SongUploader() {
       const response = await apiRequest("POST", "/api/songs/upload", {
         songURL,
         name: uploadContext.name || `Uploaded Song ${Date.now()}`,
-        fileSize: uploadContext.fileSize,
-        format: uploadContext.format,
+        fileSize: uploadContext.fileSize || 0,
+        format: uploadContext.format || 'unknown',
       });
       return response.json();
     },
@@ -73,16 +73,24 @@ export default function SongUploader() {
       const uploadedFile = result.successful[0];
       const songURL = uploadedFile.uploadURL;
       
-      // Extract file info from the uploaded file
-      setUploadContext({
+      console.log('🎵 Upload URL received:', songURL);
+      console.log('🎵 File details:', {
+        name: uploadedFile.name,
+        size: uploadedFile.size,
+        type: uploadedFile.type
+      });
+      
+      // Create context with file information
+      const fileInfo = {
         name: uploadedFile.name || `Uploaded Song ${Date.now()}`,
         fileSize: uploadedFile.size || 0,
         format: uploadedFile.name?.split('.').pop()?.toLowerCase() || 'unknown',
-      });
+      };
       
-      console.log('🎵 Upload URL received:', songURL);
+      setUploadContext(fileInfo);
       
       if (songURL) {
+        // Include file info directly in the mutation call
         uploadSongMutation.mutate(songURL);
       }
     }
@@ -264,8 +272,8 @@ This analysis has been saved and can be used with other studio tools for remixin
     return Math.round(bytes / (1024 * 1024)) + ' MB';
   };
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString();
+  const formatDate = (date: Date | string): string => {
+    return new Date(date).toLocaleDateString();
   };
 
   return (
@@ -381,7 +389,7 @@ This analysis has been saved and can be used with other studio tools for remixin
                         </div>
                         <div>
                           <span className="text-gray-400">Uploaded:</span>
-                          <div className="font-semibold">{formatDate(song.uploadDate)}</div>
+                          <div className="font-semibold">{song.uploadDate ? formatDate(song.uploadDate) : 'Unknown'}</div>
                         </div>
                         <div>
                           <span className="text-gray-400">Duration:</span>

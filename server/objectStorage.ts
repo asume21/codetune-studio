@@ -116,6 +116,36 @@ export class ObjectStorageService {
     return objectFile;
   }
 
+  // Gets the upload URL for an object entity (alias for getAudioUploadURL)
+  async getObjectEntityUploadURL(): Promise<string> {
+    return this.getAudioUploadURL();
+  }
+
+  // Normalizes object entity path from storage URL to accessible endpoint URL
+  normalizeObjectEntityPath(rawPath: string): string {
+    if (!rawPath.startsWith("https://storage.googleapis.com/")) {
+      return rawPath;
+    }
+
+    // Extract the path from the URL by removing query parameters and domain
+    const url = new URL(rawPath);
+    const rawObjectPath = url.pathname;
+
+    // Get the private object directory (e.g., /bucket-name/.private)
+    let objectEntityDir = this.getPrivateObjectDir();
+    if (!objectEntityDir.endsWith("/")) {
+      objectEntityDir = `${objectEntityDir}/`;
+    }
+
+    if (!rawObjectPath.startsWith(objectEntityDir)) {
+      return rawObjectPath;
+    }
+
+    // Extract the entity ID from the path
+    const entityId = rawObjectPath.slice(objectEntityDir.length);
+    return `/objects/${entityId}`;
+  }
+
   // Downloads an object to the response.
   async downloadObject(file: File, res: Response, cacheTtlSec: number = 3600) {
     try {

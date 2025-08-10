@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { ObjectStorageService } from "./objectStorage";
 import { 
   translateCode, 
   generateBeatPattern, 
@@ -270,9 +271,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Song upload and analysis routes
   app.post("/api/objects/upload", async (req, res) => {
     try {
-      const { ObjectStorageService } = await import("./objectStorage.js");
       const objectStorageService = new ObjectStorageService();
-      const uploadURL = await objectStorageService.getAudioUploadURL();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
       res.json({ uploadURL });
     } catch (error) {
       console.error("Upload URL generation error:", error);
