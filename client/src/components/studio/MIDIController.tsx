@@ -82,7 +82,7 @@ export function MIDIController() {
           </h3>
           <div className="text-sm text-green-200 space-y-1">
             <p><strong>1. Play Notes:</strong> Your controller is already playing piano - try pressing keys!</p>
-            <p><strong>2. Change Instrument:</strong> Use the settings gear icon below to switch instruments</p>
+            <p><strong>2. Change Instrument:</strong> Click the gear ⚙️ button below, then use "Current Instrument" dropdown</p>
             <p><strong>3. Record Melodies:</strong> Go to "Melody Composer" tab to record your playing</p>
             <p><strong>4. Control Beats:</strong> Use "Beat Maker" tab - some controllers can trigger drums</p>
             <p><strong>5. Live Performance:</strong> All tabs work with your controller for real-time control</p>
@@ -266,6 +266,28 @@ export function MIDIController() {
               </div>
             </div>
             
+            {/* Current Instrument */}
+            <div className="space-y-2 bg-blue-900/20 border border-blue-600 rounded-lg p-3">
+              <Label className="text-sm text-blue-300 font-semibold">🎹 Current Instrument</Label>
+              <Select value={settings?.currentInstrument || 'piano'} onValueChange={(value) => updateSettings({ currentInstrument: value })}>
+                <SelectTrigger className="bg-gray-800 border-gray-600">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="piano">🎹 Piano</SelectItem>
+                  <SelectItem value="guitar">🎸 Guitar</SelectItem>
+                  <SelectItem value="violin">🎻 Violin</SelectItem>
+                  <SelectItem value="flute">🎵 Flute</SelectItem>
+                  <SelectItem value="trumpet">🎺 Trumpet</SelectItem>
+                  <SelectItem value="bass">🎸 Bass</SelectItem>
+                  <SelectItem value="organ">🎹 Organ</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="text-xs text-blue-200">
+                This changes the instrument sound for your MIDI controller
+              </div>
+            </div>
+
             {/* Channel Settings */}
             <div className="space-y-2">
               <Label className="text-sm text-gray-300">MIDI Channel Mode</Label>

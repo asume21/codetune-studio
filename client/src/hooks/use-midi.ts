@@ -25,6 +25,7 @@ interface MIDISettings {
   pitchBend?: boolean;
   modulation?: boolean;
   autoConnect?: boolean;
+  currentInstrument?: string;
 }
 
 export function useMIDI() {
@@ -43,7 +44,8 @@ export function useMIDI() {
     sustainPedal: true,
     pitchBend: true,
     modulation: true,
-    autoConnect: true
+    autoConnect: true,
+    currentInstrument: 'piano'
   });
   
   const { playNote } = useAudio();
@@ -63,20 +65,19 @@ export function useMIDI() {
 
   // Map MIDI channels to instruments
   const getMIDIChannelInstrument = useCallback((channel: number): string => {
-    const channelMap: { [key: number]: string } = {
-      0: 'piano-keyboard',
-      1: 'strings-guitar',
-      2: 'bass-electric',
-      3: 'strings-violin',
-      4: 'flute-concert',
-      5: 'horns-trumpet',
-      6: 'piano-organ',
-      7: 'synth-analog',
-      9: 'kick',
+    // Use the selected instrument from settings
+    const instrumentMap: { [key: string]: string } = {
+      'piano': 'piano-keyboard',
+      'guitar': 'strings-guitar',
+      'bass': 'bass-electric',
+      'violin': 'strings-violin',
+      'flute': 'flute-concert',
+      'trumpet': 'horns-trumpet',
+      'organ': 'piano-organ'
     };
     
-    return channelMap[channel] || 'piano-keyboard';
-  }, []);
+    return instrumentMap[settings.currentInstrument || 'piano'] || 'piano-keyboard';
+  }, [settings.currentInstrument]);
 
   // Handle note on events
   const handleNoteOn = useCallback((midiNote: number, velocity: number, channel: number) => {
