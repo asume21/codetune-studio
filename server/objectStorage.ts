@@ -87,15 +87,16 @@ export class ObjectStorageService {
     const privateDir = this.getPrivateObjectDir(); // e.g., /bucket-name/.private
     console.log(`🎵 Private object dir: ${privateDir}`);
     
-    // The relativePath already contains .private/audio/uuid, but privateDir is /bucket/.private
-    // So we need to extract just the part after .private/
+    // The relativePath is .private/audio/uuid but privateDir is /bucket/.private
+    // We need to construct: /bucket/.private/audio/uuid
+    // So we should remove the .private/ prefix from relativePath and use privateDir
     let finalObjectPath;
     if (relativePath.startsWith('.private/')) {
-      // Remove .private/ from the beginning and append to privateDir
-      const pathAfterPrivate = relativePath.substring('.private/'.length);
-      finalObjectPath = `${privateDir}/${pathAfterPrivate}`;
+      // Extract everything after .private/ and append to privateDir
+      const pathAfterPrivate = relativePath.substring('.private/'.length); // gets "audio/uuid"  
+      finalObjectPath = `${privateDir}/${pathAfterPrivate}`; // becomes "/bucket/.private/audio/uuid"
     } else {
-      // Fallback to original logic
+      // If no .private prefix, just append to privateDir
       finalObjectPath = `${privateDir}/${relativePath}`;
     }
     console.log(`🎵 Final object path: ${finalObjectPath}`);

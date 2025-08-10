@@ -1,0 +1,187 @@
+Failed to play song: 
+Event {isTrusted: true}
+isTrusted: true
+get isTrusted: ƒ get isTrusted()
+length: 0
+name: "get isTrusted"
+[[Prototype]]: ƒ ()
+apply: ƒ apply()
+arguments: "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"
+get arguments: ƒ get arguments()
+set arguments: ƒ set arguments()
+bind: ƒ bind()
+call: ƒ call()
+caller: "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"
+get caller: ƒ get caller()
+set caller: ƒ set caller()
+constructor: ƒ Function()
+length: 0
+name: "get isTrusted"
+toString: ƒ toString()
+length: 0
+name: "toString"
+[[Prototype]]: ƒ ()
+apply: ƒ apply()
+length: 2
+name: "apply"
+[[Prototype]]: ƒ ()
+arguments: "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"
+get arguments: ƒ get arguments()
+length: 0
+name: "get arguments"
+[[Prototype]]: ƒ ()
+set arguments: ƒ set arguments()
+length: 1
+name: "set arguments"
+[[Prototype]]: ƒ ()
+bind: ƒ bind()
+length: 1
+name: "bind"
+[[Prototype]]: ƒ ()
+call: ƒ call()
+length: 1
+name: "call"
+[[Prototype]]: ƒ ()
+caller: "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"
+get caller: ƒ get caller()
+set caller: ƒ set caller()
+constructor: ƒ Function()
+length: 0
+name: "get isTrusted"
+toString: ƒ toString()
+length: 0
+name: "toString"
+[[Prototype]]: ƒ ()
+Symbol(Symbol.hasInstance): undefined
+[[Prototype]]: Object
+constructor: ƒ Function()
+length: 1
+name: "Function"
+prototype: ƒ ()
+apply: ƒ apply()
+arguments: "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"
+get arguments: ƒ get arguments()
+set arguments: ƒ set arguments()
+bind: ƒ bind()
+call: ƒ call()
+caller: "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"
+get caller: ƒ get caller()
+set caller: ƒ set caller()
+constructor: ƒ Function()
+length: 0
+name: "get isTrusted"
+toString: ƒ toString()
+Symbol(Symbol.hasInstance): undefined
+[[Prototype]]: Object
+[[Prototype]]: ƒ ()
+hasOwnProperty: ƒ hasOwnProperty()
+isPrototypeOf: ƒ isPrototypeOf()
+propertyIsEnumerable: ƒ propertyIsEnumerable()
+toLocaleString: ƒ toLocaleString()
+length: 0
+name: "toLocaleString"
+[[Prototype]]: ƒ ()
+toString: ƒ toString()
+length: 0
+name: "toString"
+[[Prototype]]: ƒ ()
+valueOf: ƒ valueOf()
+length: 0
+name: "valueOf"
+[[Prototype]]: ƒ ()
+__defineGetter__: ƒ __defineGetter__()
+length: 2
+name: "__defineGetter__"
+[[Prototype]]: ƒ ()
+__defineSetter__: ƒ __defineSetter__()
+length: 2
+name: "__defineSetter__"
+[[Prototype]]: ƒ ()
+__lookupGetter__: ƒ __lookupGetter__()
+length: 1
+name: "__lookupGetter__"
+[[Prototype]]: ƒ ()
+__lookupSetter__: ƒ __lookupSetter__()
+length: 1
+name: "__lookupSetter__"
+[[Prototype]]: ƒ ()
+__proto__: ƒ ()
+apply: ƒ apply()
+arguments: "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"
+get arguments: ƒ get arguments()
+set arguments: ƒ set arguments()
+bind: ƒ bind()
+call: ƒ call()
+caller: "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"
+get caller: ƒ get caller()
+set caller: ƒ set caller()
+constructor: ƒ Function()
+length: 0
+name: "get isTrusted"
+toString: ƒ toString()
+Symbol(Symbol.hasInstance): undefined
+[[Prototype]]: Object
+get __proto__: ƒ get __proto__()
+length: 0
+name: "get __proto__"
+[[Prototype]]: ƒ ()
+set __proto__: ƒ set __proto__()
+length: 1
+name: "set __proto__"
+[[Prototype]]: ƒ ()
+Symbol(Symbol.hasInstance): undefined
+[[Prototype]]: Object
+constructor: ƒ Function()
+hasOwnProperty: ƒ hasOwnProperty()
+isPrototypeOf: ƒ isPrototypeOf()
+propertyIsEnumerable: ƒ propertyIsEnumerable()
+toLocaleString: ƒ toLocaleString()
+toString: ƒ toString()
+valueOf: ƒ valueOf()
+__defineGetter__: ƒ __defineGetter__()
+__defineSetter__: ƒ __defineSetter__()
+__lookupGetter__: ƒ __lookupGetter__()
+__lookupSetter__: ƒ __lookupSetter__()
+__proto__: ƒ ()
+get __proto__: ƒ get __proto__()
+set __proto__: ƒ set __proto__()
+[[Prototype]]: Event
+AT_TARGET: 2
+BUBBLING_PHASE: 3
+CAPTURING_PHASE: 1
+NONE: 0
+bubbles: false
+get bubbles: ƒ get bubbles()
+cancelBubble: false
+get cancelBubble: ƒ get cancelBubble()
+set cancelBubble: ƒ set cancelBubble()
+cancelable: true
+get cancelable: ƒ get cancelable()
+composed: false
+get composed: ƒ get composed()
+composedPath: ƒ composedPath()
+currentTarget: null
+get currentTarget: ƒ get currentTarget()
+defaultPrevented: false
+get defaultPrevented: ƒ get defaultPrevented()
+eventPhase: 0
+get eventPhase: ƒ get eventPhase()
+initEvent: ƒ initEvent()
+preventDefault: ƒ preventDefault()
+returnValue: true
+get returnValue: ƒ get returnValue()
+set returnValue: ƒ set returnValue()
+srcElement: null
+get srcElement: ƒ get srcElement()
+stopImmediatePropagation: ƒ stopImmediatePropagation()
+stopPropagation: ƒ stopPropagation()
+target: null
+get target: ƒ get target()
+timeStamp: 372403.2999999523
+get timeStamp: ƒ get timeStamp()
+type: "error"
+get type: ƒ get type()
+constructor: ƒ Event()
+Symbol(Symbol.toStringTag): undefined
+[[Prototype]]: Object
+
