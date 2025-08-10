@@ -34,6 +34,13 @@ CodedSwitch is a revolutionary AI-powered web application that embodies the trip
 
 Preferred communication style: Simple, everyday language.
 
+**CRITICAL: NO UNAUTHORIZED FILE CHANGES**
+- User explicitly prohibits making changes to files without clear permission
+- Do not create temporary scripts that modify the GitHub repository
+- Do not alter package.json, vite configs, or server files unless specifically requested
+- Focus on helping with deployment issues without changing existing working code
+- User's local development environment works perfectly - preserve it
+
 # System Architecture
 
 ## Frontend Architecture
