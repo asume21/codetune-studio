@@ -150,14 +150,7 @@ export default function MelodyComposer() {
   const [isMelodyPlaying, setIsMelodyPlaying] = useState(false);
   const { playMelody, stopMelody } = useMelodyPlayer();
 
-  // Define functions used in keyboard shortcuts
-  const handlePlayMelody = () => {
-    handlePlay();
-  };
 
-  const generateMelody = () => {
-    handleGenerateAI();
-  };
 
   // Keyboard shortcuts effect
   useEffect(() => {
