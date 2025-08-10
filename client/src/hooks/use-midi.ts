@@ -56,9 +56,13 @@ export function useMIDI() {
   // Refresh devices
   const refreshDevices = useCallback(() => {
     if (midiAccess) {
+      console.log('🎹 Refreshing MIDI devices...');
       updateDeviceList(midiAccess);
+    } else {
+      console.log('🎹 MIDI not initialized. Attempting to initialize...');
+      initializeMIDI();
     }
-  }, [midiAccess]);
+  }, [midiAccess, updateDeviceList, initializeMIDI]);
   
   // MIDI note number to note name conversion
   const noteNumberToName = useCallback((noteNumber: number) => {
@@ -82,10 +86,12 @@ export function useMIDI() {
       setMidiAccess(access);
       setIsConnected(true);
       
-      console.log('MIDI access granted');
+      console.log('🎹 MIDI access granted');
+      console.log('🎹 Available MIDI inputs:', access.inputs.size);
+      console.log('🎹 Available MIDI outputs:', access.outputs.size);
       
       // Listen for device connections/disconnections
-      access.onstatechange = (event) => {
+      access.onstatechange = (event: any) => {
         console.log('MIDI device state changed:', event);
         updateDeviceList(access);
       };
@@ -97,7 +103,7 @@ export function useMIDI() {
       console.error('Failed to initialize MIDI:', error);
       setIsSupported(false);
     }
-  }, []);
+  }, [updateDeviceList, setupMIDIInputs]);
   
   // Update connected devices list
   const updateDeviceList = useCallback((access: any) => {
@@ -126,7 +132,17 @@ export function useMIDI() {
     }
     
     setConnectedDevices(devices);
-    console.log('Connected MIDI devices:', devices);
+    console.log('🎹 Connected MIDI devices:', devices);
+    if (devices.length === 0) {
+      console.log('🎹 No MIDI devices found. Make sure your controller is:');
+      console.log('   - Connected via USB or MIDI cable');
+      console.log('   - Powered on and recognized by your system');
+      console.log('   - Compatible with Web MIDI API');
+    } else {
+      devices.forEach(device => {
+        console.log(`🎹 Found device: ${device.name} (${device.manufacturer}) - ${device.state}`);
+      });
+    }
   }, []);
   
   // Setup MIDI input listeners
@@ -135,7 +151,7 @@ export function useMIDI() {
       input.onmidimessage = handleMIDIMessage;
       console.log(`Listening to MIDI input: ${input.name}`);
     }
-  }, []);
+  }, [handleMIDIMessage]);
   
   // Handle MIDI messages
   const handleMIDIMessage = useCallback((message: any) => {
@@ -163,25 +179,24 @@ export function useMIDI() {
     else if (messageType === 0xC0) {
       console.log(`MIDI Program Change: Channel ${channel + 1}, Program ${note}`);
     }
-  }, [playNote]);
+  }, [handleNoteOn, handleNoteOff]);
   
   // Handle note on events
   const handleNoteOn = useCallback((midiNote: number, velocity: number, channel: number) => {
     const { note, octave } = noteNumberToName(midiNote);
     const normalizedVelocity = velocity / 127; // Convert 0-127 to 0-1
     
-    setActiveNotes(prev => new Set([...prev, midiNote]));
+    setActiveNotes(prev => new Set(Array.from(prev).concat(midiNote)));
     setLastNote({ note: midiNote, velocity, channel });
     
-    console.log(`MIDI Note On: ${note}${octave} (${midiNote}) vel:${velocity} ch:${channel + 1}`);
+    console.log(`🎹 MIDI Note On: ${note}${octave} (${midiNote}) vel:${velocity} ch:${channel + 1}`);
     
     // Play the note with current instrument
-    // You can customize this based on MIDI channel or other factors
     const instrument = getMIDIChannelInstrument(channel);
     const duration = 2.0; // Sustained note duration
     
     playNote(note, octave, duration, instrument, normalizedVelocity, true);
-  }, [noteNumberToName, playNote]);
+  }, [noteNumberToName, playNote, getMIDIChannelInstrument]);
   
   // Handle note off events
   const handleNoteOff = useCallback((midiNote: number, channel: number) => {
