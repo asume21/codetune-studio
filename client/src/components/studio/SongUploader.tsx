@@ -72,17 +72,13 @@ export default function SongUploader() {
   };
 
   const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    console.log('🎵 Upload completed:', result);
+
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
       const songURL = uploadedFile.uploadURL;
       
-      console.log('🎵 Upload URL received:', songURL);
-      console.log('🎵 File details:', {
-        name: uploadedFile.name,
-        size: uploadedFile.size,
-        type: uploadedFile.type
-      });
+
+      // File details: name, size, type available
       
       // Create context with file information
       const fileInfo = {

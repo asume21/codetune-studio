@@ -165,7 +165,7 @@ export default function Mixer() {
     setIsLinked(!isLinked);
     if (!isLinked) {
       // When linking, the mixer will receive audio from active studio components
-      console.log("Mixer linked to studio - will receive audio from BeatMaker, MelodyComposer, etc.");
+
     }
   };
 

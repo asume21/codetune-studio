@@ -31,7 +31,7 @@ export default function AIAssistant() {
   useEffect(() => {
     if (aiMessages.length > 0) {
       const latestAIMessage = aiMessages[aiMessages.length - 1];
-      console.log('🎵 Received AI message from context:', latestAIMessage.id, latestAIMessage.source);
+
       
       setMessages(prev => {
         const exists = prev.some(msg => msg.id === latestAIMessage.id);
@@ -42,7 +42,7 @@ export default function AIAssistant() {
             content: latestAIMessage.content,
             timestamp: latestAIMessage.timestamp,
           };
-          console.log('🎵 Adding context message to AI Assistant, current count:', prev.length);
+
           return [...prev, newMessage];
         }
         return prev;
@@ -160,7 +160,7 @@ This is a test message using the new React Context system for cross-component co
             <ScrollArea className="flex-1 bg-studio-panel border border-gray-600 rounded-lg p-4 mb-4">
               <div className="space-y-4">
                 {messages.map((message) => {
-                  console.log('🎵 Rendering message:', message.id, message.type, message.content.substring(0, 50));
+
                   return (
                   <div key={message.id} className={`flex space-x-3 ${message.type === "user" ? "justify-end" : ""}`}>
                     {message.type === "ai" && (

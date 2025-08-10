@@ -143,8 +143,8 @@ export default function MusicMixer() {
     const stepDuration = (60 / bpm / 4) * 1000; // 16th note duration
     let step = 0;
     
-    console.log('🎵 Starting mixed composition playback');
-    console.log('🎵 Enabled tracks:', enabledTracks.map(t => t.name));
+
+
     
     intervalRef.current = setInterval(() => {
       setCurrentStep(step % 16);
@@ -219,11 +219,7 @@ export default function MusicMixer() {
     });
     
     // This would integrate with a proper audio export system
-    console.log('🎵 Exporting mixed composition:', {
-      tracks: enabledTracks,
-      bpm,
-      masterVolume: masterVolume[0]
-    });
+    // Export mixed composition with tracks, bpm, and master volume
     
     setTimeout(() => {
       toast({
