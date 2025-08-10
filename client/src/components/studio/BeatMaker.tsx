@@ -267,26 +267,54 @@ export default function BeatMaker() {
       return;
     }
 
+    console.log("🥁 Starting beat playback...");
+    console.log("🔧 Audio initialized:", isInitialized);
+    console.log("🎵 Pattern:", pattern);
+    console.log("🎯 BPM:", bpm);
+
     // Ensure audio is initialized
     if (!isInitialized) {
-      await initialize();
+      console.log("⚡ Initializing audio...");
+      try {
+        await initialize();
+        console.log("✅ Audio initialization complete");
+      } catch (error) {
+        console.error("❌ Audio initialization failed:", error);
+        toast({
+          title: "Audio Error",
+          description: "Failed to initialize audio. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setIsPlaying(true);
     setCurrentStep(0);
 
     const stepDuration = (60 / bpm / 4) * 1000; // 16th notes in milliseconds
+    console.log("⏱️ Step duration:", stepDuration, "ms");
 
     intervalRef.current = setInterval(() => {
       setCurrentStep(prev => {
         const step = prev % 16;
+        console.log(`🎼 Playing step ${step + 1}/16`);
 
+        // Check if pattern has any active steps
+        let hasActiveSteps = false;
+        
         // Play sounds for active steps
         Object.entries(pattern).forEach(([track, steps]) => {
           if (steps && steps[step]) {
+            hasActiveSteps = true;
+            console.log(`🥁 Playing ${track} on step ${step + 1}`);
             playDrumSound(track);
           }
         });
+
+        if (!hasActiveSteps && step === 0) {
+          console.log("⚠️ No active steps found in pattern. Click squares to add drum hits!");
+        }
 
         return prev + 1;
       });
@@ -426,6 +454,29 @@ export default function BeatMaker() {
             <Button onClick={clearPattern} variant="destructive">
               <i className="fas fa-trash mr-2"></i>
               Clear
+            </Button>
+            <Button 
+              onClick={() => {
+                // Add a simple test pattern
+                setPattern({
+                  kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
+                  snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+                  hihat: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+                  bass: Array(16).fill(false),
+                  tom: Array(16).fill(false),
+                  openhat: Array(16).fill(false),
+                  clap: Array(16).fill(false),
+                  crash: Array(16).fill(false),
+                });
+                toast({
+                  title: "Test Pattern Loaded",
+                  description: "Basic kick, snare, and hi-hat pattern loaded. Click Play to test!",
+                });
+              }}
+              className="bg-green-600 hover:bg-green-500"
+            >
+              <i className="fas fa-music mr-2"></i>
+              Test Pattern
             </Button>
           </div>
         </div>
