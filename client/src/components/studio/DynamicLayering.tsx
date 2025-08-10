@@ -317,11 +317,11 @@ export default function DynamicLayering() {
                         </div>
                       </div>
 
-                      {layer.effects.length > 0 && (
+                      {(Array.isArray(layer.effects) ? layer.effects.length > 0 : layer.effects) && (
                         <div>
                           <span className="text-gray-400 text-sm">Effects:</span>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {layer.effects.map((effect, effectIndex) => (
+                            {(Array.isArray(layer.effects) ? layer.effects : layer.effects ? [layer.effects] : []).map((effect, effectIndex) => (
                               <Badge key={effectIndex} variant="secondary" className="text-xs">
                                 {effect}
                               </Badge>
