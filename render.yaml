@@ -2,7 +2,7 @@ services:
   - type: web
     name: codetune-studio
     runtime: node
-    buildCommand: npm install --include=dev && npm run build && npx esbuild server/index.prod.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+    buildCommand: bash build.sh
     startCommand: node start-production.js
     envVars:
       - key: NODE_ENV
