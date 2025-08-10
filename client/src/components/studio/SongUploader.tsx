@@ -63,9 +63,11 @@ export default function SongUploader() {
   };
 
   const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    console.log('🎵 Upload completed:', result);
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
       const songURL = uploadedFile.uploadURL;
+      console.log('🎵 Upload URL received:', songURL);
       
       if (songURL) {
         uploadSongMutation.mutate(songURL);
@@ -81,7 +83,9 @@ export default function SongUploader() {
 
     try {
       // Convert object storage URL to accessible endpoint
+      console.log('🎵 Original song URL:', song.url);
       const accessibleURL = song.url.replace(/^https:\/\/storage\.googleapis\.com\/[^\/]+\//, '/objects/');
+      console.log('🎵 Converted accessible URL:', accessibleURL);
       
       const audio = new Audio();
       

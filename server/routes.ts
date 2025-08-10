@@ -249,16 +249,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Object serving route for audio files
   app.get("/objects/:objectPath(*)", async (req, res) => {
+    console.log(`🎵 Attempting to serve object: ${req.path}`);
     try {
       const { ObjectStorageService, ObjectNotFoundError } = await import("./objectStorage.js");
       const objectStorageService = new ObjectStorageService();
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
-      objectStorageService.downloadObject(objectFile, res);
+      console.log(`🎵 Found object file: ${objectFile.name}`);
+      await objectStorageService.downloadObject(objectFile, res);
     } catch (error: any) {
       console.error("Error serving object:", error);
       if (error.name === "ObjectNotFoundError") {
+        console.log(`🎵 Object not found: ${req.path}`);
         return res.sendStatus(404);
       }
+      console.error(`🎵 Server error for object: ${req.path}`, error);
       return res.sendStatus(500);
     }
   });
@@ -279,6 +283,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/songs/upload", async (req, res) => {
     try {
       const { songURL, name } = req.body;
+      console.log('🎵 Song upload request:', { songURL, name });
+      
       const song = {
         id: `song-${Date.now()}`,
         name,
@@ -287,6 +293,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         uploadDate: new Date().toISOString(),
         duration: Math.floor(Math.random() * 300) + 60 // Mock duration 1-5 minutes
       };
+      
+      console.log('🎵 Created song record:', song);
       res.json(song);
     } catch (error) {
       console.error("Song upload error:", error);
