@@ -49,8 +49,8 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Production static file serving
-  const distPath = path.resolve(import.meta.dirname, "public");
+  // Production static file serving - look in dist/client
+  const distPath = path.resolve(process.cwd(), "dist", "client");
   
   if (!fs.existsSync(distPath)) {
     throw new Error(
