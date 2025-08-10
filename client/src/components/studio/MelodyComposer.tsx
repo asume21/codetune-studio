@@ -150,6 +150,15 @@ export default function MelodyComposer() {
   const [isMelodyPlaying, setIsMelodyPlaying] = useState(false);
   const { playMelody, stopMelody } = useMelodyPlayer();
 
+  // Define functions used in keyboard shortcuts
+  const handlePlayMelody = () => {
+    handlePlay();
+  };
+
+  const generateMelody = () => {
+    handleGenerateAI();
+  };
+
   // Keyboard shortcuts effect
   useEffect(() => {
     if (!keyboardShortcutsEnabled) return;
@@ -193,7 +202,7 @@ export default function MelodyComposer() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [keyboardShortcutsEnabled, isMelodyPlaying, handlePlayMelody, handleSave, clearAllNotes, generateMelody, stopMelody]);
+  }, [keyboardShortcutsEnabled, isMelodyPlaying, stopMelody]);
 
   // Get appropriate note duration based on instrument type
   const getInstrumentDuration = (instrument: string = 'piano'): number => {
@@ -635,6 +644,12 @@ export default function MelodyComposer() {
     ));
   };
 
+  const updateTrackVolume = (trackId: string, volume: number) => {
+    setTracks(prev => prev.map(track => 
+      track.id === trackId ? { ...track, volume } : track
+    ));
+  };
+
   const pianoKeys = [
     { note: "C", type: "white", color: "bg-white" },
     { note: "C#", type: "black", color: "bg-gray-800" },
@@ -1048,6 +1063,22 @@ export default function MelodyComposer() {
                     ))}
                   </SelectContent>
                 </Select>
+
+                {/* Track Volume Control */}
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs text-gray-400">Volume</Label>
+                    <span className="text-xs text-gray-300">{track.volume}%</span>
+                  </div>
+                  <Slider
+                    value={[track.volume]}
+                    onValueChange={(value) => updateTrackVolume(track.id, value[0])}
+                    min={0}
+                    max={100}
+                    step={1}
+                    className="w-full h-2"
+                  />
+                </div>
 
                 <button
                   onClick={() => setSelectedTrack(track.id)}
