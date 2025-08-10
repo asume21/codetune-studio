@@ -2,8 +2,8 @@ services:
   - type: web
     name: codetune-studio
     runtime: node
-    buildCommand: bash build.sh
-    startCommand: node start-production.js
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
