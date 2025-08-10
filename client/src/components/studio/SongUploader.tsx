@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { StudioAudioContext } from "@/pages/studio";
+import { useAIMessages } from "@/contexts/AIMessageContext";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import type { UploadResult } from "@uppy/core";
 import type { Song } from "@shared/schema";
@@ -25,6 +26,7 @@ export default function SongUploader() {
 
   const { toast } = useToast();
   const studioContext = useContext(StudioAudioContext);
+  const { addMessage } = useAIMessages();
 
   const { data: songs, isLoading: songsLoading } = useQuery<Song[]>({
     queryKey: ['/api/songs'],
@@ -269,13 +271,9 @@ ${analysis.analysis_notes}
 
 This analysis has been saved and can be used with other studio tools for remixing, layering, and composition inspiration!`;
 
-      // Add message to AI Assistant using custom event
-      if (typeof window !== 'undefined') {
-        console.log('🎵 Dispatching AI message event with analysis:', analysisMessage.substring(0, 100) + '...');
-        window.dispatchEvent(new CustomEvent('addAIMessage', { 
-          detail: { content: analysisMessage } 
-        }));
-      }
+      // Add message to AI Assistant using context
+      console.log('🎵 Sending analysis to AI Assistant via context:', analysisMessage.substring(0, 100) + '...');
+      addMessage(analysisMessage, 'song-analysis');
 
     } catch (error) {
       toast({

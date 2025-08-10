@@ -6,6 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/hooks/use-audio";
+import { useAIMessages } from "@/contexts/AIMessageContext";
 
 interface Message {
   id: string;
@@ -24,33 +25,30 @@ export default function AIAssistant() {
     },
   ]);
 
-  // Listen for external messages (like from song analysis)
-  useEffect(() => {
-    const handleAddMessage = (event: CustomEvent) => {
-      console.log('🎵 AI Assistant received message event:', event.detail);
-      const aiMessage: Message = {
-        id: `analysis-${Date.now()}`,
-        type: "ai",
-        content: event.detail.content,
-        timestamp: new Date(),
-      };
-      setMessages(prev => {
-        console.log('🎵 Adding analysis message to AI Assistant, current count:', prev.length);
-        console.log('🎵 Message content preview:', event.detail.content.substring(0, 100));
-        const newMessages = [...prev, aiMessage];
-        console.log('🎵 New message count:', newMessages.length);
-        console.log('🎵 Last message ID:', aiMessage.id);
-        return newMessages;
-      });
-    };
+  const { messages: aiMessages, addMessage } = useAIMessages();
 
-    console.log('🎵 AI Assistant event listener registered');
-    window.addEventListener('addAIMessage', handleAddMessage as EventListener);
-    return () => {
-      console.log('🎵 AI Assistant event listener removed');
-      window.removeEventListener('addAIMessage', handleAddMessage as EventListener);
-    };
-  }, [setMessages]);
+  // Add AI messages from context to local messages
+  useEffect(() => {
+    if (aiMessages.length > 0) {
+      const latestAIMessage = aiMessages[aiMessages.length - 1];
+      console.log('🎵 Received AI message from context:', latestAIMessage.id, latestAIMessage.source);
+      
+      setMessages(prev => {
+        const exists = prev.some(msg => msg.id === latestAIMessage.id);
+        if (!exists) {
+          const newMessage: Message = {
+            id: latestAIMessage.id,
+            type: "ai",
+            content: latestAIMessage.content,
+            timestamp: latestAIMessage.timestamp,
+          };
+          console.log('🎵 Adding context message to AI Assistant, current count:', prev.length);
+          return [...prev, newMessage];
+        }
+        return prev;
+      });
+    }
+  }, [aiMessages]);
   const [inputMessage, setInputMessage] = useState("");
 
   const { toast } = useToast();
@@ -132,27 +130,24 @@ export default function AIAssistant() {
             </Button>
             <Button
               onClick={() => {
-                // Test the analysis message system
-                const testMessage = `📊 **Test Analysis: Direct Button Test**
+                // Test the analysis message system using context
+                const testMessage = `📊 **Test Analysis: Context System Test**
 
 🎵 **Musical Properties:**
-• BPM: 128
-• Key: C Major
-• Genre: Electronic
+• BPM: 140
+• Key: D Minor
+• Genre: Hip-Hop
 • Mood: Energetic
 
-This is a test message to verify the AI Assistant message system is working!`;
+This is a test message using the new React Context system for cross-component communication!`;
                 
-                window.dispatchEvent(new CustomEvent('addAIMessage', { 
-                  detail: { content: testMessage } 
-                }));
-                
-                toast({ title: "Test Message Sent", description: "Check if analysis appears above!" });
+                addMessage(testMessage, 'test-button');
+                toast({ title: "Test Message Sent", description: "Message sent via React Context!" });
               }}
               className="bg-studio-success hover:bg-green-500"
             >
               <i className="fas fa-flask mr-2"></i>
-              Test AI
+              Test Context
             </Button>
           </div>
         </div>

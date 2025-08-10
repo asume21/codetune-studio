@@ -16,6 +16,7 @@ import SongUploader from "@/components/studio/SongUploader";
 import { MIDIController } from "@/components/studio/MIDIController";
 import { PerformanceMetrics } from "@/components/studio/PerformanceMetrics";
 import { useAudio } from "@/hooks/use-audio";
+import { AIMessageProvider } from "@/contexts/AIMessageContext";
 
 // Global studio audio context for master playback
 export const StudioAudioContext = createContext({
@@ -166,24 +167,26 @@ export default function Studio() {
   };
 
   return (
-    <StudioAudioContext.Provider value={studioAudioValue}>
-      <div className="h-screen flex flex-col bg-studio-bg text-white">
-        <Header />
+    <AIMessageProvider>
+      <StudioAudioContext.Provider value={studioAudioValue}>
+        <div className="h-screen flex flex-col bg-studio-bg text-white">
+          <Header />
         
-        <div className="flex-1 flex overflow-hidden">
-          <Sidebar activeTab={activeTab} onTabChange={(tab: string) => setActiveTab(tab as Tab)} />
-          
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-auto">
-              <div className="min-w-max p-6">
-                {renderTabContent()}
-              </div>
-            </div>
+          <div className="flex-1 flex overflow-hidden">
+            <Sidebar activeTab={activeTab} onTabChange={(tab: string) => setActiveTab(tab as Tab)} />
             
-            <TransportControls currentTool={getActiveToolName(activeTab)} activeTab={activeTab} />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-1 overflow-auto">
+                <div className="min-w-max p-6">
+                  {renderTabContent()}
+                </div>
+              </div>
+              
+              <TransportControls currentTool={getActiveToolName(activeTab)} activeTab={activeTab} />
+            </div>
           </div>
         </div>
-      </div>
-    </StudioAudioContext.Provider>
+      </StudioAudioContext.Provider>
+    </AIMessageProvider>
   );
 }
