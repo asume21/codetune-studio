@@ -295,29 +295,32 @@ export default function BeatMaker() {
     const stepDuration = (60 / bpm / 4) * 1000; // 16th notes in milliseconds
     console.log("⏱️ Step duration:", stepDuration, "ms");
 
+    let stepCounter = 0;
+    
     intervalRef.current = setInterval(() => {
-      setCurrentStep(prev => {
-        const step = prev % 16;
-        console.log(`🎼 Playing step ${step + 1}/16`);
+      const step = stepCounter % 16;
+      console.log(`🎼 Playing step ${step + 1}/16`);
+      
+      // Update the visual step indicator
+      setCurrentStep(stepCounter);
 
-        // Check if pattern has any active steps
-        let hasActiveSteps = false;
-        
-        // Play sounds for active steps
-        Object.entries(pattern).forEach(([track, steps]) => {
-          if (steps && steps[step]) {
-            hasActiveSteps = true;
-            console.log(`🥁 Playing ${track} on step ${step + 1}`);
-            playDrumSound(track);
-          }
-        });
-
-        if (!hasActiveSteps && step === 0) {
-          console.log("⚠️ No active steps found in pattern. Click squares to add drum hits!");
+      // Check if pattern has any active steps
+      let hasActiveSteps = false;
+      
+      // Play sounds for active steps
+      Object.entries(pattern).forEach(([track, steps]) => {
+        if (steps && steps[step]) {
+          hasActiveSteps = true;
+          console.log(`🥁 Playing ${track} on step ${step + 1}`);
+          playDrumSound(track);
         }
-
-        return prev + 1;
       });
+
+      if (!hasActiveSteps && step === 0) {
+        console.log("⚠️ No active steps found in pattern. Click squares to add drum hits!");
+      }
+
+      stepCounter++;
     }, stepDuration);
   };
 
