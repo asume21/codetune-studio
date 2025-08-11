@@ -367,12 +367,37 @@ export default function MusicToCode() {
                 <div className="mt-4 p-4 bg-muted rounded-lg">
                   <div className="flex items-center gap-4">
                     <Button 
+                      variant="outline"
+                      onClick={async () => {
+                        console.log("Testing basic audio...");
+                        
+                        if (!isInitialized) {
+                          await initialize();
+                        }
+                        
+                        // Test basic note
+                        playNote('C', 4, 1.0, 'piano', 0.8);
+                        playDrumSound('kick', 0.8);
+                        
+                        toast({ title: "Audio Test", description: "Playing test note and kick drum" });
+                      }}
+                    >
+                      <Volume2 className="h-4 w-4 mr-2" />
+                      Test Audio
+                    </Button>
+                    <Button 
                       onClick={async () => {
                         if (!musicAnalysis) return;
                         
                         // Initialize audio if needed
                         if (!isInitialized) {
-                          await initialize();
+                          try {
+                            await initialize();
+                            toast({ title: "Audio System Ready", description: "Initializing professional audio engine..." });
+                          } catch (error) {
+                            toast({ title: "Audio Error", description: "Failed to initialize audio. Please check browser permissions.", variant: "destructive" });
+                            return;
+                          }
                         }
                         
                         // Generate sophisticated musical composition
@@ -430,18 +455,29 @@ export default function MusicToCode() {
                               const delay = currentDelay + (i * noteDuration);
                               
                               setTimeout(() => {
-                                if (musicAnalysis.instruments.includes('piano')) {
-                                  playNote(note, 4, noteDuration / 1000, 'piano', 0.7);
-                                }
-                                
-                                if (musicAnalysis.instruments.includes('strings')) {
-                                  setTimeout(() => {
-                                    playNote(note, 5, noteDuration / 1000 * 1.5, 'strings', 0.5);
-                                  }, 100);
-                                }
-                                
-                                if (musicAnalysis.instruments.includes('bass')) {
-                                  playNote(note, 2, noteDuration / 1000 * 2, 'bass', 0.8);
+                                try {
+                                  console.log(`Playing ${note} with instruments: ${musicAnalysis.instruments.join(', ')}`);
+                                  
+                                  if (musicAnalysis.instruments.includes('piano')) {
+                                    playNote(note, 4, noteDuration / 1000, 'piano', 0.7);
+                                  }
+                                  
+                                  if (musicAnalysis.instruments.includes('strings')) {
+                                    setTimeout(() => {
+                                      playNote(note, 5, noteDuration / 1000 * 1.5, 'strings', 0.5);
+                                    }, 100);
+                                  }
+                                  
+                                  if (musicAnalysis.instruments.includes('bass')) {
+                                    playNote(note, 2, noteDuration / 1000 * 2, 'bass', 0.8);
+                                  }
+                                  
+                                  // Fallback - always play piano if no specific instruments
+                                  if (!musicAnalysis.instruments.includes('piano') && !musicAnalysis.instruments.includes('strings') && !musicAnalysis.instruments.includes('bass')) {
+                                    playNote(note, 4, noteDuration / 1000, 'piano', 0.7);
+                                  }
+                                } catch (error) {
+                                  console.error('Error playing note:', error);
                                 }
                               }, delay);
                             }
@@ -455,14 +491,19 @@ export default function MusicToCode() {
                             
                             for (let beat = 0; beat < 16; beat++) {
                               setTimeout(() => {
-                                if (beat % 4 === 0) {
-                                  playDrumSound('kick', 0.8);
-                                }
-                                if (beat % 4 === 2) {
-                                  playDrumSound('snare', 0.7);
-                                }
-                                if (beat % 2 === 1) {
-                                  playDrumSound('hihat', 0.4);
+                                try {
+                                  console.log(`Playing drum beat ${beat}`);
+                                  if (beat % 4 === 0) {
+                                    playDrumSound('kick', 0.8);
+                                  }
+                                  if (beat % 4 === 2) {
+                                    playDrumSound('snare', 0.7);
+                                  }
+                                  if (beat % 2 === 1) {
+                                    playDrumSound('hihat', 0.4);
+                                  }
+                                } catch (error) {
+                                  console.error('Error playing drum:', error);
                                 }
                               }, beat * drumInterval);
                             }
