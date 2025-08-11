@@ -95,7 +95,18 @@ export default function MusicToCode() {
     },
     onSuccess: (data) => {
       setMusicAnalysis(data.originalAnalysis);
-      setGeneratedCode(data.regeneratedCode);
+      // Ensure we're setting the correct structure for generatedCode
+      if (typeof data.regeneratedCode === 'object' && data.regeneratedCode !== null) {
+        setGeneratedCode(data.regeneratedCode);
+      } else {
+        setGeneratedCode({
+          language: 'javascript',
+          code: String(data.regeneratedCode || ''),
+          description: 'Generated from circular translation',
+          framework: 'Unknown',
+          functionality: []
+        });
+      }
       toast({
         title: "Circular Translation Test Complete!",
         description: `Match accuracy: ${data.accuracy}%`,
@@ -535,7 +546,7 @@ export default function MusicToCode() {
               <CardHeader>
                 <CardTitle>Generated Code</CardTitle>
                 <CardDescription>
-                  {generatedCode?.framework || 'Unknown Framework'} - {generatedCode?.description || 'Generated code'}
+                  {String(generatedCode?.framework || 'Unknown Framework')} - {String(generatedCode?.description || 'Generated code')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -547,9 +558,12 @@ export default function MusicToCode() {
                 <div className="mt-4 space-y-3">
                   <div className="text-sm font-medium">Functionality:</div>
                   <ul className="text-sm text-muted-foreground list-disc pl-4">
-                    {generatedCode.functionality?.map((func, index) => (
-                      <li key={index}>{func}</li>
-                    )) || <li>No functionality data available</li>}
+                    {Array.isArray(generatedCode.functionality) 
+                      ? generatedCode.functionality.map((func, index) => (
+                          <li key={index}>{String(func)}</li>
+                        ))
+                      : <li>No functionality data available</li>
+                    }
                   </ul>
                   
                   {/* Code Testing Section */}
