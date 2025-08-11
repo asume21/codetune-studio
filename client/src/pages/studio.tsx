@@ -28,6 +28,9 @@ export const StudioAudioContext = createContext({
   currentLayers: [] as any[],
   isPlaying: false,
   bpm: 120,
+  playMode: 'current' as 'current' | 'all',
+  setPlayMode: (mode: 'current' | 'all') => {},
+  activeTab: 'beatmaker' as string,
   setCurrentPattern: (pattern: any) => {},
   setCurrentMelody: (melody: any[]) => {},
   setCurrentLyrics: (lyrics: string) => {},
@@ -50,6 +53,7 @@ export default function Studio() {
   const [currentLayers, setCurrentLayers] = useState<any[]>([]);
   const [isStudioPlaying, setIsStudioPlaying] = useState(false);
   const [studioBpm, setStudioBpm] = useState(120);
+  const [playMode, setPlayMode] = useState<'current' | 'all'>('current'); // New play mode state
   
   const { initialize, isInitialized } = useAudio();
 
@@ -70,6 +74,34 @@ export default function Studio() {
     if (!isInitialized) {
       await initialize();
     }
+    
+    console.log(`🎵 Playing current tool only: ${activeTab}`);
+    
+    // Play only the content from the current active tab
+    switch (activeTab) {
+      case "beatmaker":
+        console.log("🎵 Playing beat pattern only:", currentPattern);
+        // Beat pattern will be handled by the transport controls via sequencer
+        break;
+      case "melody":
+        console.log("🎵 Playing melody only:", currentMelody);
+        // Melody playback - would trigger melody composer's play function
+        if (window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('playCurrentMelody'));
+        }
+        break;
+      case "codebeat":
+        console.log("🎵 Playing code-to-music only:", currentCodeMusic);
+        break;
+      case "lyrics":
+        console.log("🎵 Playing lyrics only:", currentLyrics);
+        // Could trigger text-to-speech or backing track
+        break;
+      default:
+        console.log("🎵 Playing default audio for:", activeTab);
+        break;
+    }
+    
     setIsStudioPlaying(true);
   };
 
@@ -102,14 +134,28 @@ export default function Studio() {
       await initialize();
     }
     
-    console.log("Playing full song with:");
-    console.log("- Pattern:", currentPattern);
+    console.log("🎵 Playing ALL tools combined:");
+    console.log("- Beat Pattern:", currentPattern);
     console.log("- Melody:", currentMelody);
     console.log("- Lyrics:", currentLyrics);
     console.log("- Code Music:", currentCodeMusic);
+    console.log("- Layers:", currentLayers);
+    
+    // Trigger all tools to play simultaneously
+    if (window.dispatchEvent) {
+      window.dispatchEvent(new CustomEvent('playAllTools', {
+        detail: {
+          pattern: currentPattern,
+          melody: currentMelody,
+          lyrics: currentLyrics,
+          codeMusic: currentCodeMusic,
+          layers: currentLayers,
+          bpm: studioBpm
+        }
+      }));
+    }
     
     setIsStudioPlaying(true);
-    // TODO: Implement combined playback logic
   };
 
   const stopFullSong = () => {
@@ -124,6 +170,9 @@ export default function Studio() {
     currentLayers,
     isPlaying: isStudioPlaying,
     bpm: studioBpm,
+    playMode,
+    setPlayMode,
+    activeTab,
     setCurrentPattern,
     setCurrentMelody,
     setCurrentLyrics,

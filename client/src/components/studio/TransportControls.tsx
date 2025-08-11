@@ -1,5 +1,6 @@
 import { useState, useContext } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useAudio, useSequencer } from "@/hooks/use-audio";
 import { StudioAudioContext } from "@/pages/studio";
 
@@ -33,10 +34,17 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
       studioContext.stopFullSong();
       setIsPlaying(false);
     } else {
-      // Master playback - combine all content
-      await studioContext.playFullSong();
+      if (studioContext.playMode === 'all') {
+        // Play all tools combined
+        console.log("🎵 Playing ALL tools combined");
+        await studioContext.playFullSong();
+      } else {
+        // Play only current tool
+        console.log(`🎵 Playing current tool only: ${activeTab}`);
+        await studioContext.playCurrentAudio();
+      }
       
-      // Use the current pattern from studio context or default
+      // Use the current pattern from studio context or default for beat accompaniment
       const currentPattern = studioContext.currentPattern || {
         kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
         snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
@@ -80,11 +88,27 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
 
   return (
     <div className="bg-studio-panel border-t border-gray-700 px-6 py-4">
+      {/* Play Mode Toggle */}
+      <div className="mb-3 flex items-center justify-center gap-4 p-2 bg-gray-800 rounded-lg">
+        <span className="text-xs font-medium text-gray-300">
+          {studioContext.playMode === 'current' ? 'Current Tool Only' : 'All Tools Combined'}
+        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400">Current</span>
+          <Switch
+            checked={studioContext.playMode === 'all'}
+            onCheckedChange={(checked) => studioContext.setPlayMode(checked ? 'all' : 'current')}
+            className="data-[state=checked]:bg-studio-accent"
+          />
+          <span className="text-xs text-gray-400">All</span>
+        </div>
+      </div>
+
       {/* Master Playback Status */}
       <div className="mb-2 text-xs text-gray-400 text-center">
-        <strong>Master Playback:</strong> {isPlaying ? "Playing Full Song" : "Ready to play combined content"} | 
-        <strong> Current Tool:</strong> {currentTool} | 
-        <strong> Note:</strong> This plays ALL your content together (beats + melodies + lyrics)
+        <strong>Mode:</strong> {studioContext.playMode === 'current' ? `Playing ${currentTool} only` : "Playing ALL tools combined"} | 
+        <strong> Status:</strong> {isPlaying ? "Playing" : "Ready"} | 
+        <strong> Tool:</strong> {currentTool}
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
