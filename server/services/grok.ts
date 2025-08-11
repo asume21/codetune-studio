@@ -795,12 +795,12 @@ Code Generation Rules:
 
 Generate functional, executable code that reflects the musical composition's structure and characteristics.`;
 
-    const response = await grok.chat.completions.create({
+    const response = await openai.chat.completions.create({
       messages: [
         { role: "system", content: "You are an expert at translating musical compositions into functional code. Create working, executable code that reflects the structure and patterns of the input music." },
         { role: "user", content: prompt }
       ],
-      model: "grok-beta",
+      model: "grok-2-1212",
       temperature: 0.7
     });
 
@@ -837,7 +837,10 @@ Generate functional, executable code that reflects the musical composition's str
 // Calculate similarity between two code strings
 export function calculateCodeSimilarity(code1: string, code2: string): number {
   // Simple similarity calculation - in production would use more sophisticated algorithms
-  const normalize = (str: string) => str.replace(/\s+/g, ' ').trim().toLowerCase();
+  const normalize = (str: string) => {
+    if (typeof str !== 'string') return '';
+    return str.replace(/\s+/g, ' ').trim().toLowerCase();
+  };
   const norm1 = normalize(code1);
   const norm2 = normalize(code2);
   
