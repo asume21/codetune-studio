@@ -42,6 +42,7 @@ export default function MusicToCode() {
   const [useCurrentComposition, setUseCurrentComposition] = useState(false);
 
   const { toast } = useToast();
+  const { playNote, playDrumSound, initialize, isInitialized } = useAudio();
   const studioContext = useContext(StudioAudioContext);
 
   const analyzeMutation = useMutation({
@@ -369,16 +370,12 @@ export default function MusicToCode() {
                       onClick={async () => {
                         if (!musicAnalysis) return;
                         
-                        // Use the full studio audio system - melody composer, beat maker, and mixers
-                        const studioContext = useContext(StudioAudioContext);
-                        
-                        if (!studioContext) {
-                          toast({ title: "Audio System Error", description: "Studio audio context not available", variant: "destructive" });
-                          return;
+                        // Initialize audio if needed
+                        if (!isInitialized) {
+                          await initialize();
                         }
                         
-                        // Generate sophisticated melody from music analysis
-                        const melody = [];
+                        // Generate sophisticated musical composition
                         const structureMap: Record<string, string[]> = {
                           'Intro': ['C', 'E', 'G', 'E'],
                           'Verse': ['C', 'G', 'Am', 'F', 'C', 'G'],
@@ -387,25 +384,29 @@ export default function MusicToCode() {
                           'Outro': ['F', 'C', 'G', 'C']
                         };
                         
-                        // Create melody from structure
-                        for (const section of musicAnalysis.structure) {
-                          const pattern = structureMap[section] || ['C', 'E', 'G', 'C'];
-                          
-                          for (const note of pattern) {
-                            melody.push({
-                              note: note + '4',
-                              duration: 60 / musicAnalysis.tempo,
-                              instrument: musicAnalysis.instruments[0] || 'piano'
-                            });
-                          }
-                        }
+                        let currentDelay = 0;
+                        const noteDuration = (60 / musicAnalysis.tempo) * 1000; // Convert to milliseconds
                         
-                        // Generate beat pattern based on complexity and mood
-                        const generateBeatPattern = () => {
+                        // Use studio context if available for full integration
+                        if (studioContext) {
+                          // Generate melody for studio system
+                          const melody = [];
+                          for (const section of musicAnalysis.structure) {
+                            const pattern = structureMap[section] || ['C', 'E', 'G', 'C'];
+                            for (const note of pattern) {
+                              melody.push({
+                                note: note + '4',
+                                duration: 60 / musicAnalysis.tempo,
+                                instrument: musicAnalysis.instruments[0] || 'piano'
+                              });
+                            }
+                          }
+                          
+                          // Generate beat pattern
                           const isComplex = musicAnalysis.complexity >= 6;
                           const isAlgorithmic = musicAnalysis.mood === 'algorithmic';
                           
-                          return {
+                          const beatPattern = {
                             kick: isComplex ? 
                               [true, false, false, true, false, false, true, false, true, false, false, true, false, false, true, false] :
                               [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
@@ -413,20 +414,60 @@ export default function MusicToCode() {
                             hihat: isAlgorithmic ? 
                               [true, true, false, true, true, true, false, true, true, true, false, true, true, true, false, true] :
                               [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
-                            bass: [true, false, true, false, false, false, true, false, true, false, true, false, false, false, true, false],
-                            tom: isComplex ? [false, false, true, false, false, false, false, false, false, false, true, false, false, false, false, false] : Array(16).fill(false),
-                            openhat: [false, false, false, false, false, false, true, false, false, false, false, false, false, false, true, false],
-                            clap: isComplex ? [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false] : Array(16).fill(false),
-                            crash: [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
+                            bass: [true, false, true, false, false, false, true, false, true, false, true, false, false, false, true, false]
                           };
-                        };
-                        
-                        // Set up the studio for playback
-                        studioContext.setCurrentMelody(melody);
-                        studioContext.setCurrentPattern(generateBeatPattern());
-                        
-                        // Play the full composition using studio's integrated systems
-                        await studioContext.playFullSong();
+                          
+                          studioContext.setCurrentMelody(melody);
+                          studioContext.setCurrentPattern(beatPattern);
+                          await studioContext.playFullSong();
+                        } else {
+                          // Fallback to direct audio engine
+                          for (const section of musicAnalysis.structure) {
+                            const pattern = structureMap[section] || ['C', 'E', 'G', 'C'];
+                            
+                            for (let i = 0; i < pattern.length; i++) {
+                              const note = pattern[i];
+                              const delay = currentDelay + (i * noteDuration);
+                              
+                              setTimeout(() => {
+                                if (musicAnalysis.instruments.includes('piano')) {
+                                  playNote(note, 4, noteDuration / 1000, 'piano', 0.7);
+                                }
+                                
+                                if (musicAnalysis.instruments.includes('strings')) {
+                                  setTimeout(() => {
+                                    playNote(note, 5, noteDuration / 1000 * 1.5, 'strings', 0.5);
+                                  }, 100);
+                                }
+                                
+                                if (musicAnalysis.instruments.includes('bass')) {
+                                  playNote(note, 2, noteDuration / 1000 * 2, 'bass', 0.8);
+                                }
+                              }, delay);
+                            }
+                            
+                            currentDelay += pattern.length * noteDuration + 500;
+                          }
+                          
+                          // Add drum pattern
+                          if (musicAnalysis.complexity >= 5) {
+                            const drumInterval = 60 / musicAnalysis.tempo * 1000 / 4;
+                            
+                            for (let beat = 0; beat < 16; beat++) {
+                              setTimeout(() => {
+                                if (beat % 4 === 0) {
+                                  playDrumSound('kick', 0.8);
+                                }
+                                if (beat % 4 === 2) {
+                                  playDrumSound('snare', 0.7);
+                                }
+                                if (beat % 2 === 1) {
+                                  playDrumSound('hihat', 0.4);
+                                }
+                              }, beat * drumInterval);
+                            }
+                          }
+                        }
                         
                         toast({ 
                           title: "Playing Complete Composition", 
