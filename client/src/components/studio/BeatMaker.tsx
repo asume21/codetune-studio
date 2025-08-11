@@ -152,30 +152,13 @@ export default function BeatMaker() {
     }
   }, [studioContext.currentPattern]);
 
-  // Real-time pattern updates for live editing - disabled to fix playback issues
-  // useEffect(() => {
-  //   if (isPlaying && intervalRef.current) {
-  //     // When pattern changes during playback, the useEffect will restart the interval
-  //     // This ensures real-time editing works immediately
-  //     clearInterval(intervalRef.current);
-  //     
-  //     const stepDuration = (60 / bpm / 4) * 1000;
-  //     intervalRef.current = setInterval(() => {
-  //       setCurrentStep(prev => {
-  //         const step = prev % 16;
-  //         
-  //         // Play sounds for active steps using CURRENT pattern state
-  //         Object.entries(pattern).forEach(([track, steps]) => {
-  //           if (steps && steps[step]) {
-  //             playDrumSound(track);
-  //           }
-  //         });
-  //         
-  //         return prev + 1;
-  //       });
-  //     }, stepDuration);
-  //   }
-  // }, [bpm, pattern, isPlaying, playDrumSound]); // Pattern dependency enables real-time updates
+  // Real-time pattern updates for live editing - using pattern ref approach
+  const patternRef = useRef(pattern);
+  
+  // Update pattern ref whenever pattern changes
+  useEffect(() => {
+    patternRef.current = pattern;
+  }, [pattern]);
 
   const generateBeatMutation = useMutation({
     mutationFn: async (data: { style: string; bpm: number; complexity?: number }) => {
@@ -309,8 +292,8 @@ export default function BeatMaker() {
       // Check if pattern has any active steps
       let hasActiveSteps = false;
       
-      // Play sounds for active steps
-      Object.entries(pattern).forEach(([track, steps]) => {
+      // Play sounds for active steps using current pattern ref
+      Object.entries(patternRef.current).forEach(([track, steps]) => {
         if (steps && steps[step]) {
           hasActiveSteps = true;
           console.log(`🥁 Playing ${track} on step ${step + 1}`);
