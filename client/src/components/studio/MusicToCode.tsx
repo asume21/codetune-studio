@@ -105,6 +105,106 @@ export default function MusicToCode() {
     setUploadedFile(file);
   };
 
+  // Audio synthesis functions for realistic instrument sounds
+  const createPianoNote = (audioContext: AudioContext, frequency: number, startTime: number, duration: number) => {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    const filter = audioContext.createBiquadFilter();
+    
+    oscillator.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(frequency, startTime);
+    oscillator.type = 'triangle';
+    
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(frequency * 3, startTime);
+    
+    gainNode.gain.setValueAtTime(0.4, startTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.1, startTime + duration * 0.3);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+    
+    oscillator.start(startTime);
+    oscillator.stop(startTime + duration);
+  };
+  
+  const createStringNote = (audioContext: AudioContext, frequency: number, startTime: number, duration: number) => {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(frequency, startTime);
+    oscillator.type = 'sawtooth';
+    
+    gainNode.gain.setValueAtTime(0.2, startTime);
+    gainNode.gain.linearRampToValueAtTime(0.3, startTime + duration * 0.4);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+    
+    oscillator.start(startTime);
+    oscillator.stop(startTime + duration);
+  };
+  
+  const createBassNote = (audioContext: AudioContext, frequency: number, startTime: number, duration: number) => {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(frequency, startTime);
+    oscillator.type = 'square';
+    
+    gainNode.gain.setValueAtTime(0.5, startTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+    
+    oscillator.start(startTime);
+    oscillator.stop(startTime + duration);
+  };
+  
+  const addPercussion = (audioContext: AudioContext, tempo: number, startTime: number) => {
+    const beatInterval = 60 / tempo;
+    
+    for (let i = 0; i < 8; i++) {
+      const time = startTime + (i * beatInterval);
+      
+      // Kick drum on beats 1 and 3
+      if (i % 4 === 0) {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(60, time);
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.6, time);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+        
+        oscillator.start(time);
+        oscillator.stop(time + 0.1);
+      }
+      
+      // Hi-hat on every beat
+      if (i % 2 === 1) {
+        const noise = audioContext.createBufferSource();
+        const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.05, audioContext.sampleRate);
+        const output = buffer.getChannelData(0);
+        
+        for (let j = 0; j < buffer.length; j++) {
+          output[j] = (Math.random() * 2 - 1) * 0.1;
+        }
+        
+        noise.buffer = buffer;
+        noise.connect(audioContext.destination);
+        noise.start(time);
+      }
+    }
+  };
+
   const testGeneratedCode = () => {
     const codeString = generatedCode?.code?.code || generatedCode?.code || '';
     const testResults = document.getElementById('code-test-results');
@@ -367,50 +467,59 @@ export default function MusicToCode() {
                       onClick={async () => {
                         if (!musicAnalysis) return;
                         
-                        // Create a simple melody from the music analysis
-                        const melody = [];
-                        const keys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-                        const baseOctave = 4;
-                        
-                        // Generate notes based on tempo and complexity
-                        for (let i = 0; i < 8; i++) {
-                          const noteIndex = i % keys.length;
-                          const note = keys[noteIndex];
-                          melody.push({
-                            note: `${note}${baseOctave}`,
-                            duration: 60 / musicAnalysis.tempo, // Duration based on tempo
-                            instrument: musicAnalysis.instruments[0] || 'piano'
-                          });
-                        }
-                        
-                        // Play the melody using the audio engine
+                        // Create sophisticated musical composition from analysis
                         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
                         
-                        melody.forEach((note, index) => {
-                          setTimeout(() => {
-                            // Create a simple tone
-                            const oscillator = audioContext.createOscillator();
-                            const gainNode = audioContext.createGain();
+                        // Define scale based on key and complexity
+                        const scaleMap: Record<string, number[]> = {
+                          'C Major': [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25],
+                          'D Major': [293.66, 329.63, 369.99, 392.00, 440.00, 493.88, 554.37, 587.33],
+                          'G Major': [392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 739.99, 783.99]
+                        };
+                        
+                        const scale = scaleMap[musicAnalysis.key] || scaleMap['C Major'];
+                        const noteDuration = 60 / musicAnalysis.tempo * 0.5; // Based on tempo
+                        
+                        // Generate melody based on complexity and structure
+                        const structureMap: Record<string, number[]> = {
+                          'Intro': [0, 2, 4, 2],
+                          'Verse': [0, 4, 7, 4, 2, 0],
+                          'Chorus': [7, 6, 5, 7, 4, 2, 0],
+                          'Bridge': [5, 4, 2, 7, 5],
+                          'Outro': [4, 2, 0]
+                        };
+                        
+                        let currentTime = audioContext.currentTime;
+                        
+                        // Play each section with different instruments
+                        musicAnalysis.structure.forEach((section: string, sectionIndex: number) => {
+                          const pattern = structureMap[section] || [0, 2, 4, 7];
+                          
+                          pattern.forEach((noteIndex, patternIndex) => {
+                            const frequency = scale[noteIndex % scale.length];
+                            const startTime = currentTime + (patternIndex * noteDuration);
                             
-                            // Map note to frequency
-                            const noteFrequencies: Record<string, number> = {
-                              'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23,
-                              'G4': 392.00, 'A4': 440.00, 'B4': 493.88
-                            };
+                            // Create different instrument sounds based on section
+                            if (musicAnalysis.instruments.includes('piano')) {
+                              createPianoNote(audioContext, frequency, startTime, noteDuration);
+                            }
                             
-                            oscillator.connect(gainNode);
-                            gainNode.connect(audioContext.destination);
+                            if (musicAnalysis.instruments.includes('strings') && sectionIndex > 0) {
+                              createStringNote(audioContext, frequency * 1.5, startTime + 0.1, noteDuration * 1.5);
+                            }
                             
-                            oscillator.frequency.setValueAtTime(noteFrequencies[note.note] || 440, audioContext.currentTime);
-                            oscillator.type = 'sine';
-                            
-                            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + note.duration);
-                            
-                            oscillator.start(audioContext.currentTime);
-                            oscillator.stop(audioContext.currentTime + note.duration);
-                          }, index * (note.duration * 1000));
+                            if (musicAnalysis.instruments.includes('bass')) {
+                              createBassNote(audioContext, frequency * 0.5, startTime, noteDuration * 2);
+                            }
+                          });
+                          
+                          currentTime += pattern.length * noteDuration + 0.5; // Gap between sections
                         });
+                        
+                        // Add rhythmic elements based on complexity
+                        if (musicAnalysis.complexity >= 5) {
+                          addPercussion(audioContext, musicAnalysis.tempo, currentTime);
+                        }
                       }}
                       className="bg-green-600 hover:bg-green-700"
                     >
