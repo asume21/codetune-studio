@@ -367,7 +367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         originalCode,
         musicData,
-        regeneratedCode,
+        regeneratedCode: regeneratedCode.code,  // Return the code object directly
         accuracy,
         test: "SUCCESS",
         message: "Circular translation completed! Music-to-code conversion working.",

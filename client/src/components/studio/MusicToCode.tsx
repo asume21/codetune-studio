@@ -486,22 +486,24 @@ export default function MusicToCode() {
                                 try {
                                   console.log(`Playing ${note} with instruments: ${musicAnalysis.instruments.join(', ')}`);
                                   
-                                  if (musicAnalysis.instruments.includes('piano')) {
+                                  const instruments = Array.isArray(musicAnalysis.instruments) ? musicAnalysis.instruments : [];
+                                  
+                                  if (instruments.includes('piano')) {
                                     playNote(note, 4, noteDuration / 1000, 'piano', 0.7);
                                   }
                                   
-                                  if (musicAnalysis.instruments.includes('strings')) {
+                                  if (instruments.includes('strings')) {
                                     setTimeout(() => {
                                       playNote(note, 5, noteDuration / 1000 * 1.5, 'strings', 0.5);
                                     }, 100);
                                   }
                                   
-                                  if (musicAnalysis.instruments.includes('bass')) {
+                                  if (instruments.includes('bass')) {
                                     playNote(note, 2, noteDuration / 1000 * 2, 'bass', 0.8);
                                   }
                                   
                                   // Fallback - always play piano if no specific instruments
-                                  if (!musicAnalysis.instruments.includes('piano') && !musicAnalysis.instruments.includes('strings') && !musicAnalysis.instruments.includes('bass')) {
+                                  if (!instruments.includes('piano') && !instruments.includes('strings') && !instruments.includes('bass')) {
                                     playNote(note, 4, noteDuration / 1000, 'piano', 0.7);
                                   }
                                 } catch (error) {
@@ -568,7 +570,7 @@ export default function MusicToCode() {
               <CardContent>
                 <ScrollArea className="h-64">
                   <pre className="text-xs bg-muted p-4 rounded overflow-x-auto">
-                    <code>{(generatedCode?.code as string) || 'No code generated'}</code>
+                    <code>{typeof generatedCode?.code === 'string' ? generatedCode.code : (typeof generatedCode?.code === 'object' ? JSON.stringify(generatedCode.code, null, 2) : String(generatedCode?.code || 'No code generated'))}</code>
                   </pre>
                 </ScrollArea>
                 <div className="mt-4 space-y-3">
