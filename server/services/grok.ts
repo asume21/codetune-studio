@@ -768,3 +768,134 @@ export async function analyzeSong(songName: string, analysisPrompt: string): Pro
     throw new Error("Failed to analyze song: " + (error as Error).message);
   }
 }
+
+// Music to Code conversion - Revolutionary bidirectional translation
+export async function musicToCode(musicData: any, language: string, codeStyle: string, complexity: number): Promise<any> {
+  try {
+    const prompt = `Convert this musical composition to ${language} code using ${codeStyle} style:
+
+Musical Analysis:
+- Pattern: ${JSON.stringify(musicData.pattern || {})}
+- Melody: ${JSON.stringify(musicData.melody || [])}
+- Tempo: ${musicData.tempo || 120} BPM
+- Key: ${musicData.key || 'C Major'}
+- Structure: ${JSON.stringify(musicData.structure || [])}
+
+Code Generation Rules:
+- Language: ${language}
+- Style: ${codeStyle}
+- Complexity: ${complexity}/10
+- Map musical elements to code structures:
+  * Beat patterns → Loop structures
+  * Melody lines → Function calls
+  * Chord progressions → Class hierarchies  
+  * Tempo → Processing speed/intervals
+  * Key changes → Variable scoping
+  * Song structure → Application architecture
+
+Generate functional, executable code that reflects the musical composition's structure and characteristics.`;
+
+    const response = await grok.chat.completions.create({
+      messages: [
+        { role: "system", content: "You are an expert at translating musical compositions into functional code. Create working, executable code that reflects the structure and patterns of the input music." },
+        { role: "user", content: prompt }
+      ],
+      model: "grok-beta",
+      temperature: 0.7
+    });
+
+    const generatedCode = response.choices[0]?.message?.content || "";
+
+    // Extract code from response
+    const codeMatch = generatedCode.match(/```\w*\n([\s\S]*?)\n```/);
+    const cleanCode = codeMatch ? codeMatch[1] : generatedCode;
+
+    return {
+      analysis: {
+        tempo: musicData.tempo || 120,
+        key: musicData.key || 'C Major',
+        timeSignature: musicData.timeSignature || '4/4',
+        structure: musicData.structure || ['Intro', 'Main', 'Outro'],
+        instruments: Object.keys(musicData.pattern || {}),
+        complexity: complexity,
+        mood: 'generated'
+      },
+      code: {
+        language,
+        code: cleanCode,
+        description: `Generated ${language} code from musical composition`,
+        framework: getFrameworkForLanguage(language),
+        functionality: extractFunctionality(cleanCode, language)
+      }
+    };
+  } catch (error) {
+    console.error('Error in musicToCode:', error);
+    throw error;
+  }
+}
+
+// Calculate similarity between two code strings
+export function calculateCodeSimilarity(code1: string, code2: string): number {
+  // Simple similarity calculation - in production would use more sophisticated algorithms
+  const normalize = (str: string) => str.replace(/\s+/g, ' ').trim().toLowerCase();
+  const norm1 = normalize(code1);
+  const norm2 = normalize(code2);
+  
+  if (norm1 === norm2) return 100;
+  
+  // Calculate character-level similarity
+  const maxLen = Math.max(norm1.length, norm2.length);
+  const minLen = Math.min(norm1.length, norm2.length);
+  let matches = 0;
+  
+  for (let i = 0; i < minLen; i++) {
+    if (norm1[i] === norm2[i]) matches++;
+  }
+  
+  return Math.round((matches / maxLen) * 100);
+}
+
+function getFrameworkForLanguage(language: string): string {
+  const frameworks: { [key: string]: string } = {
+    javascript: 'Node.js/Browser',
+    react: 'React Component',
+    python: 'Python Standard',
+    java: 'Spring Framework',
+    csharp: '.NET Core',
+    css: 'CSS3/HTML5'
+  };
+  return frameworks[language] || 'Standard Library';
+}
+
+function extractFunctionality(code: string, language: string): string[] {
+  const functionality: string[] = [];
+  
+  // Extract functions/methods based on language patterns
+  const patterns: { [key: string]: RegExp[] } = {
+    javascript: [/function\s+(\w+)/g, /const\s+(\w+)\s*=/g, /class\s+(\w+)/g],
+    python: [/def\s+(\w+)/g, /class\s+(\w+)/g],
+    java: [/public\s+\w+\s+(\w+)\s*\(/g, /class\s+(\w+)/g],
+    csharp: [/public\s+\w+\s+(\w+)\s*\(/g, /class\s+(\w+)/g],
+    css: [/\.(\w+)/g, /#(\w+)/g]
+  };
+  
+  const langPatterns = patterns[language] || patterns.javascript;
+  
+  langPatterns.forEach(pattern => {
+    const matches = code.match(pattern);
+    if (matches) {
+      matches.forEach(match => {
+        const name = match.replace(pattern, '$1');
+        if (name && !functionality.includes(name)) {
+          functionality.push(`${name} implementation`);
+        }
+      });
+    }
+  });
+  
+  if (functionality.length === 0) {
+    functionality.push('Code structure generation', 'Basic functionality implementation');
+  }
+  
+  return functionality;
+}

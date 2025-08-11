@@ -12,7 +12,9 @@ import {
   generateBeatFromLyrics,
   codeToMusic, 
   chatAssistant,
-  generateDynamicLayers
+  generateDynamicLayers,
+  musicToCode,
+  calculateCodeSimilarity
 } from "./services/grok";
 import { 
   insertCodeTranslationSchema, 
@@ -233,6 +235,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Code to music error:", error);
       res.status(500).json({ error: "Failed to convert code to music" });
+    }
+  });
+
+  // Music to Code Route - Revolutionary bidirectional translation
+  app.post("/api/music-to-code", async (req, res) => {
+    try {
+      const { musicData, language, codeStyle, complexity = 5 } = req.body;
+      
+      // Analyze musical structure and generate code
+      const result = await musicToCode(musicData, language, codeStyle, complexity);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Music to code error:", error);
+      res.status(500).json({ error: "Failed to convert music to code" });
+    }
+  });
+
+  // Circular Translation Test - Ultimate accuracy test
+  app.post("/api/test-circular-translation", async (req, res) => {
+    try {
+      const { sourceCode } = req.body;
+      
+      // Step 1: Get CodedSwitch source (simplified example)
+      const originalCode = `class CodedSwitch {
+  constructor() {
+    this.audioEngine = new AudioEngine();
+    this.beatMaker = new BeatMaker();
+    this.melodyComposer = new MelodyComposer();
+  }
+  
+  translateCodeToMusic(code, language) {
+    const analysis = this.analyzeCode(code, language);
+    return this.generateMusic(analysis);
+  }
+  
+  translateMusicToCode(musicData, targetLanguage) {
+    const structure = this.analyzeMusicStructure(musicData);
+    return this.generateCode(structure, targetLanguage);
+  }
+}`;
+
+      // Step 2: Convert to music
+      const musicData = await codeToMusic(originalCode, "javascript", 5);
+      
+      // Step 3: Convert back to code  
+      const regeneratedCode = await musicToCode(musicData, "javascript", "object-oriented", 5);
+      
+      // Step 4: Calculate similarity
+      const accuracy = calculateCodeSimilarity(originalCode, regeneratedCode.code);
+      
+      res.json({
+        originalCode,
+        musicData,
+        regeneratedCode,
+        accuracy,
+        originalAnalysis: {
+          tempo: 120,
+          key: "C Major", 
+          timeSignature: "4/4",
+          structure: ["Intro", "Verse", "Chorus", "Bridge", "Outro"],
+          instruments: ["piano", "strings", "bass"],
+          complexity: 6,
+          mood: "algorithmic"
+        }
+      });
+    } catch (error) {
+      console.error("Circular translation error:", error);
+      res.status(500).json({ error: "Failed to perform circular translation test" });
     }
   });
 

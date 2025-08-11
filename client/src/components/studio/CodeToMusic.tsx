@@ -73,6 +73,8 @@ export default function CodeToMusic() {
       };
       
       studioContext.setCurrentPattern(generatedPattern);
+      
+      // Store generated music data for Music→Code conversion
       studioContext.setCurrentCodeMusic(data);
       
       toast({

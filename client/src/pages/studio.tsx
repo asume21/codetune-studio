@@ -6,6 +6,7 @@ import CodeTranslator from "@/components/studio/CodeTranslator";
 import BeatMaker from "@/components/studio/BeatMaker";
 import MelodyComposer from "@/components/studio/MelodyComposer";
 import CodeToMusic from "@/components/studio/CodeToMusic";
+import MusicToCode from "@/components/studio/MusicToCode";
 import AIAssistant from "@/components/studio/AIAssistant";
 import VulnerabilityScanner from "@/components/studio/VulnerabilityScanner";
 import LyricLab from "@/components/studio/LyricLab";
@@ -38,7 +39,7 @@ export const StudioAudioContext = createContext({
   stopFullSong: () => {},
 });
 
-type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "assistant" | "security" | "lyrics" | "musicmixer" | "mixer" | "layers" | "upload" | "midi" | "metrics";
+type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "musiccode" | "assistant" | "security" | "lyrics" | "musicmixer" | "mixer" | "layers" | "upload" | "midi" | "metrics";
 
 export default function Studio() {
   const [activeTab, setActiveTab] = useState<Tab>("beatmaker");
@@ -82,6 +83,7 @@ export default function Studio() {
       "beatmaker": "Beat Maker", 
       "melody": "Melody Composer",
       "codebeat": "Code to Music",
+      "musiccode": "Music to Code",
       "assistant": "AI Assistant",
       "security": "Security Scanner",
       "lyrics": "Lyric Lab",
@@ -143,6 +145,8 @@ export default function Studio() {
         return <MelodyComposer />;
       case "codebeat":
         return <CodeToMusic />;
+      case "musiccode":
+        return <MusicToCode />;
       case "assistant":
         return <AIAssistant />;
       case "security":

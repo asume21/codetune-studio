@@ -11,6 +11,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     { id: "beatmaker", icon: "fas fa-drum", label: "Beat Maker" },
     { id: "melody", icon: "fas fa-music", label: "Melody Composer" },
     { id: "codebeat", icon: "fas fa-exchange-alt", label: "Code to Music" },
+    { id: "musiccode", icon: "fas fa-code-branch", label: "Music to Code" },
     { id: "layers", icon: "fas fa-layer-group", label: "Dynamic Layering" },
     { id: "upload", icon: "fas fa-cloud-upload-alt", label: "Song Uploader" },
     { id: "assistant", icon: "fas fa-robot", label: "AI Assistant" },
@@ -55,6 +56,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             {activeTab === "translator" && "Convert code between languages"}
             {activeTab === "melody" && "Compose musical melodies"}
             {activeTab === "codebeat" && "Turn code into music"}
+            {activeTab === "musiccode" && "Convert music back to code"}
             {activeTab === "layers" && "AI-powered instrument layering"}
             {activeTab === "upload" && "Upload and analyze existing songs"}
             {activeTab === "assistant" && "AI-powered music help"}
