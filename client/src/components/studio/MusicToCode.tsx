@@ -339,13 +339,13 @@ export default function MusicToCode() {
               <CardHeader>
                 <CardTitle>Generated Code</CardTitle>
                 <CardDescription>
-                  {generatedCode.framework} - {generatedCode.description}
+                  {generatedCode?.framework || 'Unknown Framework'} - {generatedCode?.description || 'Generated code'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-64">
                   <pre className="text-xs bg-muted p-4 rounded overflow-x-auto">
-                    <code>{generatedCode.code}</code>
+                    <code>{generatedCode?.code?.code || generatedCode?.code || 'No code generated'}</code>
                   </pre>
                 </ScrollArea>
                 <div className="mt-4 space-y-1">
