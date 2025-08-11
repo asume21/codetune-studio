@@ -178,7 +178,7 @@ export default function CodeToMusic() {
                       await studioContext.playFullSong();
                     }
                     
-                    const instrumentCount = [...new Set(musicData.melody.map(note => note.instrument || 'piano'))].length;
+                    const instrumentCount = [...new Set(musicData.melody.map((note: any) => note.instrument || 'piano'))].length;
                     toast({ title: "Playing Multi-Instrument Arrangement", description: `Playing ${musicData.melody.length} notes across ${instrumentCount} instruments plus drums.` });
                   } else {
                     // If no proper melody, just trigger the drum pattern playback
