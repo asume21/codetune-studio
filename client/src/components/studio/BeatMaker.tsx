@@ -115,6 +115,7 @@ export default function BeatMaker() {
   // MIDI Controller Integration  
   const { isConnected: midiConnected, activeNotes, settings: midiSettings } = useMIDI();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const stepCounterRef = useRef<number>(0);
 
   // Initialize audio on first interaction
   useEffect(() => {
@@ -151,30 +152,30 @@ export default function BeatMaker() {
     }
   }, [studioContext.currentPattern]);
 
-  // Real-time pattern updates for live editing
-  useEffect(() => {
-    if (isPlaying && intervalRef.current) {
-      // When pattern changes during playback, the useEffect will restart the interval
-      // This ensures real-time editing works immediately
-      clearInterval(intervalRef.current);
-      
-      const stepDuration = (60 / bpm / 4) * 1000;
-      intervalRef.current = setInterval(() => {
-        setCurrentStep(prev => {
-          const step = prev % 16;
-          
-          // Play sounds for active steps using CURRENT pattern state
-          Object.entries(pattern).forEach(([track, steps]) => {
-            if (steps && steps[step]) {
-              playDrumSound(track);
-            }
-          });
-          
-          return prev + 1;
-        });
-      }, stepDuration);
-    }
-  }, [bpm, pattern, isPlaying, playDrumSound]); // Pattern dependency enables real-time updates
+  // Real-time pattern updates for live editing - disabled to fix playback issues
+  // useEffect(() => {
+  //   if (isPlaying && intervalRef.current) {
+  //     // When pattern changes during playback, the useEffect will restart the interval
+  //     // This ensures real-time editing works immediately
+  //     clearInterval(intervalRef.current);
+  //     
+  //     const stepDuration = (60 / bpm / 4) * 1000;
+  //     intervalRef.current = setInterval(() => {
+  //       setCurrentStep(prev => {
+  //         const step = prev % 16;
+  //         
+  //         // Play sounds for active steps using CURRENT pattern state
+  //         Object.entries(pattern).forEach(([track, steps]) => {
+  //           if (steps && steps[step]) {
+  //             playDrumSound(track);
+  //           }
+  //         });
+  //         
+  //         return prev + 1;
+  //       });
+  //     }, stepDuration);
+  //   }
+  // }, [bpm, pattern, isPlaying, playDrumSound]); // Pattern dependency enables real-time updates
 
   const generateBeatMutation = useMutation({
     mutationFn: async (data: { style: string; bpm: number; complexity?: number }) => {
@@ -295,14 +296,15 @@ export default function BeatMaker() {
     const stepDuration = (60 / bpm / 4) * 1000; // 16th notes in milliseconds
     console.log("⏱️ Step duration:", stepDuration, "ms");
 
-    let stepCounter = 0;
+    // Reset step counter
+    stepCounterRef.current = 0;
     
     intervalRef.current = setInterval(() => {
-      const step = stepCounter % 16;
+      const step = stepCounterRef.current % 16;
       console.log(`🎼 Playing step ${step + 1}/16`);
       
       // Update the visual step indicator
-      setCurrentStep(stepCounter);
+      setCurrentStep(stepCounterRef.current);
 
       // Check if pattern has any active steps
       let hasActiveSteps = false;
@@ -320,7 +322,7 @@ export default function BeatMaker() {
         console.log("⚠️ No active steps found in pattern. Click squares to add drum hits!");
       }
 
-      stepCounter++;
+      stepCounterRef.current++;
     }, stepDuration);
   };
 
