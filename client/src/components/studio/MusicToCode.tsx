@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMutation } from "@tanstack/react-query";
+import { Loader2, Music, Code, Play, Pause, Volume2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/hooks/use-audio";
@@ -109,7 +110,7 @@ export default function MusicToCode() {
 
 
   const testGeneratedCode = () => {
-    const codeString = typeof generatedCode?.code === 'string' ? generatedCode.code : generatedCode?.code?.code || '';
+    const codeString = (generatedCode?.code as string) || '';
     const testResults = document.getElementById('code-test-results');
     
     if (!testResults) return;
@@ -540,7 +541,7 @@ export default function MusicToCode() {
               <CardContent>
                 <ScrollArea className="h-64">
                   <pre className="text-xs bg-muted p-4 rounded overflow-x-auto">
-                    <code>{typeof generatedCode?.code === 'string' ? generatedCode.code : generatedCode?.code?.code || 'No code generated'}</code>
+                    <code>{(generatedCode?.code as string) || 'No code generated'}</code>
                   </pre>
                 </ScrollArea>
                 <div className="mt-4 space-y-3">
