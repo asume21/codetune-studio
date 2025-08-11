@@ -351,9 +351,9 @@ export default function MusicToCode() {
                 <div className="mt-4 space-y-1">
                   <div className="text-sm font-medium">Functionality:</div>
                   <ul className="text-sm text-muted-foreground list-disc pl-4">
-                    {generatedCode.functionality.map((func, index) => (
+                    {generatedCode.functionality?.map((func, index) => (
                       <li key={index}>{func}</li>
-                    ))}
+                    )) || <li>No functionality data available</li>}
                   </ul>
                 </div>
               </CardContent>
