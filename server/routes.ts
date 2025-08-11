@@ -361,8 +361,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
       
-      // Step 4: Calculate similarity (realistic demo)
-      const accuracy = 89; // High accuracy showing circular translation success
+      // Step 4: Calculate actual similarity between original and regenerated code
+      const accuracy = calculateCodeSimilarity(originalCode, regeneratedCode.code.code);
       
       res.json({
         originalCode,
