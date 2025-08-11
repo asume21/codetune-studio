@@ -70,10 +70,19 @@ export default function MusicToCode() {
     },
     onSuccess: (data) => {
       setMusicAnalysis(data.analysis);
-      setGeneratedCode(data.code);
+      // Ensure proper structure for generated code
+      if (data.code && typeof data.code === 'object') {
+        setGeneratedCode({
+          language: String(data.code.language || 'javascript'),
+          code: String(data.code.code || ''),
+          description: String(data.code.description || 'Generated code'),
+          framework: String(data.code.framework || 'Unknown'),
+          functionality: Array.isArray(data.code.functionality) ? data.code.functionality : []
+        });
+      }
       toast({
         title: "Music Analysis Complete!",
-        description: `Generated ${data.code.language} code from musical composition.`,
+        description: `Generated ${data.code?.language || 'JavaScript'} code from musical composition.`,
       });
     },
     onError: (error: any) => {
@@ -95,13 +104,20 @@ export default function MusicToCode() {
     },
     onSuccess: (data) => {
       setMusicAnalysis(data.originalAnalysis);
-      // Ensure we're setting the correct structure for generatedCode
-      if (typeof data.regeneratedCode === 'object' && data.regeneratedCode !== null) {
-        setGeneratedCode(data.regeneratedCode);
+      // Ensure proper structure for generated code from circular translation
+      const codeData = data.regeneratedCode;
+      if (codeData && typeof codeData === 'object') {
+        setGeneratedCode({
+          language: String(codeData.language || 'javascript'),
+          code: String(codeData.code || ''),
+          description: String(codeData.description || 'Generated from circular translation'),
+          framework: String(codeData.framework || 'Unknown'),
+          functionality: Array.isArray(codeData.functionality) ? codeData.functionality.map(String) : []
+        });
       } else {
         setGeneratedCode({
           language: 'javascript',
-          code: String(data.regeneratedCode || ''),
+          code: String(codeData || ''),
           description: 'Generated from circular translation',
           framework: 'Unknown',
           functionality: []
@@ -365,13 +381,13 @@ export default function MusicToCode() {
               <CardContent>
                 <ScrollArea className="h-64">
                   <div className="space-y-2 text-sm">
-                    <div><strong>Tempo:</strong> {musicAnalysis.tempo} BPM</div>
-                    <div><strong>Key:</strong> {musicAnalysis.key}</div>
-                    <div><strong>Time Signature:</strong> {musicAnalysis.timeSignature}</div>
-                    <div><strong>Mood:</strong> {musicAnalysis.mood}</div>
-                    <div><strong>Complexity:</strong> {musicAnalysis.complexity}/10</div>
-                    <div><strong>Structure:</strong> {musicAnalysis.structure.join(' → ')}</div>
-                    <div><strong>Instruments:</strong> {musicAnalysis.instruments.join(', ')}</div>
+                    <div><strong>Tempo:</strong> {String(musicAnalysis.tempo || 120)} BPM</div>
+                    <div><strong>Key:</strong> {String(musicAnalysis.key || 'C Major')}</div>
+                    <div><strong>Time Signature:</strong> {String(musicAnalysis.timeSignature || '4/4')}</div>
+                    <div><strong>Mood:</strong> {String(musicAnalysis.mood || 'neutral')}</div>
+                    <div><strong>Complexity:</strong> {String(musicAnalysis.complexity || 5)}/10</div>
+                    <div><strong>Structure:</strong> {Array.isArray(musicAnalysis.structure) ? musicAnalysis.structure.join(' → ') : 'No structure data'}</div>
+                    <div><strong>Instruments:</strong> {Array.isArray(musicAnalysis.instruments) ? musicAnalysis.instruments.join(', ') : 'No instrument data'}</div>
                   </div>
                 </ScrollArea>
                 
@@ -524,7 +540,7 @@ export default function MusicToCode() {
                         
                         toast({ 
                           title: "Playing Complete Composition", 
-                          description: `${musicAnalysis.instruments.join(', ')} with ${musicAnalysis.mood} beat at ${musicAnalysis.tempo} BPM` 
+                          description: `${Array.isArray(musicAnalysis.instruments) ? musicAnalysis.instruments.join(', ') : 'Multiple instruments'} with ${String(musicAnalysis.mood)} beat at ${String(musicAnalysis.tempo)} BPM` 
                         });
                       }}
                       className="bg-green-600 hover:bg-green-700"
