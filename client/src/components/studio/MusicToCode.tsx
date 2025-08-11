@@ -415,129 +415,94 @@ export default function MusicToCode() {
                     </Button>
                     <Button 
                       onClick={async () => {
-                        if (!musicAnalysis) return;
-                        
-                        // Initialize audio if needed
-                        if (!isInitialized) {
-                          try {
-                            await initialize();
-                            toast({ title: "Audio System Ready", description: "Initializing professional audio engine..." });
-                          } catch (error) {
-                            toast({ title: "Audio Error", description: "Failed to initialize audio. Please check browser permissions.", variant: "destructive" });
-                            return;
-                          }
+                        console.log("🎵 Starting Play Music - Full composition playback");
+                        if (!musicAnalysis) {
+                          console.log("🎵 No music analysis available");
+                          return;
                         }
                         
-                        // Generate sophisticated musical composition
-                        const structureMap: Record<string, string[]> = {
-                          'Intro': ['C', 'E', 'G', 'E'],
-                          'Verse': ['C', 'G', 'Am', 'F', 'C', 'G'],
-                          'Chorus': ['F', 'G', 'Am', 'C', 'F', 'G', 'C'],
-                          'Bridge': ['Am', 'F', 'C', 'G', 'Am'],
-                          'Outro': ['F', 'C', 'G', 'C']
-                        };
-                        
-                        let currentDelay = 0;
-                        const noteDuration = (60 / musicAnalysis.tempo) * 1000; // Convert to milliseconds
-                        
-                        // Use studio context if available for full integration
-                        if (studioContext) {
-                          // Generate melody for studio system
-                          const melody = [];
-                          for (const section of musicAnalysis.structure) {
-                            const pattern = structureMap[section] || ['C', 'E', 'G', 'C'];
-                            for (const note of pattern) {
-                              melody.push({
-                                note: note + '4',
-                                duration: 60 / musicAnalysis.tempo,
-                                instrument: musicAnalysis.instruments[0] || 'piano'
-                              });
-                            }
+                        // Always initialize audio if needed
+                        try {
+                          if (!isInitialized) {
+                            console.log("🎵 Initializing audio system...");
+                            await initialize();
+                            console.log("🎵 Audio system initialized successfully");
+                            toast({ title: "Audio System Ready", description: "Professional audio engine initialized" });
                           }
                           
-                          // Generate beat pattern
-                          const isComplex = musicAnalysis.complexity >= 6;
-                          const isAlgorithmic = musicAnalysis.mood === 'algorithmic';
+                          // Test basic audio first
+                          console.log("🎵 Testing basic note...");
+                          playNote('C', 4, 0.5, 'piano', 0.8);
                           
-                          const beatPattern = {
-                            kick: isComplex ? 
-                              [true, false, false, true, false, false, true, false, true, false, false, true, false, false, true, false] :
-                              [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
-                            snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-                            hihat: isAlgorithmic ? 
-                              [true, true, false, true, true, true, false, true, true, true, false, true, true, true, false, true] :
-                              [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
-                            bass: [true, false, true, false, false, false, true, false, true, false, true, false, false, false, true, false]
-                          };
-                          
-                          studioContext.setCurrentMelody(melody);
-                          studioContext.setCurrentPattern(beatPattern);
-                          await studioContext.playFullSong();
-                        } else {
-                          // Fallback to direct audio engine
-                          for (const section of musicAnalysis.structure) {
-                            const pattern = structureMap[section] || ['C', 'E', 'G', 'C'];
+                          // Short delay before starting composition
+                          setTimeout(async () => {
+                            console.log("🎵 Starting full composition...");
                             
-                            for (let i = 0; i < pattern.length; i++) {
-                              const note = pattern[i];
-                              const delay = currentDelay + (i * noteDuration);
+                            // Generate sophisticated musical composition
+                            const structureMap: Record<string, string[]> = {
+                              'Intro': ['C', 'E', 'G', 'E'],
+                              'Verse': ['C', 'G', 'Am', 'F', 'C', 'G'],
+                              'Chorus': ['F', 'G', 'Am', 'C', 'F', 'G', 'C'],
+                              'Bridge': ['Am', 'F', 'C', 'G', 'Am'],
+                              'Outro': ['F', 'C', 'G', 'C']
+                            };
+                            
+                            let currentDelay = 0;
+                            const noteDuration = (60 / (musicAnalysis.tempo || 120)) * 1000;
+                            const structure = Array.isArray(musicAnalysis.structure) ? musicAnalysis.structure : ['Verse', 'Chorus'];
+                            
+                            // Play each section of the composition
+                            for (const section of structure) {
+                              const pattern = structureMap[section] || ['C', 'E', 'G', 'C'];
+                              console.log(`🎵 Playing section: ${section}`);
                               
-                              setTimeout(() => {
-                                try {
-                                  console.log(`Playing ${note} with instruments: ${musicAnalysis.instruments.join(', ')}`);
+                              for (let i = 0; i < pattern.length; i++) {
+                                const note = pattern[i];
+                                const delay = currentDelay + (i * noteDuration);
+                                
+                                setTimeout(() => {
+                                  console.log(`🎵 Playing note: ${note}`);
+                                  const instruments = Array.isArray(musicAnalysis.instruments) ? musicAnalysis.instruments : ['piano'];
                                   
-                                  const instruments = Array.isArray(musicAnalysis.instruments) ? musicAnalysis.instruments : [];
-                                  
+                                  // Play multiple instruments
                                   if (instruments.includes('piano')) {
                                     playNote(note, 4, noteDuration / 1000, 'piano', 0.7);
                                   }
-                                  
                                   if (instruments.includes('strings')) {
-                                    setTimeout(() => {
-                                      playNote(note, 5, noteDuration / 1000 * 1.5, 'strings', 0.5);
-                                    }, 100);
+                                    playNote(note, 5, noteDuration / 1000 * 1.5, 'strings', 0.5);
                                   }
-                                  
                                   if (instruments.includes('bass')) {
                                     playNote(note, 2, noteDuration / 1000 * 2, 'bass', 0.8);
                                   }
-                                  
-                                  // Fallback - always play piano if no specific instruments
+                                  // Fallback piano
                                   if (!instruments.includes('piano') && !instruments.includes('strings') && !instruments.includes('bass')) {
                                     playNote(note, 4, noteDuration / 1000, 'piano', 0.7);
                                   }
-                                } catch (error) {
-                                  console.error('Error playing note:', error);
-                                }
-                              }, delay);
+                                }, delay);
+                              }
+                              
+                              currentDelay += pattern.length * noteDuration + 500;
                             }
                             
-                            currentDelay += pattern.length * noteDuration + 500;
-                          }
+                            // Add drum rhythm if complex enough
+                            if ((musicAnalysis.complexity || 5) >= 5) {
+                              const drumInterval = 60 / (musicAnalysis.tempo || 120) * 1000 / 4;
+                              console.log(`🎵 Adding drum pattern at ${drumInterval}ms intervals`);
+                              
+                              for (let beat = 0; beat < 16; beat++) {
+                                setTimeout(() => {
+                                  if (beat % 4 === 0) playDrumSound('kick', 0.8);
+                                  if (beat % 4 === 2) playDrumSound('snare', 0.7);
+                                  if (beat % 2 === 1) playDrumSound('hihat', 0.4);
+                                }, beat * drumInterval);
+                              }
+                            }
+                          }, 600);
                           
-                          // Add drum pattern
-                          if (musicAnalysis.complexity >= 5) {
-                            const drumInterval = 60 / musicAnalysis.tempo * 1000 / 4;
-                            
-                            for (let beat = 0; beat < 16; beat++) {
-                              setTimeout(() => {
-                                try {
-                                  console.log(`Playing drum beat ${beat}`);
-                                  if (beat % 4 === 0) {
-                                    playDrumSound('kick', 0.8);
-                                  }
-                                  if (beat % 4 === 2) {
-                                    playDrumSound('snare', 0.7);
-                                  }
-                                  if (beat % 2 === 1) {
-                                    playDrumSound('hihat', 0.4);
-                                  }
-                                } catch (error) {
-                                  console.error('Error playing drum:', error);
-                                }
-                              }, beat * drumInterval);
-                            }
-                          }
+                        } catch (error) {
+                          console.error("🎵 Audio initialization failed:", error);
+                          toast({ title: "Audio Error", description: "Failed to initialize audio. Please check browser permissions.", variant: "destructive" });
+                          return;
                         }
                         
                         toast({ 
