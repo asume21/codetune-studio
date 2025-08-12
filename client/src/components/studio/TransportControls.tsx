@@ -1,4 +1,5 @@
 import { useState, useContext } from "react";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,6 +30,12 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
   const [newPlaylistName, setNewPlaylistName] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showPlaylistDropdown, setShowPlaylistDropdown] = useState(false);
+  const [isDocked, setIsDocked] = useState(true);
+  const [isFloating, setIsFloating] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [position, setPosition] = useState({ x: 50, y: 50 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   
   const { setMasterVolume, initialize, isInitialized } = useAudio();
   const { playPattern, stopPattern, isPlaying: sequencerPlaying } = useSequencer();
@@ -201,10 +208,146 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
     createPlaylistMutation.mutate(newPlaylistName.trim());
   };
 
+  const handleFloat = () => {
+    setIsDocked(false);
+    setIsFloating(true);
+    setIsMinimized(false);
+    // Center the floating controls
+    const centerX = window.innerWidth / 2 - 400; // Half of min-width
+    const centerY = window.innerHeight / 2 - 100;
+    setPosition({ x: Math.max(0, centerX), y: Math.max(0, centerY) });
+  };
+
+  const handleDock = () => {
+    setIsFloating(false);
+    setIsDocked(true);
+    setIsMinimized(false);
+  };
+
+  const handleMinimize = () => {
+    setIsMinimized(!isMinimized);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!isFloating) return;
+    // Only allow dragging from header area, not buttons
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('[role="button"]')) return;
+    
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    });
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging || !isFloating) return;
+    
+    const newX = e.clientX - dragOffset.x;
+    const newY = e.clientY - dragOffset.y;
+    
+    // Keep within viewport bounds
+    const maxX = window.innerWidth - 800; // min-width of floating panel
+    const maxY = window.innerHeight - 200; // approximate height
+    
+    setPosition({
+      x: Math.max(0, Math.min(newX, maxX)),
+      y: Math.max(0, Math.min(newY, maxY)),
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Add mouse event listeners for dragging
+  React.useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragOffset]);
+
+  const containerClasses = isFloating 
+    ? `fixed bg-studio-panel border border-gray-600 rounded-lg shadow-2xl px-6 py-4 z-50 min-w-[800px] ${isDragging ? 'cursor-grabbing' : ''} ${isMinimized ? 'pb-4' : ''}`
+    : "bg-studio-panel border-t border-gray-700 px-6 py-4";
+
+  const containerStyle = isFloating 
+    ? { 
+        left: `${position.x}px`, 
+        top: `${position.y}px`,
+        transform: 'none'
+      } 
+    : {};
+
   return (
-    <div className="bg-studio-panel border-t border-gray-700 px-6 py-4">
-      {/* Play Mode Toggle */}
-      <div className="mb-3 flex items-center justify-center gap-4 p-2 bg-gray-800 rounded-lg">
+    <div 
+      className={containerClasses}
+      style={containerStyle}
+      onMouseDown={isFloating ? handleMouseDown : undefined}
+    >
+      {/* Dock/Float Controls */}
+      <div className={`absolute ${isFloating ? 'top-10' : 'top-2'} right-2 flex items-center space-x-1`}>
+        {isFloating && (
+          <Button
+            onClick={handleDock}
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0 text-xs hover:bg-gray-600"
+            title="Dock to bottom"
+          >
+            <i className="fas fa-anchor text-gray-400"></i>
+          </Button>
+        )}
+        {isDocked && (
+          <Button
+            onClick={handleFloat}
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0 text-xs hover:bg-gray-600"
+            title="Float controls"
+          >
+            <i className="fas fa-external-link-alt text-gray-400"></i>
+          </Button>
+        )}
+      </div>
+
+      {/* Floating drag handle */}
+      {isFloating && (
+        <div 
+          className="absolute top-0 left-0 right-0 h-8 bg-gray-700 rounded-t-lg flex items-center justify-center cursor-grab hover:bg-gray-600 transition-colors"
+          onMouseDown={handleMouseDown}
+        >
+          <div className="flex items-center space-x-2">
+            <div className="flex space-x-1">
+              <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+              <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+              <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+            </div>
+            <span className="text-xs text-gray-400 font-medium">Transport Controls</span>
+            <Button
+              onClick={handleMinimize}
+              size="sm"
+              variant="ghost"
+              className="h-5 w-5 p-0 text-xs hover:bg-gray-600 ml-auto mr-2"
+              title={isMinimized ? "Expand" : "Minimize"}
+            >
+              <i className={`fas ${isMinimized ? 'fa-expand' : 'fa-minus'} text-gray-400 text-xs`}></i>
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Main content - hidden when minimized */}
+      {(!isFloating || !isMinimized) && (
+        <>
+          {/* Play Mode Toggle */}
+          <div className={`mb-3 flex items-center justify-center gap-4 p-2 bg-gray-800 rounded-lg relative ${isFloating ? 'mt-8' : ''}`}>
         <span className="text-xs font-medium text-gray-300">
           {studioContext.playMode === 'current' ? 'Current Tool Only' : 'All Tools Combined'}
         </span>
@@ -382,6 +525,8 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }
