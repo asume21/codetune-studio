@@ -375,7 +375,9 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
               className="h-6 w-6 p-0 text-xs hover:bg-gray-600 bg-gray-800 border border-gray-500"
               title={isMinimized ? "Expand controls" : "Minimize controls"}
             >
-              <i className={`fas ${isMinimized ? 'fa-expand-arrows-alt' : 'fa-window-minimize'} text-yellow-400 text-sm font-bold`}></i>
+              <span className="text-white text-lg font-bold leading-none">
+                {isMinimized ? "+" : "−"}
+              </span>
             </Button>
             <Button
               onClick={handleDock}
