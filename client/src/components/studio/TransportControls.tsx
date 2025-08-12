@@ -375,7 +375,7 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
               className="h-6 w-6 p-0 text-xs hover:bg-gray-600"
               title={isMinimized ? "Expand controls" : "Minimize controls"}
             >
-              <i className={`fas ${isMinimized ? 'fa-expand-alt' : 'fa-minus'} text-gray-400 text-xs`}></i>
+              <i className={`fas ${isMinimized ? 'fa-expand-alt' : 'fa-minus'} text-white text-sm`}></i>
             </Button>
             <Button
               onClick={handleDock}
@@ -384,7 +384,7 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
               className="h-6 w-6 p-0 text-xs hover:bg-gray-600"
               title="Dock to bottom"
             >
-              <i className="fas fa-anchor text-gray-400 text-xs"></i>
+              <i className="fas fa-anchor text-white text-sm"></i>
             </Button>
           </div>
         </div>
