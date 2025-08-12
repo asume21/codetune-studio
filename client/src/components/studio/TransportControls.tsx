@@ -333,7 +333,7 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
   }, [isDragging, dragOffset]);
 
   const containerClasses = isFloating 
-    ? `fixed bg-studio-panel border border-gray-600 rounded-lg shadow-2xl px-6 py-4 z-50 min-w-[800px] ${isDragging ? 'cursor-grabbing' : ''} ${isMinimized ? 'pb-4' : ''}`
+    ? `fixed bg-studio-panel border border-gray-600 rounded-lg shadow-2xl px-6 z-50 min-w-[800px] ${isDragging ? 'cursor-grabbing' : ''} ${isMinimized ? 'h-auto pb-2' : 'py-4'}`
     : "bg-studio-panel border-t border-gray-700 px-6 py-4";
 
   const containerStyle = isFloating 
@@ -352,10 +352,10 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
     >
 
 
-      {/* Floating drag handle */}
+      {/* Floating drag handle with minimize */}
       {isFloating && (
         <div 
-          className="absolute top-0 left-0 right-0 h-8 bg-gray-700 rounded-t-lg flex items-center justify-center cursor-grab hover:bg-gray-600 transition-colors"
+          className="absolute top-0 left-0 right-0 h-8 bg-gray-700 rounded-t-lg flex items-center justify-between px-3 cursor-grab hover:bg-gray-600 transition-colors"
           onMouseDown={handleMouseDown}
         >
           <div className="flex items-center space-x-2">
@@ -365,20 +365,32 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
               <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
             </div>
             <span className="text-xs text-gray-400 font-medium">Transport Controls</span>
+          </div>
+          
+          <div className="flex items-center space-x-1">
             <Button
               onClick={handleMinimize}
               size="sm"
               variant="ghost"
-              className="h-5 w-5 p-0 text-xs hover:bg-gray-600 ml-auto mr-2"
-              title={isMinimized ? "Expand" : "Minimize"}
+              className="h-6 w-6 p-0 text-xs hover:bg-gray-600"
+              title={isMinimized ? "Expand controls" : "Minimize controls"}
             >
-              <i className={`fas ${isMinimized ? 'fa-expand' : 'fa-minus'} text-gray-400 text-xs`}></i>
+              <i className={`fas ${isMinimized ? 'fa-expand-alt' : 'fa-minus'} text-gray-400 text-xs`}></i>
+            </Button>
+            <Button
+              onClick={handleDock}
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0 text-xs hover:bg-gray-600"
+              title="Dock to bottom"
+            >
+              <i className="fas fa-anchor text-gray-400 text-xs"></i>
             </Button>
           </div>
         </div>
       )}
 
-      {/* Main content - hidden when minimized */}
+      {/* Main content - hidden when floating and minimized */}
       {(!isFloating || !isMinimized) && (
         <>
           {/* Tool Audio Controls */}
