@@ -350,31 +350,7 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
       style={containerStyle}
       onMouseDown={isFloating ? handleMouseDown : undefined}
     >
-      {/* Slick Float Button - Visible Inside Transport */}
-      <div className={`absolute ${isFloating ? 'top-3' : 'top-2'} left-1/2 transform -translate-x-1/2 z-10`}>
-        {isFloating && (
-          <div className="flex items-center space-x-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full px-4 py-2 shadow-lg border border-blue-400 animate-pulse">
-            <Button
-              onClick={handleDock}
-              size="sm"
-              variant="ghost"
-              className="h-8 w-8 p-0 text-white hover:bg-blue-500 rounded-full"
-              title="Dock to bottom"
-            >
-              <i className="fas fa-anchor"></i>
-            </Button>
-            <span className="text-white font-semibold text-sm">DOCK CONTROLS</span>
-          </div>
-        )}
-        {isDocked && (
-          <div className="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full px-4 py-2 shadow-xl border-2 border-green-300 hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer animate-pulse"
-               onClick={handleFloat}>
-            <i className="fas fa-rocket text-white animate-bounce"></i>
-            <span className="text-white font-bold text-xs tracking-wide">FLOAT</span>
-            <i className="fas fa-arrow-up text-white"></i>
-          </div>
-        )}
-      </div>
+
 
       {/* Floating drag handle */}
       {isFloating && (
@@ -418,6 +394,29 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
                 />
                 <span className="text-xs text-gray-400">All</span>
               </div>
+              
+              {/* Small Float/Dock Button */}
+              {isFloating ? (
+                <Button
+                  onClick={handleDock}
+                  size="sm"
+                  variant="outline"
+                  className="h-6 w-12 text-xs bg-blue-600 hover:bg-blue-500 text-white border-blue-500"
+                  title="Dock to bottom"
+                >
+                  Dock
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleFloat}
+                  size="sm" 
+                  variant="outline"
+                  className="h-6 w-12 text-xs bg-green-600 hover:bg-green-500 text-white border-green-500"
+                  title="Float controls"
+                >
+                  Float
+                </Button>
+              )}
             </div>
             
             {/* Tool-specific play button */}
