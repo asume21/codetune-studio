@@ -32,6 +32,10 @@ export const StudioAudioContext = createContext({
   playMode: 'current' as 'current' | 'all',
   setPlayMode: (mode: 'current' | 'all') => {},
   activeTab: 'beatmaker' as string,
+  currentPlaylist: null as any,
+  setCurrentPlaylist: (playlist: any) => {},
+  currentPlaylistIndex: 0 as number,
+  setCurrentPlaylistIndex: (index: number) => {},
   setCurrentPattern: (pattern: any) => {},
   setCurrentMelody: (melody: any[]) => {},
   setCurrentLyrics: (lyrics: string) => {},
@@ -55,6 +59,8 @@ export default function Studio() {
   const [isStudioPlaying, setIsStudioPlaying] = useState(false);
   const [studioBpm, setStudioBpm] = useState(120);
   const [playMode, setPlayMode] = useState<'current' | 'all'>('current'); // New play mode state
+  const [currentPlaylist, setCurrentPlaylist] = useState<any>(null); // Current active playlist
+  const [currentPlaylistIndex, setCurrentPlaylistIndex] = useState(0); // Current song in playlist
   
   const { initialize, isInitialized } = useAudio();
 
@@ -98,6 +104,14 @@ export default function Studio() {
         console.log("🎵 Playing lyrics only:", currentLyrics);
         // Could trigger text-to-speech or backing track
         break;
+      case "playlist":
+        console.log("🎵 Playing playlist:", currentPlaylist);
+        // Play current playlist or current song in playlist
+        if (currentPlaylist && currentPlaylist.songs && currentPlaylist.songs.length > 0) {
+          const currentSong = currentPlaylist.songs[currentPlaylistIndex];
+          console.log("🎵 Playing playlist song:", currentSong);
+        }
+        break;
       default:
         console.log("🎵 Playing default audio for:", activeTab);
         break;
@@ -125,6 +139,7 @@ export default function Studio() {
       "layers": "Dynamic Layering",
       "upload": "Song Uploader",
       "midi": "MIDI Controller",
+      "playlist": "Playlist Manager",
       "metrics": "Performance Metrics"
     };
     return toolNames[tab] || "Beat Maker";
@@ -142,7 +157,7 @@ export default function Studio() {
     console.log("- Code Music:", currentCodeMusic);
     console.log("- Layers:", currentLayers);
     
-    // Trigger all tools to play simultaneously
+    // Trigger all tools to play simultaneously, including playlist if available
     if (window.dispatchEvent) {
       window.dispatchEvent(new CustomEvent('playAllTools', {
         detail: {
@@ -151,6 +166,8 @@ export default function Studio() {
           lyrics: currentLyrics,
           codeMusic: currentCodeMusic,
           layers: currentLayers,
+          playlist: currentPlaylist,
+          playlistIndex: currentPlaylistIndex,
           bpm: studioBpm
         }
       }));
@@ -174,6 +191,10 @@ export default function Studio() {
     playMode,
     setPlayMode,
     activeTab,
+    currentPlaylist,
+    setCurrentPlaylist,
+    currentPlaylistIndex,
+    setCurrentPlaylistIndex,
     setCurrentPattern,
     setCurrentMelody,
     setCurrentLyrics,

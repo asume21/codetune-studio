@@ -95,8 +95,35 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
         return "AI Generated Music";
       case "assistant":
         return "Assistant Demo Audio";
+      case "playlist":
+        if (studioContext.currentPlaylist && studioContext.currentPlaylist.songs) {
+          const currentSong = studioContext.currentPlaylist.songs[studioContext.currentPlaylistIndex];
+          return currentSong ? `${currentSong.name} (${studioContext.currentPlaylistIndex + 1}/${studioContext.currentPlaylist.songs.length})` 
+                              : `${studioContext.currentPlaylist.name} - Empty`;
+        }
+        return "No Playlist Selected";
       default:
         return "Demo Audio Pattern";
+    }
+  };
+
+  const handlePrevious = () => {
+    if (activeTab === "playlist" && studioContext.currentPlaylist && studioContext.currentPlaylist.songs) {
+      const newIndex = studioContext.currentPlaylistIndex > 0 
+        ? studioContext.currentPlaylistIndex - 1 
+        : studioContext.currentPlaylist.songs.length - 1;
+      studioContext.setCurrentPlaylistIndex(newIndex);
+      console.log(`🎵 Previous track: ${newIndex + 1}/${studioContext.currentPlaylist.songs.length}`);
+    }
+  };
+
+  const handleNext = () => {
+    if (activeTab === "playlist" && studioContext.currentPlaylist && studioContext.currentPlaylist.songs) {
+      const newIndex = studioContext.currentPlaylistIndex < studioContext.currentPlaylist.songs.length - 1
+        ? studioContext.currentPlaylistIndex + 1 
+        : 0;
+      studioContext.setCurrentPlaylistIndex(newIndex);
+      console.log(`🎵 Next track: ${newIndex + 1}/${studioContext.currentPlaylist.songs.length}`);
     }
   };
 
@@ -122,7 +149,13 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
       <div className="mb-2 text-xs text-gray-400 text-center">
         <strong>Mode:</strong> {studioContext.playMode === 'current' ? `Playing ${currentTool} only` : "Playing ALL tools combined"} | 
         <strong> Status:</strong> {isPlaying ? "Playing" : "Ready"} | 
-        <strong> Tool:</strong> {currentTool}
+        <strong> Content:</strong> {getPlayingContent(activeTab)}
+        {activeTab === "playlist" && studioContext.currentPlaylist && (
+          <div className="mt-1">
+            <strong>Playlist:</strong> {studioContext.currentPlaylist.name} | 
+            <strong> Track:</strong> {studioContext.currentPlaylistIndex + 1}/{studioContext.currentPlaylist.songs?.length || 0}
+          </div>
+        )}
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -130,9 +163,10 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
           <div className="flex items-center space-x-6">
             <div className="flex flex-col items-center space-y-1">
               <Button
+                onClick={handlePrevious}
                 variant="secondary"
                 className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-                title="Previous Track - Go to previous song or beat pattern"
+                title={activeTab === "playlist" ? "Previous Song in Playlist" : "Previous Track - Go to previous song or beat pattern"}
               >
                 <i className="fas fa-step-backward"></i>
               </Button>
@@ -169,9 +203,10 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
 
             <div className="flex flex-col items-center space-y-1">
               <Button
+                onClick={handleNext}
                 variant="secondary"
                 className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-                title="Next Track - Go to next song or beat pattern"
+                title={activeTab === "playlist" ? "Next Song in Playlist" : "Next Track - Go to next song or beat pattern"}
               >
                 <i className="fas fa-step-forward"></i>
               </Button>

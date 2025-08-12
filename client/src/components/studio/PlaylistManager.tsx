@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,12 +7,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { StudioAudioContext } from "@/pages/studio";
 import type { Playlist, Song } from "@shared/schema";
 
 export default function PlaylistManager() {
   const [newPlaylistName, setNewPlaylistName] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const { toast } = useToast();
+  const studioContext = useContext(StudioAudioContext);
 
   const { data: playlists, isLoading: playlistsLoading } = useQuery<Playlist[]>({
     queryKey: ['/api/playlists'],
@@ -94,6 +96,32 @@ export default function PlaylistManager() {
     addSongToPlaylistMutation.mutate({ playlistId, songId });
   };
 
+  const handleSetActivePlaylist = async (playlist: Playlist) => {
+    try {
+      // Fetch playlist songs
+      const response = await apiRequest("GET", `/api/playlists/${playlist.id}/songs`, {});
+      const playlistWithSongs = await response.json();
+      
+      // Set as active playlist in studio context
+      studioContext.setCurrentPlaylist({
+        ...playlist,
+        songs: playlistWithSongs
+      });
+      studioContext.setCurrentPlaylistIndex(0);
+      
+      toast({
+        title: "Active Playlist Set",
+        description: `${playlist.name} is now your active playlist. Use the main play button to play it.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to set active playlist.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="p-6 border-b border-gray-600 flex-shrink-0">
@@ -101,6 +129,11 @@ export default function PlaylistManager() {
           <h2 className="text-2xl font-heading font-bold">Playlist Manager</h2>
           <div className="text-xs text-gray-400 px-2">
             <div>Organize your uploaded songs into playlists</div>
+            {studioContext.currentPlaylist && (
+              <div className="mt-1 text-studio-accent font-medium">
+                🎵 Active: {studioContext.currentPlaylist.name}
+              </div>
+            )}
           </div>
         </div>
 
@@ -190,6 +223,15 @@ export default function PlaylistManager() {
                         {playlist.name}
                       </CardTitle>
                       <div className="flex items-center space-x-2">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => handleSetActivePlaylist(playlist)}
+                          className="bg-studio-accent hover:bg-blue-500"
+                        >
+                          <i className="fas fa-play mr-1"></i>
+                          Set Active
+                        </Button>
                         <Button
                           size="sm"
                           variant="destructive"
