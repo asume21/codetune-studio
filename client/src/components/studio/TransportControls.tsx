@@ -1,8 +1,15 @@
 import { useState, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAudio, useSequencer } from "@/hooks/use-audio";
 import { StudioAudioContext } from "@/pages/studio";
+import type { Playlist } from "@shared/schema";
 
 // Remove the duplicate AudioContext since we're using StudioAudioContext from pages/studio.tsx
 
@@ -19,10 +26,41 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
   const [bar] = useState(1);
   const [beat] = useState(1);
   const [volume, setVolume] = useState(75);
+  const [newPlaylistName, setNewPlaylistName] = useState("");
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showPlaylistDropdown, setShowPlaylistDropdown] = useState(false);
   
   const { setMasterVolume, initialize, isInitialized } = useAudio();
   const { playPattern, stopPattern, isPlaying: sequencerPlaying } = useSequencer();
   const studioContext = useContext(StudioAudioContext);
+  const { toast } = useToast();
+
+  // Fetch playlists
+  const { data: playlists } = useQuery<Playlist[]>({
+    queryKey: ['/api/playlists'],
+    initialData: [],
+  });
+
+  // Create playlist mutation
+  const createPlaylistMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const response = await apiRequest("POST", "/api/playlists", {
+        name,
+        description: `Playlist created on ${new Date().toLocaleDateString()}`,
+        isPublic: false,
+      });
+      return response.json();
+    },
+    onSuccess: (newPlaylist: Playlist) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/playlists'] });
+      setNewPlaylistName("");
+      setShowCreateDialog(false);
+      toast({
+        title: "Playlist Created",
+        description: `${newPlaylist.name} has been created!`,
+      });
+    },
+  });
 
   const handlePlay = async () => {
     try {
@@ -125,6 +163,42 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
       studioContext.setCurrentPlaylistIndex(newIndex);
       console.log(`🎵 Next track: ${newIndex + 1}/${studioContext.currentPlaylist.songs.length}`);
     }
+  };
+
+  const handleSetActivePlaylist = async (playlist: Playlist) => {
+    try {
+      const response = await apiRequest("GET", `/api/playlists/${playlist.id}/songs`, {});
+      const playlistWithSongs = await response.json();
+      
+      studioContext.setCurrentPlaylist({
+        ...playlist,
+        songs: playlistWithSongs
+      });
+      studioContext.setCurrentPlaylistIndex(0);
+      
+      toast({
+        title: "Active Playlist Set",
+        description: `${playlist.name} is now active. Use play button to start.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to set active playlist.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCreatePlaylist = () => {
+    if (!newPlaylistName.trim()) {
+      toast({
+        title: "Invalid Name",
+        description: "Please enter a playlist name.",
+        variant: "destructive",
+      });
+      return;
+    }
+    createPlaylistMutation.mutate(newPlaylistName.trim());
   };
 
   return (
@@ -240,13 +314,60 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
           </div>
         </div>
 
+        {/* Playlist Management */}
         <div className="flex items-center space-x-4">
-          <Button
-            variant="secondary"
-            className="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm transition-colors"
-          >
-            <i className="fas fa-cog mr-2"></i>Settings
-          </Button>
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-gray-400">Playlists:</span>
+            <Select 
+              value={studioContext.currentPlaylist?.id || ""} 
+              onValueChange={(playlistId) => {
+                const playlist = playlists?.find(p => p.id === playlistId);
+                if (playlist) handleSetActivePlaylist(playlist);
+              }}
+            >
+              <SelectTrigger className="w-32 h-8 bg-gray-700 border-gray-600 text-xs">
+                <SelectValue placeholder="Select..." />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-600">
+                {playlists?.map((playlist) => (
+                  <SelectItem key={playlist.id} value={playlist.id}>
+                    {playlist.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button variant="secondary" size="sm" className="h-8 bg-gray-700 hover:bg-gray-600 text-xs">
+                <i className="fas fa-plus mr-1"></i>New
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-gray-800 border-gray-600">
+              <DialogHeader>
+                <DialogTitle>Create New Playlist</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  placeholder="Enter playlist name..."
+                  value={newPlaylistName}
+                  onChange={(e) => setNewPlaylistName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleCreatePlaylist()}
+                  className="bg-gray-700 border-gray-600"
+                />
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreatePlaylist} disabled={createPlaylistMutation.isPending}>
+                    {createPlaylistMutation.isPending ? 'Creating...' : 'Create'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <div className="flex items-center space-x-2">
             <i className="fas fa-volume-up text-gray-400"></i>
             <input

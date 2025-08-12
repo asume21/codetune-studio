@@ -20,7 +20,6 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     { id: "musicmixer", icon: "fas fa-sliders-h", label: "Music Mixer" },
     { id: "mixer", icon: "fas fa-sliders-v", label: "Track Mixer" },
     { id: "midi", icon: "fas fa-piano", label: "MIDI Controller" },
-    { id: "playlist", icon: "fas fa-list-music", label: "Playlist Manager" },
     { id: "metrics", icon: "fas fa-chart-line", label: "Performance Metrics" },
   ];
 
@@ -66,7 +65,6 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             {activeTab === "musicmixer" && "Mix beats, melodies & lyrics together"}
             {activeTab === "mixer" && "Mix and master individual tracks"}
             {activeTab === "midi" && "Connect physical MIDI controllers"}
-            {activeTab === "playlist" && "Create and manage music playlists"}
             {activeTab === "metrics" && "AI music generation analytics"}
           </div>
         </div>
