@@ -350,8 +350,8 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
       style={containerStyle}
       onMouseDown={isFloating ? handleMouseDown : undefined}
     >
-      {/* Slick Float Button - Center Top with Animation */}
-      <div className={`absolute ${isFloating ? 'top-3' : '-top-8'} left-1/2 transform -translate-x-1/2 z-10`}>
+      {/* Slick Float Button - Visible Inside Transport */}
+      <div className={`absolute ${isFloating ? 'top-3' : 'top-2'} left-1/2 transform -translate-x-1/2 z-10`}>
         {isFloating && (
           <div className="flex items-center space-x-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full px-4 py-2 shadow-lg border border-blue-400 animate-pulse">
             <Button
@@ -367,13 +367,11 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
           </div>
         )}
         {isDocked && (
-          <div className="flex items-center space-x-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full px-6 py-3 shadow-xl border-2 border-green-300 hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer"
+          <div className="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full px-4 py-2 shadow-xl border-2 border-green-300 hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer animate-pulse"
                onClick={handleFloat}>
-            <div className="flex items-center space-x-2">
-              <i className="fas fa-rocket text-white text-lg animate-bounce"></i>
-              <span className="text-white font-bold text-sm tracking-wide">FLOAT TRANSPORT</span>
-              <i className="fas fa-arrow-up text-white"></i>
-            </div>
+            <i className="fas fa-rocket text-white animate-bounce"></i>
+            <span className="text-white font-bold text-xs tracking-wide">FLOAT</span>
+            <i className="fas fa-arrow-up text-white"></i>
           </div>
         )}
       </div>
@@ -408,7 +406,7 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
       {(!isFloating || !isMinimized) && (
         <>
           {/* Tool Audio Controls */}
-          <div className={`mb-3 flex items-center justify-between gap-4 p-3 bg-gray-800 rounded-lg relative ${isFloating ? 'mt-8' : ''}`}>
+          <div className={`mb-3 flex items-center justify-between gap-4 p-3 bg-gray-800 rounded-lg relative ${isFloating ? 'mt-8' : 'mt-8'}`}>
             <div className="flex items-center gap-4">
               <span className="text-xs font-medium text-gray-300">Tool Audio:</span>
               <div className="flex items-center gap-2">
