@@ -16,6 +16,8 @@ import DynamicLayering from "@/components/studio/DynamicLayering";
 import SongUploader from "@/components/studio/SongUploader";
 import { MIDIController } from "@/components/studio/MIDIController";
 import { PerformanceMetrics } from "@/components/studio/PerformanceMetrics";
+import { IOSAudioEnable } from "@/components/IOSAudioEnable";
+import MobileNav from "@/components/studio/MobileNav";
 // PlaylistManager integrated into TransportControls
 import { useAudio } from "@/hooks/use-audio";
 import { AIMessageProvider } from "@/contexts/AIMessageContext";
@@ -104,8 +106,8 @@ export default function Studio() {
         console.log("🎵 Playing lyrics only:", currentLyrics);
         // Could trigger text-to-speech or backing track
         break;
-      case "playlist":
-        console.log("🎵 Playing playlist:", currentPlaylist);
+      case "upload":
+        console.log("🎵 Playing uploaded song:", currentPlaylist);
         // Play current playlist or current song in playlist
         if (currentPlaylist && currentPlaylist.songs && currentPlaylist.songs.length > 0) {
           const currentSong = currentPlaylist.songs[currentPlaylistIndex];
@@ -247,11 +249,14 @@ export default function Studio() {
           <Header />
         
           <div className="flex-1 flex overflow-hidden">
-            <Sidebar activeTab={activeTab} onTabChange={(tab: string) => setActiveTab(tab as Tab)} />
+            {/* Mobile responsive sidebar */}
+            <div className="hidden md:block">
+              <Sidebar activeTab={activeTab} onTabChange={(tab: string) => setActiveTab(tab as Tab)} />
+            </div>
             
             <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="flex-1 overflow-auto">
-                <div className="min-w-max p-6">
+              <div className="flex-1 overflow-auto pb-16 md:pb-0">
+                <div className="min-w-max p-3 md:p-6 studio-content">
                   {renderTabContent()}
                 </div>
               </div>
@@ -259,6 +264,12 @@ export default function Studio() {
               <TransportControls currentTool={getActiveToolName(activeTab)} activeTab={activeTab} />
             </div>
           </div>
+          
+          {/* Mobile Bottom Navigation */}
+          <MobileNav activeTab={activeTab} onTabChange={(tab: string) => setActiveTab(tab as Tab)} />
+          
+          {/* iOS Audio Enable Button */}
+          <IOSAudioEnable />
         </div>
       </StudioAudioContext.Provider>
     </AIMessageProvider>

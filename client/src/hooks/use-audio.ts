@@ -7,6 +7,56 @@ import { useToast } from "@/hooks/use-toast";
 let globalAudioInitialized = false;
 const audioInitCallbacks: (() => void)[] = [];
 
+// iPhone/iOS audio context management
+let iOSAudioContext: AudioContext | null = null;
+let iOSAudioInitialized = false;
+
+// Function to detect if we're on iOS
+function isIOS(): boolean {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+// Function to enable audio on iOS (requires user gesture)
+async function enableIOSAudio(): Promise<void> {
+  if (!isIOS() || iOSAudioInitialized) return;
+  
+  try {
+    // Create audio context if it doesn't exist
+    if (!iOSAudioContext) {
+      iOSAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    
+    // Resume the audio context (required after user gesture on iOS)
+    if (iOSAudioContext.state === 'suspended') {
+      await iOSAudioContext.resume();
+    }
+    
+    // Play a silent sound to fully enable audio
+    const oscillator = iOSAudioContext.createOscillator();
+    const gainNode = iOSAudioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(iOSAudioContext.destination);
+    
+    gainNode.gain.setValueAtTime(0, iOSAudioContext.currentTime);
+    oscillator.frequency.setValueAtTime(440, iOSAudioContext.currentTime);
+    
+    oscillator.start(iOSAudioContext.currentTime);
+    oscillator.stop(iOSAudioContext.currentTime + 0.1);
+    
+    iOSAudioInitialized = true;
+    console.log('✅ iOS audio enabled successfully');
+    
+    // Trigger any waiting callbacks
+    audioInitCallbacks.forEach(callback => callback());
+    audioInitCallbacks.length = 0;
+    
+  } catch (error) {
+    console.error('Failed to enable iOS audio:', error);
+  }
+}
+
 // Note frequency calculation helper
 function getNoteFrequency(note: string, octave: number = 4): number {
   const noteMap: { [key: string]: number } = {
@@ -31,6 +81,9 @@ interface UseAudioReturn {
   initialize: () => Promise<void>;
   useRealisticSounds: boolean;
   toggleRealisticSounds: () => void;
+  isIOSDevice: boolean;
+  needsIOSAudioEnable: boolean;
+  enableIOSAudio: () => Promise<void>;
 }
 
 // Sequencer hook for beat patterns
@@ -260,22 +313,31 @@ export function useAudio(): UseAudioReturn {
     }
   }, []);
 
-  // Initialize audio on first user interaction
+  // Initialize audio on first user interaction (especially important for iOS)
   useEffect(() => {
-    const handleFirstInteraction = () => {
-      if (!globalAudioInitialized) {
-        initialize();
+    const handleFirstInteraction = async () => {
+      // Enable iOS audio first if needed
+      if (isIOS() && !iOSAudioInitialized) {
+        await enableIOSAudio();
       }
+      
+      if (!globalAudioInitialized) {
+        await initialize();
+      }
+      
       document.removeEventListener("click", handleFirstInteraction);
       document.removeEventListener("keydown", handleFirstInteraction);
+      document.removeEventListener("touchstart", handleFirstInteraction);
     };
 
     document.addEventListener("click", handleFirstInteraction);
     document.addEventListener("keydown", handleFirstInteraction);
+    document.addEventListener("touchstart", handleFirstInteraction); // Important for mobile
 
     return () => {
       document.removeEventListener("click", handleFirstInteraction);
       document.removeEventListener("keydown", handleFirstInteraction);
+      document.removeEventListener("touchstart", handleFirstInteraction);
     };
   }, [initialize]);
 
@@ -295,5 +357,8 @@ export function useAudio(): UseAudioReturn {
     initialize,
     useRealisticSounds,
     toggleRealisticSounds,
+    isIOSDevice: isIOS(),
+    needsIOSAudioEnable: isIOS() && !iOSAudioInitialized,
+    enableIOSAudio,
   };
 }
