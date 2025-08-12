@@ -350,33 +350,32 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
       style={containerStyle}
       onMouseDown={isFloating ? handleMouseDown : undefined}
     >
-      {/* Dock/Float Controls - Center Top */}
-      <div className={`absolute ${isFloating ? 'top-2' : '-top-6'} left-1/2 transform -translate-x-1/2 flex items-center space-x-2 bg-gray-800 rounded-md p-1 border border-gray-600`}>
+      {/* Slick Float Button - Center Top with Animation */}
+      <div className={`absolute ${isFloating ? 'top-3' : '-top-8'} left-1/2 transform -translate-x-1/2 z-10`}>
         {isFloating && (
-          <Button
-            onClick={handleDock}
-            size="sm"
-            variant="default"
-            className="h-6 w-6 p-0 text-xs bg-blue-600 hover:bg-blue-500"
-            title="Dock to bottom"
-          >
-            <i className="fas fa-anchor text-white"></i>
-          </Button>
+          <div className="flex items-center space-x-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full px-4 py-2 shadow-lg border border-blue-400 animate-pulse">
+            <Button
+              onClick={handleDock}
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-white hover:bg-blue-500 rounded-full"
+              title="Dock to bottom"
+            >
+              <i className="fas fa-anchor"></i>
+            </Button>
+            <span className="text-white font-semibold text-sm">DOCK CONTROLS</span>
+          </div>
         )}
         {isDocked && (
-          <Button
-            onClick={handleFloat}
-            size="sm"
-            variant="default"
-            className="h-6 w-6 p-0 text-xs bg-green-600 hover:bg-green-500"
-            title="Float controls - Detach from bottom"
-          >
-            <i className="fas fa-external-link-alt text-white"></i>
-          </Button>
+          <div className="flex items-center space-x-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full px-6 py-3 shadow-xl border-2 border-green-300 hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer"
+               onClick={handleFloat}>
+            <div className="flex items-center space-x-2">
+              <i className="fas fa-rocket text-white text-lg animate-bounce"></i>
+              <span className="text-white font-bold text-sm tracking-wide">FLOAT TRANSPORT</span>
+              <i className="fas fa-arrow-up text-white"></i>
+            </div>
+          </div>
         )}
-        <span className="text-xs text-gray-300 font-medium">
-          {isDocked ? "Float" : "Dock"}
-        </span>
       </div>
 
       {/* Floating drag handle */}
