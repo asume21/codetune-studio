@@ -96,7 +96,12 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
         console.log("🎵 Playing pattern:", currentPattern);
         playPattern(currentPattern, studioContext.bpm || 120);
 
-        if (studioContext.playMode === 'all') {
+        // Smart playback logic based on active tab and context
+        if (activeTab === "playlist" && studioContext.currentPlaylist?.songs?.length > 0) {
+          // Priority: Playlist playback when on playlist tab with active playlist
+          console.log("🎵 Playing from active playlist");
+          await studioContext.playFullSong();
+        } else if (studioContext.playMode === 'all') {
           // Play all tools combined
           console.log("🎵 Playing ALL tools combined");
           await studioContext.playFullSong();
@@ -291,14 +296,14 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
       style={containerStyle}
       onMouseDown={isFloating ? handleMouseDown : undefined}
     >
-      {/* Dock/Float Controls - More Visible */}
-      <div className={`absolute ${isFloating ? 'top-10' : 'top-2'} right-2 flex items-center space-x-2 bg-gray-800 rounded-md p-1`}>
+      {/* Dock/Float Controls - Center Top */}
+      <div className={`absolute ${isFloating ? 'top-2' : '-top-6'} left-1/2 transform -translate-x-1/2 flex items-center space-x-2 bg-gray-800 rounded-md p-1 border border-gray-600`}>
         {isFloating && (
           <Button
             onClick={handleDock}
             size="sm"
             variant="default"
-            className="h-8 w-8 p-0 text-xs bg-blue-600 hover:bg-blue-500"
+            className="h-6 w-6 p-0 text-xs bg-blue-600 hover:bg-blue-500"
             title="Dock to bottom"
           >
             <i className="fas fa-anchor text-white"></i>
@@ -309,7 +314,7 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
             onClick={handleFloat}
             size="sm"
             variant="default"
-            className="h-8 w-8 p-0 text-xs bg-green-600 hover:bg-green-500"
+            className="h-6 w-6 p-0 text-xs bg-green-600 hover:bg-green-500"
             title="Float controls - Detach from bottom"
           >
             <i className="fas fa-external-link-alt text-white"></i>
@@ -367,12 +372,17 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
 
       {/* Master Playback Status */}
       <div className="mb-2 text-xs text-gray-400 text-center">
-        <strong>Mode:</strong> {studioContext.playMode === 'current' ? `Playing ${currentTool} only` : "Playing ALL tools combined"} | 
-        <strong> Status:</strong> {isPlaying ? "Playing" : "Ready"} | 
-        <strong> Content:</strong> {getPlayingContent(activeTab)}
+        <strong>Play Button Will:</strong> {
+          activeTab === "playlist" && studioContext.currentPlaylist?.songs?.length > 0 
+            ? `Play playlist "${studioContext.currentPlaylist.name}"`
+            : studioContext.playMode === 'current' 
+              ? `Play ${currentTool} tool only`
+              : "Play ALL tools combined"
+        } | 
+        <strong> Status:</strong> {isPlaying ? "Playing" : "Ready"}
         {activeTab === "playlist" && studioContext.currentPlaylist && (
-          <div className="mt-1">
-            <strong>Playlist:</strong> {studioContext.currentPlaylist.name} | 
+          <div className="mt-1 text-blue-300">
+            <strong>Active Playlist:</strong> {studioContext.currentPlaylist.name} | 
             <strong> Track:</strong> {studioContext.currentPlaylistIndex + 1}/{studioContext.currentPlaylist.songs?.length || 0}
           </div>
         )}
