@@ -372,10 +372,10 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
               onClick={handleMinimize}
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 text-xs hover:bg-gray-600 bg-gray-800 border border-gray-500"
+              className="h-6 w-6 p-0 text-xs hover:bg-yellow-600 bg-yellow-500 border border-yellow-400"
               title={isMinimized ? "Expand controls" : "Minimize controls"}
             >
-              <span className="text-white text-lg font-bold leading-none">
+              <span className="text-black text-lg font-bold leading-none">
                 {isMinimized ? "+" : "−"}
               </span>
             </Button>
@@ -383,10 +383,10 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
               onClick={handleDock}
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 text-xs hover:bg-gray-600"
-              title="Dock to bottom"
+              className="h-6 w-6 p-0 text-xs hover:bg-red-600 bg-red-500 border border-red-400"
+              title="Close floating window - Dock to bottom"
             >
-              <i className="fas fa-anchor text-white text-sm"></i>
+              <span className="text-white text-lg font-bold leading-none">×</span>
             </Button>
           </div>
         </div>
