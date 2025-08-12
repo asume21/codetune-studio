@@ -156,6 +156,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // File Security Scanner Route (using same AI as code scanner)
+  app.post("/api/security/scan-file", async (req, res) => {
+    try {
+      const { filename, fileInfo } = req.body;
+      
+      const { FileSecurityScanner } = await import("./services/fileSecurity.js");
+      const scanner = new FileSecurityScanner();
+      
+      const results = await scanner.analyzeFileContentWithAI(filename, fileInfo);
+      
+      res.json({
+        ...results,
+        scannedBy: "CodedSwitch AI Security Scanner",
+        scannedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("File security scan error:", error);
+      res.status(500).json({ error: "Failed to scan file for security threats" });
+    }
+  });
+
   app.get("/api/security/scans", async (req, res) => {
     try {
       const scans = await storage.getUserVulnerabilityScans(currentUserId);
@@ -436,6 +457,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { songURL, name, fileSize, duration, format } = req.body;
       console.log('🎵 Song upload request:', { songURL, name, fileSize, duration, format });
       
+      // SECURITY: Use CodedSwitch's own AI scanner to protect uploads
+      const { FileSecurityScanner } = await import("./services/fileSecurity.js");
+      const scanner = new FileSecurityScanner();
+      
+      // AI-powered security analysis using our own scanner
+      const securityScan = await scanner.analyzeFileContentWithAI(name, {
+        url: songURL,
+        fileSize,
+        duration,
+        format,
+        uploadedAt: new Date().toISOString()
+      });
+      
+      console.log('🛡️ CodedSwitch security scan result:', securityScan);
+      
+      // Block upload if security threats detected
+      if (!securityScan.isSecure) {
+        console.log('🚫 Upload blocked by CodedSwitch security scanner');
+        return res.status(400).json({
+          error: "File upload blocked by security scanner",
+          securityScan: {
+            score: securityScan.securityScore,
+            threats: securityScan.threats,
+            summary: securityScan.summary
+          }
+        });
+      }
+      
       // Convert the storage URL to accessible URL
       const objectStorageService = new ObjectStorageService();
       const accessibleUrl = objectStorageService.normalizeObjectEntityPath(songURL);
@@ -449,8 +498,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         format: format || null,
       });
       
-      console.log('🎵 Created song record:', song);
-      res.json(song);
+      console.log('🎵 Created song record with security approval:', song);
+      res.json({
+        ...song,
+        securityScan: {
+          score: securityScan.securityScore,
+          summary: securityScan.summary,
+          scannedBy: "CodedSwitch AI Security Scanner"
+        }
+      });
     } catch (error) {
       console.error("Song upload error:", error);
       res.status(500).json({ error: "Failed to save uploaded song" });
