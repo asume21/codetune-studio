@@ -291,30 +291,33 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
       style={containerStyle}
       onMouseDown={isFloating ? handleMouseDown : undefined}
     >
-      {/* Dock/Float Controls */}
-      <div className={`absolute ${isFloating ? 'top-10' : 'top-2'} right-2 flex items-center space-x-1`}>
+      {/* Dock/Float Controls - More Visible */}
+      <div className={`absolute ${isFloating ? 'top-10' : 'top-2'} right-2 flex items-center space-x-2 bg-gray-800 rounded-md p-1`}>
         {isFloating && (
           <Button
             onClick={handleDock}
             size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0 text-xs hover:bg-gray-600"
+            variant="default"
+            className="h-8 w-8 p-0 text-xs bg-blue-600 hover:bg-blue-500"
             title="Dock to bottom"
           >
-            <i className="fas fa-anchor text-gray-400"></i>
+            <i className="fas fa-anchor text-white"></i>
           </Button>
         )}
         {isDocked && (
           <Button
             onClick={handleFloat}
             size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0 text-xs hover:bg-gray-600"
-            title="Float controls"
+            variant="default"
+            className="h-8 w-8 p-0 text-xs bg-green-600 hover:bg-green-500"
+            title="Float controls - Detach from bottom"
           >
-            <i className="fas fa-external-link-alt text-gray-400"></i>
+            <i className="fas fa-external-link-alt text-white"></i>
           </Button>
         )}
+        <span className="text-xs text-gray-300 font-medium">
+          {isDocked ? "Float" : "Dock"}
+        </span>
       </div>
 
       {/* Floating drag handle */}
