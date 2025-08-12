@@ -333,7 +333,7 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
   }, [isDragging, dragOffset]);
 
   const containerClasses = isFloating 
-    ? `fixed bg-studio-panel border border-gray-600 rounded-lg shadow-2xl px-6 z-50 min-w-[800px] ${isDragging ? 'cursor-grabbing' : ''} ${isMinimized ? 'h-auto pb-2' : 'py-4'}`
+    ? `fixed bg-studio-panel border border-gray-600 rounded-lg shadow-2xl px-6 z-50 ${isDragging ? 'cursor-grabbing' : ''} ${isMinimized ? 'h-auto pb-2 min-w-[400px]' : 'py-4 min-w-[800px]'}`
     : "bg-studio-panel border-t border-gray-700 px-6 py-4";
 
   const containerStyle = isFloating 
@@ -388,6 +388,62 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
             >
               <span className="text-white text-lg font-bold leading-none">×</span>
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Minimized Controls - Show essential controls when floating and minimized */}
+      {isFloating && isMinimized && (
+        <div className="mt-8 flex items-center justify-between gap-4 px-4 py-2">
+          {/* Essential Playlist Controls */}
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handlePrevious}
+              variant="secondary"
+              className="bg-gray-700 hover:bg-gray-600 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+              title="Previous Song"
+            >
+              <i className="fas fa-step-backward text-xs"></i>
+            </Button>
+            <Button
+              onClick={handlePlay}
+              variant="default"
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                isPlaying 
+                  ? "bg-red-600 hover:bg-red-500" 
+                  : "bg-green-600 hover:bg-green-500"
+              }`}
+              title={isPlaying ? "Stop" : "Play"}
+            >
+              <i className={`fas ${isPlaying ? "fa-stop" : "fa-play"} text-white`}></i>
+            </Button>
+            <Button
+              onClick={handleNext}
+              variant="secondary"
+              className="bg-gray-700 hover:bg-gray-600 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+              title="Next Song"
+            >
+              <i className="fas fa-step-forward text-xs"></i>
+            </Button>
+          </div>
+
+          {/* Volume Control */}
+          <div className="flex items-center gap-2 min-w-[120px]">
+            <i className="fas fa-volume-down text-gray-400 text-xs"></i>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={volume}
+              onChange={(e) => {
+                const newVolume = parseInt(e.target.value);
+                setVolume(newVolume);
+                setMasterVolume(newVolume / 100);
+              }}
+              className="flex-1 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
+              title={`Volume: ${volume}%`}
+            />
+            <span className="text-xs text-gray-300 w-8">{volume}%</span>
           </div>
         </div>
       )}
