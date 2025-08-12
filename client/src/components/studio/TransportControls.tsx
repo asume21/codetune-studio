@@ -36,6 +36,7 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
   const [position, setPosition] = useState({ x: 50, y: 50 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isToolPlaying, setIsToolPlaying] = useState(false);
   
   const { setMasterVolume, initialize, isInitialized } = useAudio();
   const { playPattern, stopPattern, isPlaying: sequencerPlaying } = useSequencer();
@@ -96,19 +97,19 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
         console.log("🎵 Playing pattern:", currentPattern);
         playPattern(currentPattern, studioContext.bpm || 120);
 
-        // Smart playback logic based on active tab and context
-        if (activeTab === "playlist" && studioContext.currentPlaylist?.songs?.length > 0) {
-          // Priority: Playlist playback when on playlist tab with active playlist
+        // Dedicated playlist playback - main transport only plays playlists
+        if (studioContext.currentPlaylist?.songs?.length > 0) {
           console.log("🎵 Playing from active playlist");
           await studioContext.playFullSong();
-        } else if (studioContext.playMode === 'all') {
-          // Play all tools combined
-          console.log("🎵 Playing ALL tools combined");
-          await studioContext.playFullSong();
         } else {
-          // Play only current tool
-          console.log(`🎵 Playing current tool only: ${activeTab}`);
-          await studioContext.playCurrentAudio();
+          console.log("🎵 No playlist selected - main transport is for playlist playback only");
+          toast({
+            title: "No Playlist Selected",
+            description: "Main transport controls are for playlist playback. Select a playlist or use tool-specific play buttons.",
+            variant: "default",
+          });
+          setIsPlaying(false);
+          return;
         }
         
         setIsPlaying(true);
@@ -158,22 +159,34 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
   };
 
   const handlePrevious = () => {
-    if (activeTab === "playlist" && studioContext.currentPlaylist && studioContext.currentPlaylist.songs) {
+    if (studioContext.currentPlaylist && studioContext.currentPlaylist.songs) {
       const newIndex = studioContext.currentPlaylistIndex > 0 
         ? studioContext.currentPlaylistIndex - 1 
         : studioContext.currentPlaylist.songs.length - 1;
       studioContext.setCurrentPlaylistIndex(newIndex);
       console.log(`🎵 Previous track: ${newIndex + 1}/${studioContext.currentPlaylist.songs.length}`);
+    } else {
+      toast({
+        title: "No Playlist Active",
+        description: "Previous/Next buttons work with playlists only.",
+        variant: "default",
+      });
     }
   };
 
   const handleNext = () => {
-    if (activeTab === "playlist" && studioContext.currentPlaylist && studioContext.currentPlaylist.songs) {
+    if (studioContext.currentPlaylist && studioContext.currentPlaylist.songs) {
       const newIndex = studioContext.currentPlaylistIndex < studioContext.currentPlaylist.songs.length - 1
         ? studioContext.currentPlaylistIndex + 1 
         : 0;
       studioContext.setCurrentPlaylistIndex(newIndex);
       console.log(`🎵 Next track: ${newIndex + 1}/${studioContext.currentPlaylist.songs.length}`);
+    } else {
+      toast({
+        title: "No Playlist Active",
+        description: "Previous/Next buttons work with playlists only.",
+        variant: "default",
+      });
     }
   };
 
@@ -211,6 +224,47 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
       return;
     }
     createPlaylistMutation.mutate(newPlaylistName.trim());
+  };
+
+  const handleToolPlay = async () => {
+    try {
+      if (!isInitialized) {
+        console.log("🔧 Initializing audio for tool...");
+        await initialize();
+      }
+
+      if (isToolPlaying) {
+        console.log("🔧 Stopping tool audio...");
+        stopPattern();
+        setIsToolPlaying(false);
+      } else {
+        console.log(`🔧 Playing ${activeTab} tool audio - Mode: ${studioContext.playMode}`);
+        
+        // Always play the beat pattern as the base
+        const currentPattern = studioContext.currentPattern && Object.keys(studioContext.currentPattern).length > 0 
+          ? studioContext.currentPattern 
+          : {
+              kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
+              snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+              hihat: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+            };
+
+        playPattern(currentPattern, studioContext.bpm || 120);
+
+        if (studioContext.playMode === 'all') {
+          console.log("🔧 Playing ALL tools combined");
+          await studioContext.playFullSong();
+        } else {
+          console.log(`🔧 Playing current tool only: ${activeTab}`);
+          await studioContext.playCurrentAudio();
+        }
+        
+        setIsToolPlaying(true);
+      }
+    } catch (error) {
+      console.error("🚫 Tool play button error:", error);
+      setIsToolPlaying(false);
+    }
   };
 
   const handleFloat = () => {
@@ -354,38 +408,56 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
       {/* Main content - hidden when minimized */}
       {(!isFloating || !isMinimized) && (
         <>
-          {/* Play Mode Toggle */}
-          <div className={`mb-3 flex items-center justify-center gap-4 p-2 bg-gray-800 rounded-lg relative ${isFloating ? 'mt-8' : ''}`}>
-        <span className="text-xs font-medium text-gray-300">
-          {studioContext.playMode === 'current' ? 'Current Tool Only' : 'All Tools Combined'}
-        </span>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400">Current</span>
-          <Switch
-            checked={studioContext.playMode === 'all'}
-            onCheckedChange={(checked) => studioContext.setPlayMode(checked ? 'all' : 'current')}
-            className="data-[state=checked]:bg-studio-accent"
-          />
-          <span className="text-xs text-gray-400">All</span>
-        </div>
-      </div>
-
-      {/* Master Playback Status */}
-      <div className="mb-2 text-xs text-gray-400 text-center">
-        <strong>Play Button Will:</strong> {
-          activeTab === "playlist" && studioContext.currentPlaylist?.songs?.length > 0 
-            ? `Play playlist "${studioContext.currentPlaylist.name}"`
-            : studioContext.playMode === 'current' 
-              ? `Play ${currentTool} tool only`
-              : "Play ALL tools combined"
-        } | 
-        <strong> Status:</strong> {isPlaying ? "Playing" : "Ready"}
-        {activeTab === "playlist" && studioContext.currentPlaylist && (
-          <div className="mt-1 text-blue-300">
-            <strong>Active Playlist:</strong> {studioContext.currentPlaylist.name} | 
-            <strong> Track:</strong> {studioContext.currentPlaylistIndex + 1}/{studioContext.currentPlaylist.songs?.length || 0}
+          {/* Tool Audio Controls */}
+          <div className={`mb-3 flex items-center justify-between gap-4 p-3 bg-gray-800 rounded-lg relative ${isFloating ? 'mt-8' : ''}`}>
+            <div className="flex items-center gap-4">
+              <span className="text-xs font-medium text-gray-300">Tool Audio:</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400">Current</span>
+                <Switch
+                  checked={studioContext.playMode === 'all'}
+                  onCheckedChange={(checked) => studioContext.setPlayMode(checked ? 'all' : 'current')}
+                  className="data-[state=checked]:bg-studio-accent"
+                />
+                <span className="text-xs text-gray-400">All</span>
+              </div>
+            </div>
+            
+            {/* Tool-specific play button */}
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleToolPlay}
+                className={`h-8 w-16 text-xs ${
+                  isToolPlaying 
+                    ? "bg-red-600 hover:bg-red-500" 
+                    : "bg-green-600 hover:bg-green-500"
+                }`}
+              >
+                {isToolPlaying ? "Stop" : "Play"} Tool
+              </Button>
+            </div>
           </div>
-        )}
+
+      {/* Separated Status Display */}
+      <div className="mb-2 text-xs text-gray-400 text-center">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-blue-900/30 p-2 rounded">
+            <strong>Playlist Controls:</strong> {
+              studioContext.currentPlaylist?.songs?.length > 0 
+                ? `"${studioContext.currentPlaylist.name}" (${studioContext.currentPlaylist.songs.length} songs)`
+                : "No playlist selected"
+            }
+            <div className="text-xs mt-1 text-blue-300">
+              Status: {isPlaying ? "Playing" : "Ready"}
+            </div>
+          </div>
+          <div className="bg-green-900/30 p-2 rounded">
+            <strong>Tool Audio:</strong> {studioContext.playMode === 'current' ? `${currentTool} only` : "All tools combined"}
+            <div className="text-xs mt-1 text-green-300">
+              Status: {isToolPlaying ? "Playing" : "Ready"}
+            </div>
+          </div>
+        </div>
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -396,7 +468,7 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
                 onClick={handlePrevious}
                 variant="secondary"
                 className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-                title={activeTab === "playlist" ? "Previous Song in Playlist" : "Previous Track - Go to previous song or beat pattern"}
+                title="Previous Song in Playlist"
               >
                 <i className="fas fa-step-backward"></i>
               </Button>
@@ -436,7 +508,7 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
                 onClick={handleNext}
                 variant="secondary"
                 className="bg-gray-700 hover:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-                title={activeTab === "playlist" ? "Next Song in Playlist" : "Next Track - Go to next song or beat pattern"}
+                title="Next Song in Playlist"
               >
                 <i className="fas fa-step-forward"></i>
               </Button>
