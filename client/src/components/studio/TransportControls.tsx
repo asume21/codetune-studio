@@ -25,33 +25,47 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
   const studioContext = useContext(StudioAudioContext);
 
   const handlePlay = async () => {
-    if (!isInitialized) {
-      await initialize();
-    }
-    
-    if (isPlaying) {
-      stopPattern();
-      studioContext.stopFullSong();
-      setIsPlaying(false);
-    } else {
-      if (studioContext.playMode === 'all') {
-        // Play all tools combined
-        console.log("🎵 Playing ALL tools combined");
-        await studioContext.playFullSong();
-      } else {
-        // Play only current tool
-        console.log(`🎵 Playing current tool only: ${activeTab}`);
-        await studioContext.playCurrentAudio();
+    try {
+      if (!isInitialized) {
+        console.log("🎵 Initializing audio...");
+        await initialize();
       }
       
-      // Use the current pattern from studio context or default for beat accompaniment
-      const currentPattern = studioContext.currentPattern || {
-        kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
-        snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-        hihat: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
-      };
-      playPattern(currentPattern, studioContext.bpm || 120);
-      setIsPlaying(true);
+      if (isPlaying) {
+        console.log("🎵 Stopping playback...");
+        stopPattern();
+        studioContext.stopFullSong();
+        setIsPlaying(false);
+      } else {
+        console.log(`🎵 Starting playback - Mode: ${studioContext.playMode}, Tool: ${activeTab}`);
+        
+        // Always play the beat pattern as the base
+        const currentPattern = studioContext.currentPattern && Object.keys(studioContext.currentPattern).length > 0 
+          ? studioContext.currentPattern 
+          : {
+              kick: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
+              snare: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+              hihat: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+            };
+
+        console.log("🎵 Playing pattern:", currentPattern);
+        playPattern(currentPattern, studioContext.bpm || 120);
+
+        if (studioContext.playMode === 'all') {
+          // Play all tools combined
+          console.log("🎵 Playing ALL tools combined");
+          await studioContext.playFullSong();
+        } else {
+          // Play only current tool
+          console.log(`🎵 Playing current tool only: ${activeTab}`);
+          await studioContext.playCurrentAudio();
+        }
+        
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error("🚫 Play button error:", error);
+      setIsPlaying(false);
     }
   };
 

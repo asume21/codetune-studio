@@ -16,6 +16,7 @@ import DynamicLayering from "@/components/studio/DynamicLayering";
 import SongUploader from "@/components/studio/SongUploader";
 import { MIDIController } from "@/components/studio/MIDIController";
 import { PerformanceMetrics } from "@/components/studio/PerformanceMetrics";
+import PlaylistManager from "@/components/studio/PlaylistManager";
 import { useAudio } from "@/hooks/use-audio";
 import { AIMessageProvider } from "@/contexts/AIMessageContext";
 
@@ -42,7 +43,7 @@ export const StudioAudioContext = createContext({
   stopFullSong: () => {},
 });
 
-type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "musiccode" | "assistant" | "security" | "lyrics" | "musicmixer" | "mixer" | "layers" | "upload" | "midi" | "metrics";
+type Tab = "translator" | "beatmaker" | "melody" | "codebeat" | "musiccode" | "assistant" | "security" | "lyrics" | "musicmixer" | "mixer" | "layers" | "upload" | "midi" | "playlist" | "metrics";
 
 export default function Studio() {
   const [activeTab, setActiveTab] = useState<Tab>("beatmaker");
@@ -212,6 +213,8 @@ export default function Studio() {
         return <SongUploader />;
       case "midi":
         return <MIDIController />;
+      case "playlist":
+        return <PlaylistManager />;
       case "metrics":
         return <PerformanceMetrics />;
       default:
