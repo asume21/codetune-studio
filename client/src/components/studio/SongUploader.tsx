@@ -36,13 +36,8 @@ export default function SongUploader() {
   });
 
   const uploadSongMutation = useMutation({
-    mutationFn: async (songURL: string) => {
-      const response = await apiRequest("POST", "/api/songs/upload", {
-        songURL,
-        name: uploadContext.name || `Uploaded Song ${Date.now()}`,
-        fileSize: uploadContext.fileSize || 0,
-        format: uploadContext.format || 'unknown',
-      });
+    mutationFn: async (songData: any) => {
+      const response = await apiRequest("POST", "/api/songs/upload", songData);
       return response.json();
     },
     onSuccess: (newSong: Song) => {
@@ -129,26 +124,54 @@ export default function SongUploader() {
   };
 
   const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    console.log('🎵 Upload complete result:', result);
 
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
       const songURL = uploadedFile.uploadURL;
       
+      console.log('🎵 Uploaded file details:', {
+        name: uploadedFile.name,
+        size: uploadedFile.size,
+        type: uploadedFile.type,
+        uploadURL: songURL
+      });
 
-      // File details: name, size, type available
+      // Extract proper file information
+      const fileName = uploadedFile.name || `Uploaded Song ${Date.now()}`;
+      const fileExtension = fileName.split('.').pop()?.toLowerCase() || 'unknown';
+      const fileSize = uploadedFile.size || 0;
+      const mimeType = uploadedFile.type || '';
       
-      // Create context with file information
+      // Determine format from file extension and MIME type
+      let format = fileExtension;
+      if (mimeType.includes('audio/')) {
+        format = mimeType.split('/')[1] || fileExtension;
+      }
+      
+      // Create context with proper file information
       const fileInfo = {
-        name: uploadedFile.name || `Uploaded Song ${Date.now()}`,
-        fileSize: uploadedFile.size || 0,
-        format: uploadedFile.name?.split('.').pop()?.toLowerCase() || 'unknown',
+        name: fileName,
+        fileSize: fileSize,
+        format: format === 'unknown' ? (mimeType || 'audio') : format,
+        mimeType: mimeType
       };
       
+      console.log('🎵 Processed file info:', fileInfo);
       setUploadContext(fileInfo);
       
       if (songURL) {
-        // Include file info directly in the mutation call
-        uploadSongMutation.mutate(songURL);
+        // Upload with proper metadata
+        const songData = {
+          songURL,
+          name: fileInfo.name,
+          fileSize: fileInfo.fileSize,
+          format: fileInfo.format,
+          mimeType: fileInfo.mimeType
+        };
+        
+        console.log('🎵 Sending song data:', songData);
+        uploadSongMutation.mutate(songData);
       }
     }
   };
