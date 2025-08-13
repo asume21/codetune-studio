@@ -722,23 +722,66 @@ export async function generateBeatFromLyrics(lyrics: string, genre: string, comp
   }
 }
 
-export async function chatAssistant(message: string, context: string = ""): Promise<string> {
+export async function chatAssistant(message: string, context: string = "", conversationHistory: any[] = []): Promise<string> {
   try {
+    const systemMessage = {
+      role: "system" as const,
+      content: `You are an AI assistant for CodedSwitch Studio, specializing in music production and code development. 
+
+KEY CAPABILITIES:
+- Song analysis and vocal detection (especially collaborative tracks)
+- Beat making and melody composition
+- Code translation between languages
+- Security vulnerability scanning
+- Lyric writing and vocal coaching
+- Music-to-Code bidirectional translation
+
+MEMORY INSTRUCTIONS:
+- Remember all previous song analyses in this conversation
+- Track vocal presence, collaborators, and lyrical content from uploaded songs
+- Reference previous uploads when discussing improvements or comparisons
+- Maintain context about user's musical style and preferences
+- If user mentions lyrics but previous analysis said "no vocals", re-examine and correct
+
+CONVERSATION CONTEXT:
+${context ? `Current Context: ${context}` : ""}
+
+RECENT SONG ANALYSES:
+${conversationHistory.length > 0 ? 
+  conversationHistory
+    .filter(msg => msg.type === 'song-analysis' || msg.content.includes('Song Analysis Complete'))
+    .slice(-3) // Keep last 3 analyses
+    .map(msg => `- ${msg.content.split('\n')[0]}`)
+    .join('\n') 
+  : "No recent song analyses"}
+
+Provide helpful, accurate responses while maintaining memory of previous interactions.`
+    };
+
+    const messages: any[] = [systemMessage];
+    
+    // Add relevant conversation history (last 6 messages for context)
+    if (conversationHistory.length > 0) {
+      const recentHistory = conversationHistory.slice(-6);
+      for (const msg of recentHistory) {
+        messages.push({
+          role: msg.type === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        });
+      }
+    }
+    
+    // Add current message
+    messages.push({
+      role: "user",
+      content: message
+    });
+
     const response = await openai.chat.completions.create({
       model: "grok-2-1212",
-      messages: [
-        {
-          role: "system",
-          content: `You are an AI assistant for CodeTune Studio, helping with music production and code development. 
-          You can help with beat making, melody composition, code translation, vulnerability scanning, and lyric writing.
-          ${context ? `Context: ${context}` : ""}`
-        },
-        {
-          role: "user",
-          content: message
-        }
-      ],
+      messages: messages,
       temperature: 0.7,
+      max_tokens: 1000,
     });
 
     return response.choices[0].message.content || "I'm sorry, I couldn't process that request.";
