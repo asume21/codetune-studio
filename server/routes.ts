@@ -448,8 +448,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if object storage is properly configured
       if (!process.env.PRIVATE_OBJECT_DIR) {
         console.error("❌ PRIVATE_OBJECT_DIR not set");
-        return res.status(500).json({ 
-          error: "Object storage not configured. PRIVATE_OBJECT_DIR environment variable missing." 
+        return res.status(503).json({ 
+          error: "Object storage temporarily unavailable - PRIVATE_OBJECT_DIR not configured",
+          temporary: true,
+          retryAfter: 300
         });
       }
       
@@ -459,31 +461,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("🎵 ObjectStorageService created, getting upload URL...");
       
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      console.log("🎵 Upload URL generated successfully");
+      console.log("🎵 Upload URL generated successfully:", uploadURL ? "✅" : "❌");
       
       res.json({ uploadURL });
     } catch (error) {
       console.error("Upload URL generation error:", error);
+      console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
       
-      // Provide more specific error messages
-      if (error instanceof Error) {
-        if (error.message.includes("PRIVATE_OBJECT_DIR")) {
-          return res.status(500).json({ 
-            error: "Object storage not configured properly", 
-            details: error.message 
-          });
-        }
-        if (error.message.includes("Failed to sign object URL")) {
-          return res.status(500).json({ 
-            error: "Failed to generate signed URL - ensure running on Replit with object storage enabled", 
-            details: error.message 
-          });
-        }
+      // Check if it's a sidecar connectivity issue
+      if (error instanceof Error && error.message.includes("Failed to sign object URL")) {
+        console.log("🔧 Detected sidecar connectivity issue, checking alternatives...");
+        
+        return res.status(503).json({ 
+          error: "Upload service temporarily unavailable - object storage endpoint unreachable",
+          details: "The upload service is experiencing connectivity issues. Please try again in a few minutes.",
+          temporary: true,
+          retryAfter: 180,
+          code: "SIDECAR_UNREACHABLE"
+        });
       }
       
-      res.status(500).json({ 
-        error: "Failed to generate upload URL", 
-        details: error instanceof Error ? error.message : "Unknown error" 
+      // Check for other object storage configuration issues
+      if (error instanceof Error && error.message.includes("PRIVATE_OBJECT_DIR")) {
+        return res.status(503).json({ 
+          error: "Object storage service temporarily unavailable",
+          details: "Storage configuration issue detected. Service should recover automatically.",
+          temporary: true,
+          retryAfter: 300,
+          code: "CONFIG_ERROR"
+        });
+      }
+      
+      // Generic fallback for unknown errors
+      res.status(503).json({ 
+        error: "Upload service temporarily unavailable", 
+        details: "The file upload service is experiencing technical difficulties. Please try again later.",
+        temporary: true,
+        retryAfter: 300,
+        code: "UNKNOWN_ERROR"
       });
     }
   });
