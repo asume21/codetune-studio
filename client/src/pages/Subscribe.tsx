@@ -15,7 +15,11 @@ if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
 }
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
-const SubscribeForm = () => {
+interface SubscribeFormProps {
+  selectedTier: 'basic' | 'pro';
+}
+
+const SubscribeForm = ({ selectedTier }: SubscribeFormProps) => {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
@@ -44,9 +48,10 @@ const SubscribeForm = () => {
         variant: "destructive",
       });
     } else {
+      const tierName = selectedTier === 'basic' ? 'Basic' : 'Pro';
       toast({
-        title: "Welcome to CodedSwitch Pro!",
-        description: "Your subscription is now active. Enjoy unlimited features!",
+        title: `Welcome to CodedSwitch ${tierName}!`,
+        description: "Your subscription is now active. Enjoy your new features!",
       });
     }
     setIsLoading(false);
@@ -69,7 +74,7 @@ const SubscribeForm = () => {
         ) : (
           <>
             <Crown className="mr-2 h-4 w-4" />
-            Subscribe to CodedSwitch Pro
+            Subscribe to CodedSwitch {selectedTier === 'basic' ? 'Basic' : 'Pro'}
           </>
         )}
       </Button>
@@ -80,10 +85,11 @@ const SubscribeForm = () => {
 export default function Subscribe() {
   const [clientSecret, setClientSecret] = useState("");
   const [loading, setLoading] = useState(true);
+  const [selectedTier, setSelectedTier] = useState<'basic' | 'pro'>('pro');
 
   useEffect(() => {
-    // Create subscription as soon as the page loads
-    apiRequest("POST", "/api/create-subscription")
+    // Create subscription when tier is selected
+    apiRequest("POST", "/api/create-subscription", { tier: selectedTier })
       .then((res) => res.json())
       .then((data) => {
         setClientSecret(data.clientSecret);
@@ -93,7 +99,7 @@ export default function Subscribe() {
         console.error("Subscription creation failed:", error);
         setLoading(false);
       });
-  }, []);
+  }, [selectedTier]);
 
   if (loading) {
     return (
@@ -156,8 +162,8 @@ export default function Subscribe() {
               <div className="flex items-start space-x-3">
                 <Music className="h-5 w-5 text-purple-400 mt-0.5" />
                 <div>
-                  <h4 className="text-white font-medium">Unlimited Song Analysis</h4>
-                  <p className="text-gray-400 text-sm">Upload and analyze unlimited tracks with advanced AI detection of vocals, collaborators, and musical elements</p>
+                  <h4 className="text-white font-medium">Tiered Upload Limits</h4>
+                  <p className="text-gray-400 text-sm">Basic: 100 songs/month • Pro: Unlimited uploads with advanced AI analysis and collaboration detection</p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
@@ -177,13 +183,13 @@ export default function Subscribe() {
               <div className="flex items-start space-x-3">
                 <Shield className="h-5 w-5 text-green-400 mt-0.5" />
                 <div>
-                  <h4 className="text-white font-medium">Security Scanner</h4>
-                  <p className="text-gray-400 text-sm">Professional vulnerability detection using our advanced AI technology</p>
+                  <h4 className="text-white font-medium">Commercial Features</h4>
+                  <p className="text-gray-400 text-sm">Basic: Personal use • Pro: Commercial licensing, export rights, and professional vulnerability scanning</p>
                 </div>
               </div>
               <div className="bg-purple-900/30 p-3 rounded-lg">
                 <p className="text-purple-200 font-medium text-center">
-                  💫 Plus: Export capabilities, commercial licensing, priority processing, and more!
+                  Choose your tier: Basic for enhanced features or Pro for unlimited commercial use
                 </p>
               </div>
             </CardContent>
@@ -196,16 +202,58 @@ export default function Subscribe() {
                 <Crown className="inline mr-2 h-5 w-5 text-yellow-400" />
                 Subscribe Now
               </CardTitle>
-              <CardDescription className="text-center">
-                <span className="text-3xl font-bold text-white">$19.99</span>
-                <span className="text-gray-400">/month</span>
-                <br />
-                <span className="text-sm text-green-400">Cancel anytime • No setup fees</span>
+              <CardDescription className="text-center space-y-4">
+                {/* Basic Tier */}
+                <div 
+                  className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                    selectedTier === 'basic' 
+                      ? 'border-blue-500 bg-blue-900/30' 
+                      : 'border-blue-500/30 bg-blue-900/20 hover:bg-blue-900/25'
+                  }`}
+                  onClick={() => setSelectedTier('basic')}
+                  data-testid="tier-basic"
+                >
+                  <div className="text-lg font-semibold text-blue-400">Basic</div>
+                  <div>
+                    <span className="text-2xl font-bold text-white">$10</span>
+                    <span className="text-gray-400">/month</span>
+                  </div>
+                  <div className="text-sm text-gray-300">Enhanced features + 100 uploads/month</div>
+                  {selectedTier === 'basic' && (
+                    <div className="mt-2 text-xs text-blue-300 font-medium">✓ Selected</div>
+                  )}
+                </div>
+                
+                {/* Pro Tier - Featured */}
+                <div 
+                  className={`p-4 border rounded-lg cursor-pointer transition-all relative ${
+                    selectedTier === 'pro' 
+                      ? 'border-purple-500 bg-gradient-to-r from-purple-900/40 to-blue-900/40' 
+                      : 'border-purple-500/50 bg-gradient-to-r from-purple-900/30 to-blue-900/30 hover:from-purple-900/35 hover:to-blue-900/35'
+                  }`}
+                  onClick={() => setSelectedTier('pro')}
+                  data-testid="tier-pro"
+                >
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold">MOST POPULAR</span>
+                  </div>
+                  <div className="text-lg font-semibold text-purple-400">Pro</div>
+                  <div>
+                    <span className="text-3xl font-bold text-white">$39.99</span>
+                    <span className="text-gray-400">/month</span>
+                  </div>
+                  <div className="text-sm text-gray-300">Unlimited everything + commercial license</div>
+                  {selectedTier === 'pro' && (
+                    <div className="mt-2 text-xs text-purple-300 font-medium">✓ Selected</div>
+                  )}
+                </div>
+                
+                <div className="text-sm text-green-400">Cancel anytime • No setup fees</div>
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Elements stripe={stripePromise} options={{ clientSecret }}>
-                <SubscribeForm />
+                <SubscribeForm selectedTier={selectedTier} />
               </Elements>
             </CardContent>
           </Card>
