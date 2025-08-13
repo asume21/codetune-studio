@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import Stripe from "stripe";
 import { storage } from "./storage";
 import { ObjectStorageService } from "./objectStorage";
 import { 
@@ -24,6 +25,18 @@ import {
   insertLyricsSchema,
   insertProjectSchema 
 } from "@shared/schema";
+
+// Initialize Stripe only if keys are available
+let stripe: Stripe | null = null;
+try {
+  if (process.env.STRIPE_SECRET_KEY) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2023-10-16",
+    });
+  }
+} catch (error) {
+  console.log("Stripe not initialized - API keys not available");
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const currentUserId = "default-user"; // In a real app, this would come from authentication
@@ -960,6 +973,129 @@ Respond in JSON format with specific technical recommendations.`;
     } catch (error) {
       console.error("Mastering error:", error);
       res.status(500).json({ error: "Failed to master song" });
+    }
+  });
+
+  // Stripe Payment Routes
+  app.post("/api/create-subscription", async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ error: "Stripe not configured. Please add STRIPE_SECRET_KEY environment variable." });
+      }
+
+      if (!process.env.STRIPE_PRICE_ID) {
+        return res.status(500).json({ error: "Stripe price ID not configured. Please add STRIPE_PRICE_ID environment variable." });
+      }
+
+      const user = await storage.getUser(currentUserId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Check if user already has an active subscription
+      if (user.stripeSubscriptionId) {
+        try {
+          const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+          if (subscription.status === 'active') {
+            const latestInvoice = await stripe.invoices.retrieve(subscription.latest_invoice as string, {
+              expand: ['payment_intent']
+            });
+            
+            return res.json({
+              subscriptionId: subscription.id,
+              clientSecret: (latestInvoice.payment_intent as any)?.client_secret,
+              status: 'existing_subscription'
+            });
+          }
+        } catch (error) {
+          console.log("Previous subscription not found, creating new one");
+        }
+      }
+
+      // Create or get Stripe customer
+      let customerId = user.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: user.username,
+        });
+        customerId = customer.id;
+        await storage.updateStripeCustomerId(currentUserId, customerId);
+      }
+
+      // Create subscription
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{
+          price: process.env.STRIPE_PRICE_ID,
+        }],
+        payment_behavior: 'default_incomplete',
+        expand: ['latest_invoice.payment_intent'],
+      });
+
+      // Update user with subscription info
+      await storage.updateUserStripeInfo(currentUserId, {
+        customerId: customerId,
+        subscriptionId: subscription.id,
+        status: subscription.status,
+        tier: subscription.status === 'active' ? 'pro' : 'free'
+      });
+
+      const latestInvoice = subscription.latest_invoice as any;
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret: latestInvoice?.payment_intent?.client_secret,
+        status: 'subscription_created'
+      });
+
+    } catch (error: any) {
+      console.error("Stripe subscription creation error:", error);
+      res.status(500).json({ 
+        error: "Failed to create subscription", 
+        details: error.message 
+      });
+    }
+  });
+
+  // Get subscription status
+  app.get("/api/subscription-status", async (req, res) => {
+    try {
+      const user = await storage.getUser(currentUserId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      let subscriptionStatus = {
+        tier: user.subscriptionTier || 'free',
+        status: user.subscriptionStatus || 'inactive',
+        hasActiveSubscription: false
+      };
+
+      if (stripe && user.stripeSubscriptionId) {
+        try {
+          const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+          subscriptionStatus = {
+            tier: subscription.status === 'active' ? 'pro' : 'free',
+            status: subscription.status,
+            hasActiveSubscription: subscription.status === 'active'
+          };
+
+          // Update user status if it changed
+          if (user.subscriptionStatus !== subscription.status) {
+            await storage.updateUserStripeInfo(currentUserId, {
+              status: subscription.status,
+              tier: subscription.status === 'active' ? 'pro' : 'free'
+            });
+          }
+        } catch (error) {
+          console.log("Could not fetch subscription from Stripe, using cached data");
+        }
+      }
+
+      res.json(subscriptionStatus);
+    } catch (error) {
+      console.error("Failed to get subscription status:", error);
+      res.status(500).json({ error: "Failed to get subscription status" });
     }
   });
 
