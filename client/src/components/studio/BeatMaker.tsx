@@ -353,6 +353,7 @@ export default function BeatMaker() {
                 className="w-16 text-sm"
                 min="60"
                 max="200"
+                aria-label="BPM tempo control"
               />
             </div>
             <div className="flex items-center space-x-3">
@@ -370,6 +371,7 @@ export default function BeatMaker() {
                   min={0.3}
                   step={0.1}
                   className="w-20"
+                  aria-label="Bass drum duration control"
                 />
                 <span className="text-xs text-gray-400">2.0s</span>
               </div>
@@ -386,6 +388,7 @@ export default function BeatMaker() {
                   min={1}
                   step={1}
                   className="w-24"
+                  aria-label="AI complexity level control"
                 />
                 <span className="text-xs text-gray-400">Complex</span>
               </div>
@@ -575,6 +578,7 @@ export default function BeatMaker() {
                       max="100"
                       defaultValue="80"
                       className="w-20 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                      aria-label={`${track.name} volume control`}
                       title={`${track.name} volume control`}
                     />
                     <span className="text-xs text-gray-400 w-8">80%</span>
