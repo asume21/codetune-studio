@@ -67,12 +67,28 @@ export default function SongUploader() {
       const response = await apiRequest("POST", "/api/objects/upload", {});
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        const errorData = await response.json().catch(() => ({ error: "Unknown error", temporary: false }));
         console.error('Upload URL generation failed:', errorData);
         
+        // Check if it's a temporary service issue
+        if (response.status === 503 || errorData.temporary) {
+          const retryAfter = errorData.retryAfter || 300;
+          const minutes = Math.ceil(retryAfter / 60);
+          
+          toast({
+            title: "Upload Service Temporarily Down",
+            description: `The file upload service is temporarily unavailable. Please try again in ${minutes} minute${minutes > 1 ? 's' : ''}.`,
+            variant: "destructive",
+            duration: 8000,
+          });
+          
+          throw new Error(`Service temporarily unavailable (retry in ${minutes} minutes)`);
+        }
+        
+        // For other errors, show generic message
         toast({
-          title: "Upload Service Temporarily Unavailable",
-          description: "Object storage is temporarily unavailable. Please try again in a few moments.",
+          title: "Upload Service Error",
+          description: "Unable to connect to upload service. Please refresh the page and try again.",
           variant: "destructive",
         });
         
@@ -82,8 +98,15 @@ export default function SongUploader() {
       const data = await response.json();
       
       if (!data.uploadURL) {
+        toast({
+          title: "Upload Configuration Error",
+          description: "Server did not provide upload URL. Please contact support if this persists.",
+          variant: "destructive",
+        });
         throw new Error("No upload URL received from server");
       }
+      
+      console.log("✅ Upload URL received successfully");
       
       return {
         method: "PUT" as const,
@@ -92,11 +115,14 @@ export default function SongUploader() {
     } catch (error) {
       console.error('Upload parameters error:', error);
       
-      toast({
-        title: "Upload Setup Failed",
-        description: "Unable to initialize file upload. Please refresh and try again.",
-        variant: "destructive",
-      });
+      // Don't show duplicate toast if we already showed one above
+      if (!(error instanceof Error && error.message.includes("temporarily unavailable"))) {
+        toast({
+          title: "Upload Setup Failed",
+          description: "Unable to initialize file upload. Please refresh and try again.",
+          variant: "destructive",
+        });
+      }
       
       throw error;
     }
