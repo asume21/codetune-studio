@@ -880,78 +880,7 @@ Generate functional, executable code that reflects the musical composition's str
   }
 }
 
-// Calculate similarity between two code strings
-export function calculateCodeSimilarity(code1: string, code2: string): number {
-  // Advanced similarity calculation using multiple metrics
-  const normalize = (str: string) => {
-    if (typeof str !== 'string') return '';
-    return str
-      .replace(/\/\/.*$/gm, '') // Remove single-line comments
-      .replace(/\/\*[\s\S]*?\*\//g, '') // Remove multi-line comments
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .trim()
-      .toLowerCase();
-  };
-  
-  const norm1 = normalize(code1);
-  const norm2 = normalize(code2);
-  
-  if (norm1 === norm2) return 100;
-  if (!norm1 || !norm2) return 0;
-  
-  // Use Levenshtein distance for accurate similarity
-  const distance = levenshteinDistance(norm1, norm2);
-  const maxLength = Math.max(norm1.length, norm2.length);
-  const similarity = ((maxLength - distance) / maxLength) * 100;
-  
-  // Also check structural similarity (keywords, patterns)
-  const structuralSimilarity = calculateStructuralSimilarity(norm1, norm2);
-  
-  // Weighted average: 70% character similarity, 30% structural similarity
-  const finalSimilarity = (similarity * 0.7) + (structuralSimilarity * 0.3);
-  
-  return Math.round(finalSimilarity * 100) / 100;
-}
 
-function levenshteinDistance(str1: string, str2: string): number {
-  const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
-  
-  for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
-  for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
-  
-  for (let j = 1; j <= str2.length; j++) {
-    for (let i = 1; i <= str1.length; i++) {
-      const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
-      matrix[j][i] = Math.min(
-        matrix[j][i - 1] + 1, // insertion
-        matrix[j - 1][i] + 1, // deletion
-        matrix[j - 1][i - 1] + indicator // substitution
-      );
-    }
-  }
-  
-  return matrix[str2.length][str1.length];
-}
-
-function calculateStructuralSimilarity(code1: string, code2: string): number {
-  const keywords = ['class', 'function', 'constructor', 'if', 'for', 'while', 'return', 'this', 'new', 'const', 'let', 'var'];
-  
-  let matches = 0;
-  let total = 0;
-  
-  for (const keyword of keywords) {
-    const count1 = (code1.match(new RegExp(keyword, 'g')) || []).length;
-    const count2 = (code2.match(new RegExp(keyword, 'g')) || []).length;
-    
-    if (count1 > 0 || count2 > 0) {
-      total++;
-      if (count1 === count2) matches++;
-      else if (Math.abs(count1 - count2) <= 1) matches += 0.5; // Partial credit for close matches
-    }
-  }
-  
-  return total > 0 ? (matches / total) * 100 : 0;
-}
 
 function getFrameworkForLanguage(language: string): string {
   const frameworks: { [key: string]: string } = {
