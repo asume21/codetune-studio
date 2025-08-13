@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { SubscriptionButton } from "./SubscriptionButton";
 
 export default function Header() {
   return (
@@ -88,6 +89,7 @@ export default function Header() {
       </div>
       
       <div className="flex items-center space-x-4">
+        <SubscriptionButton />
         <Button className="bg-studio-accent hover:bg-blue-500 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
           <i className="fas fa-save mr-2"></i>Save Project
         </Button>
