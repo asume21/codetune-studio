@@ -29,11 +29,16 @@ export function SubscriptionButton() {
   }
 
   if (subscriptionStatus?.hasActiveSubscription) {
+    const tierDisplay = subscriptionStatus.tier === 'basic' ? 'Basic' : 'Pro';
+    const tierColor = subscriptionStatus.tier === 'basic' 
+      ? "bg-gradient-to-r from-blue-600 to-cyan-600" 
+      : "bg-gradient-to-r from-purple-600 to-blue-600";
+    
     return (
       <div className="flex items-center space-x-2">
-        <Badge variant="secondary" className="bg-gradient-to-r from-purple-600 to-blue-600 text-white" data-testid="badge-pro-active">
+        <Badge variant="secondary" className={`${tierColor} text-white`} data-testid="badge-subscription-active">
           <Crown className="h-3 w-3 mr-1" />
-          CodedSwitch Pro
+          CodedSwitch {tierDisplay}
         </Badge>
       </div>
     );
@@ -47,7 +52,7 @@ export function SubscriptionButton() {
       data-testid="button-upgrade-pro"
     >
       <Zap className="h-4 w-4 mr-2" />
-      Upgrade to Pro
+      Choose Plan
     </Button>
   );
 }
