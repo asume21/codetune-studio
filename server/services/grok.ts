@@ -26,6 +26,9 @@ const openai = new OpenAI({
   timeout: 30000
 });
 
+// Export the openai instance for use in other modules
+export { openai };
+
 export async function translateCode(sourceCode: string, sourceLanguage: string, targetLanguage: string): Promise<string> {
   try {
     const response = await openai.chat.completions.create({
