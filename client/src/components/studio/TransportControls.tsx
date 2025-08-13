@@ -441,6 +441,7 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
                 setMasterVolume(newVolume / 100);
               }}
               className="flex-1 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
+              aria-label={`Master volume control: ${volume}%`}
               title={`Volume: ${volume}%`}
             />
             <span className="text-xs text-gray-300 w-8">{volume}%</span>
@@ -461,6 +462,7 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
                   checked={studioContext.playMode === 'all'}
                   onCheckedChange={(checked) => studioContext.setPlayMode(checked ? 'all' : 'current')}
                   className="data-[state=checked]:bg-studio-accent"
+                  aria-label="Toggle between current tool audio and all tools audio"
                 />
                 <span className="text-xs text-gray-400">All</span>
               </div>
@@ -619,7 +621,7 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
                 if (playlist) handleSetActivePlaylist(playlist);
               }}
             >
-              <SelectTrigger className="w-32 h-8 bg-gray-700 border-gray-600 text-xs">
+              <SelectTrigger className="w-32 h-8 bg-gray-700 border-gray-600 text-xs" aria-label="Select playlist">
                 <SelectValue placeholder="Select..." />
               </SelectTrigger>
               <SelectContent className="bg-gray-800 border-gray-600">
@@ -649,6 +651,7 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
                   onChange={(e) => setNewPlaylistName(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleCreatePlaylist()}
                   className="bg-gray-700 border-gray-600"
+                  aria-label="New playlist name"
                 />
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
