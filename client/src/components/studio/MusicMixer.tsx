@@ -273,6 +273,7 @@ export default function MusicMixer() {
               className="w-16 px-2 py-1 text-sm border rounded"
               min="60"
               max="200"
+              aria-label="BPM tempo control"
             />
           </div>
         </div>
@@ -372,6 +373,7 @@ export default function MusicMixer() {
                     checked={track.enabled}
                     onCheckedChange={() => toggleTrack(track.id)}
                     disabled={!track.hasData}
+                    aria-label={`Toggle ${track.name} track`}
                   />
                   
                   {track.hasData && (
@@ -394,6 +396,7 @@ export default function MusicMixer() {
                       max={100}
                       step={1}
                       className="w-full"
+                      aria-label={`${track.name} track volume control`}
                     />
                   </div>
                   <span className="text-sm text-muted-foreground w-8">{track.volume}%</span>
