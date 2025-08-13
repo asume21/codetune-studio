@@ -443,12 +443,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Song upload and analysis routes
   app.post("/api/objects/upload", async (req, res) => {
     try {
+      console.log("🎵 Upload URL request received");
+      
+      // Check if object storage is properly configured
+      if (!process.env.PRIVATE_OBJECT_DIR) {
+        console.error("❌ PRIVATE_OBJECT_DIR not set");
+        return res.status(500).json({ 
+          error: "Object storage not configured. PRIVATE_OBJECT_DIR environment variable missing." 
+        });
+      }
+      
+      console.log("🎵 PRIVATE_OBJECT_DIR:", process.env.PRIVATE_OBJECT_DIR);
+      
       const objectStorageService = new ObjectStorageService();
+      console.log("🎵 ObjectStorageService created, getting upload URL...");
+      
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      console.log("🎵 Upload URL generated successfully");
+      
       res.json({ uploadURL });
     } catch (error) {
       console.error("Upload URL generation error:", error);
-      res.status(500).json({ error: "Failed to generate upload URL" });
+      
+      // Provide more specific error messages
+      if (error instanceof Error) {
+        if (error.message.includes("PRIVATE_OBJECT_DIR")) {
+          return res.status(500).json({ 
+            error: "Object storage not configured properly", 
+            details: error.message 
+          });
+        }
+        if (error.message.includes("Failed to sign object URL")) {
+          return res.status(500).json({ 
+            error: "Failed to generate signed URL - ensure running on Replit with object storage enabled", 
+            details: error.message 
+          });
+        }
+      }
+      
+      res.status(500).json({ 
+        error: "Failed to generate upload URL", 
+        details: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
 
