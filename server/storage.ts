@@ -26,6 +26,8 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateStripeCustomerId(userId: string, customerId: string): Promise<User>;
+  updateUserStripeInfo(userId: string, data: { customerId?: string; subscriptionId?: string; status?: string; tier?: string }): Promise<User>;
 
   // Projects
   getProject(id: string): Promise<Project | undefined>;
@@ -116,6 +118,10 @@ export class MemStorage implements IStorage {
       id: "default-user",
       username: "CodeTuneUser",
       email: "user@codetune.studio",
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      subscriptionStatus: null,
+      subscriptionTier: "free",
       createdAt: new Date(),
     };
     this.users.set(defaultUser.id, defaultUser);
@@ -135,10 +141,41 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      subscriptionStatus: null,
+      subscriptionTier: "free",
       createdAt: new Date(),
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async updateStripeCustomerId(userId: string, customerId: string): Promise<User> {
+    const user = this.users.get(userId);
+    if (!user) throw new Error("User not found");
+    
+    const updated: User = {
+      ...user,
+      stripeCustomerId: customerId,
+    };
+    this.users.set(userId, updated);
+    return updated;
+  }
+
+  async updateUserStripeInfo(userId: string, data: { customerId?: string; subscriptionId?: string; status?: string; tier?: string }): Promise<User> {
+    const user = this.users.get(userId);
+    if (!user) throw new Error("User not found");
+    
+    const updated: User = {
+      ...user,
+      ...(data.customerId && { stripeCustomerId: data.customerId }),
+      ...(data.subscriptionId && { stripeSubscriptionId: data.subscriptionId }),
+      ...(data.status && { subscriptionStatus: data.status }),
+      ...(data.tier && { subscriptionTier: data.tier }),
+    };
+    this.users.set(userId, updated);
+    return updated;
   }
 
   // Projects
@@ -279,6 +316,8 @@ export class MemStorage implements IStorage {
       ...insertLyrics,
       id,
       userId,
+      genre: insertLyrics.genre || null,
+      rhymeScheme: insertLyrics.rhymeScheme || null,
       createdAt: new Date(),
     };
     this.lyrics.set(id, lyrics);
@@ -300,6 +339,8 @@ export class MemStorage implements IStorage {
       ...insertSong,
       id,
       userId,
+      duration: insertSong.duration || null,
+      format: insertSong.format || null,
       uploadDate: new Date(),
       lastPlayed: null,
       playCount: 0,
@@ -372,6 +413,8 @@ export class MemStorage implements IStorage {
       ...insertPlaylist,
       id,
       userId,
+      description: insertPlaylist.description || null,
+      isPublic: insertPlaylist.isPublic || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
