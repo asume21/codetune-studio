@@ -16,7 +16,8 @@ Preferred communication style: Simple, everyday language.
 - **PAYMENT INFRASTRUCTURE**: Robust backend API routes for subscription creation, status checking, and customer management
 - **DATABASE SCHEMA**: Enhanced user model with Stripe customer IDs, subscription status, and tier management
 - **PRODUCTION READY**: All payment components deployed to GitHub with comprehensive error handling and security
-- **MONETIZATION ACTIVE**: CodedSwitch now ready for commercial revenue with $19.99/month Pro subscriptions
+- **TIERED PRICING STRUCTURE**: Free tier, $10/month Basic (100 uploads), and $39.99/month Pro (unlimited + commercial licensing)
+- **MONETIZATION ACTIVE**: CodedSwitch now ready for commercial revenue with flexible pricing options
 
 ## AI ANALYSIS & MEMORY ENHANCEMENT COMPLETE (August 13, 2025)
 - **ADVANCED VOCAL DETECTION**: Enhanced AI analysis with specific focus on collaborative tracks, multiple vocalists, and featured artists
