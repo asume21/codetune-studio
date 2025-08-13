@@ -11,7 +11,6 @@ export default function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
     { id: "musiccode", icon: "fas fa-code-branch", label: "Music→Code" },
     { id: "assistant", icon: "fas fa-robot", label: "AI" },
     { id: "security", icon: "fas fa-shield-alt", label: "Security" },
-    { id: "upload", icon: "fas fa-cloud-upload-alt", label: "Upload" },
   ];
 
   return (
