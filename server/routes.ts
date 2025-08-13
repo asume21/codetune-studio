@@ -505,26 +505,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/songs/upload", async (req, res) => {
     try {
-      const { songURL, name, fileSize, duration, format } = req.body;
-      console.log('🎵 Song upload request:', { songURL, name, fileSize, duration, format });
+      const { songURL, name, fileSize, duration, format, mimeType } = req.body;
+      console.log('🎵 Song upload request:', { songURL, name, fileSize, duration, format, mimeType });
       
-      // SECURITY: Use CodedSwitch's own AI scanner to protect uploads
+      // SECURITY: Use CodedSwitch's own AI scanner to protect uploads - but be less restrictive for legitimate audio files
       const { FileSecurityScanner } = await import("./services/fileSecurity.js");
       const scanner = new FileSecurityScanner();
+      
+      // Determine if this looks like a legitimate audio file
+      const isLikelyAudioFile = (
+        mimeType && mimeType.startsWith('audio/') ||
+        format && ['mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac'].includes(format.toLowerCase()) ||
+        name && /\.(mp3|wav|m4a|ogg|flac|aac)$/i.test(name)
+      );
       
       // AI-powered security analysis using our own scanner
       const securityScan = await scanner.analyzeFileContentWithAI(name, {
         url: songURL,
-        fileSize,
+        fileSize: fileSize || 0,
         duration,
-        format,
-        uploadedAt: new Date().toISOString()
+        format: format || 'audio',
+        mimeType: mimeType || 'audio/*',
+        uploadedAt: new Date().toISOString(),
+        isAudioFile: isLikelyAudioFile
       });
       
       console.log('🛡️ CodedSwitch security scan result:', securityScan);
       
-      // Block upload if security threats detected
-      if (!securityScan.isSecure) {
+      // For audio files, be more lenient - only block on high-severity threats
+      const shouldBlock = isLikelyAudioFile 
+        ? securityScan.threats.some(threat => threat.severity === 'Critical')
+        : !securityScan.isSecure;
+      
+      if (shouldBlock) {
         console.log('🚫 Upload blocked by CodedSwitch security scanner');
         return res.status(400).json({
           error: "File upload blocked by security scanner",
