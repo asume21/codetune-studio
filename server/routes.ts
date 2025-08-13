@@ -983,8 +983,20 @@ Respond in JSON format with specific technical recommendations.`;
         return res.status(500).json({ error: "Stripe not configured. Please add STRIPE_SECRET_KEY environment variable." });
       }
 
-      if (!process.env.STRIPE_PRICE_ID) {
-        return res.status(500).json({ error: "Stripe price ID not configured. Please add STRIPE_PRICE_ID environment variable." });
+      // Support both Basic ($10) and Pro ($39.99) tiers
+      const { tier = 'pro' } = req.body; // Default to pro tier
+      let priceId;
+      
+      if (tier === 'basic') {
+        priceId = process.env.STRIPE_PRICE_ID_BASIC;
+        if (!priceId) {
+          return res.status(500).json({ error: "Stripe Basic price ID not configured. Please add STRIPE_PRICE_ID_BASIC environment variable." });
+        }
+      } else {
+        priceId = process.env.STRIPE_PRICE_ID_PRO || process.env.STRIPE_PRICE_ID;
+        if (!priceId) {
+          return res.status(500).json({ error: "Stripe Pro price ID not configured. Please add STRIPE_PRICE_ID_PRO environment variable." });
+        }
       }
 
       const user = await storage.getUser(currentUserId);
@@ -1027,7 +1039,7 @@ Respond in JSON format with specific technical recommendations.`;
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{
-          price: process.env.STRIPE_PRICE_ID,
+          price: priceId,
         }],
         payment_behavior: 'default_incomplete',
         expand: ['latest_invoice.payment_intent'],
@@ -1038,7 +1050,7 @@ Respond in JSON format with specific technical recommendations.`;
         customerId: customerId,
         subscriptionId: subscription.id,
         status: subscription.status,
-        tier: subscription.status === 'active' ? 'pro' : 'free'
+        tier: subscription.status === 'active' ? tier : 'free'
       });
 
       const latestInvoice = subscription.latest_invoice as any;
@@ -1074,17 +1086,28 @@ Respond in JSON format with specific technical recommendations.`;
       if (stripe && user.stripeSubscriptionId) {
         try {
           const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+          // Determine tier from subscription metadata or price
+          let currentTier = 'free';
+          if (subscription.status === 'active') {
+            const priceId = subscription.items.data[0]?.price?.id;
+            if (priceId === process.env.STRIPE_PRICE_ID_BASIC) {
+              currentTier = 'basic';
+            } else if (priceId === process.env.STRIPE_PRICE_ID_PRO || priceId === process.env.STRIPE_PRICE_ID) {
+              currentTier = 'pro';
+            }
+          }
+          
           subscriptionStatus = {
-            tier: subscription.status === 'active' ? 'pro' : 'free',
+            tier: currentTier,
             status: subscription.status,
             hasActiveSubscription: subscription.status === 'active'
           };
 
           // Update user status if it changed
-          if (user.subscriptionStatus !== subscription.status) {
+          if (user.subscriptionStatus !== subscription.status || user.subscriptionTier !== currentTier) {
             await storage.updateUserStripeInfo(currentUserId, {
               status: subscription.status,
-              tier: subscription.status === 'active' ? 'pro' : 'free'
+              tier: currentTier
             });
           }
         } catch (error) {
