@@ -332,6 +332,7 @@ export function MIDIController() {
                     min={0}
                     step={1}
                     className="w-full"
+                    aria-label="Lowest MIDI note range"
                   />
                   <div className="text-xs text-gray-400 text-center">Note {settings?.noteRange?.min || 21}</div>
                 </div>
@@ -344,6 +345,7 @@ export function MIDIController() {
                     min={0}
                     step={1}
                     className="w-full"
+                    aria-label="Highest MIDI note range"
                   />
                   <div className="text-xs text-gray-400 text-center">Note {settings?.noteRange?.max || 108}</div>
                 </div>
@@ -361,6 +363,7 @@ export function MIDIController() {
                 <Switch
                   checked={settings?.sustainPedal !== false}
                   onCheckedChange={(checked) => updateSettings({ sustainPedal: checked })}
+                  aria-label="Enable sustain pedal support"
                 />
               </div>
               
@@ -369,6 +372,7 @@ export function MIDIController() {
                 <Switch
                   checked={settings?.pitchBend !== false}
                   onCheckedChange={(checked) => updateSettings({ pitchBend: checked })}
+                  aria-label="Enable pitch bend support"
                 />
               </div>
               
@@ -377,6 +381,7 @@ export function MIDIController() {
                 <Switch
                   checked={settings?.modulation !== false}
                   onCheckedChange={(checked) => updateSettings({ modulation: checked })}
+                  aria-label="Enable modulation wheel support"
                 />
               </div>
               
@@ -385,6 +390,7 @@ export function MIDIController() {
                 <Switch
                   checked={settings?.autoConnect !== false}
                   onCheckedChange={(checked) => updateSettings({ autoConnect: checked })}
+                  aria-label="Auto-connect new MIDI devices"
                 />
               </div>
             </div>
