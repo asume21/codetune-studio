@@ -674,6 +674,8 @@ export default function TransportControls({ currentTool = "Beat Maker", activeTa
               value={volume}
               onChange={handleVolumeChange}
               className="w-20 h-2 bg-gray-700 rounded-lg appearance-none slider"
+              aria-label={`Playlist volume control: ${volume}%`}
+              title={`Playlist volume: ${volume}%`}
             />
             <span className="text-sm text-gray-400 w-8">{volume}%</span>
           </div>
