@@ -330,7 +330,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
+  // Real circular translation testing
+  app.post("/api/test-circular-translation", async (req, res) => {
+    try {
+      const { runCircularTranslationTests } = await import("./services/translationTester.js");
+      console.log('🧪 Starting real circular translation tests...');
+      
+      const testResults = await runCircularTranslationTests();
+      
+      res.json({
+        success: true,
+        ...testResults,
+        message: `Completed ${testResults.totalTests} tests with ${testResults.averageAccuracy}% average accuracy`
+      });
+    } catch (error: any) {
+      console.error("Translation testing error:", error);
+      res.status(500).json({ 
+        success: false,
+        error: "Failed to run circular translation tests",
+        details: error.message 
+      });
+    }
+  });
 
   // Dynamic instrument layering
   app.post("/api/layers/generate", async (req, res) => {
