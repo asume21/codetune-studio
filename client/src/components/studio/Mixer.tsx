@@ -220,6 +220,7 @@ export default function Mixer() {
                         max={12}
                         step={1}
                         className="h-1"
+                        aria-label={`${channel.name} high EQ control`}
                       />
                     </div>
                   </div>
@@ -233,6 +234,7 @@ export default function Mixer() {
                         max={12}
                         step={1}
                         className="h-1"
+                        aria-label={`${channel.name} mid EQ control`}
                       />
                     </div>
                   </div>
@@ -246,6 +248,7 @@ export default function Mixer() {
                         max={12}
                         step={1}
                         className="h-1"
+                        aria-label={`${channel.name} low EQ control`}
                       />
                     </div>
                   </div>
@@ -266,6 +269,7 @@ export default function Mixer() {
                         max={100}
                         step={1}
                         className="h-1"
+                        aria-label={`${channel.name} reverb send level`}
                       />
                     </div>
                   </div>
@@ -279,6 +283,7 @@ export default function Mixer() {
                         max={100}
                         step={1}
                         className="h-1"
+                        aria-label={`${channel.name} delay send level`}
                       />
                     </div>
                   </div>
@@ -295,6 +300,7 @@ export default function Mixer() {
                   max={50}
                   step={1}
                   className="w-full h-1"
+                  aria-label={`${channel.name} pan control`}
                 />
                 <div className="text-xs text-center mt-1">
                   {channel.pan === 0 ? "CENTER" : channel.pan > 0 ? `R+${channel.pan}` : `L${channel.pan}`}
@@ -318,6 +324,12 @@ export default function Mixer() {
                   <div 
                     className="absolute w-6 h-3 bg-studio-accent rounded-full cursor-pointer transition-all"
                     style={{ bottom: `${channel.volume}%`, transform: 'translateY(50%)' }}
+                    role="slider"
+                    aria-label={`${channel.name} volume fader`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={channel.volume}
+                    tabIndex={0}
                     onMouseDown={(e) => {
                       const slider = e.currentTarget.parentElement!;
                       const rect = slider.getBoundingClientRect();
