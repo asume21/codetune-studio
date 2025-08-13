@@ -10,10 +10,9 @@ import { Loader2, Music, Code, Zap, Shield, Star, Crown } from "lucide-react";
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
-}
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY 
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
+  : null;
 
 interface SubscribeFormProps {
   selectedTier: 'basic' | 'pro';
@@ -101,6 +100,39 @@ export default function Subscribe() {
       });
   }, [selectedTier]);
 
+  // Show setup message if Stripe is not configured
+  if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-gray-800/50 border-gray-700">
+          <CardHeader className="text-center">
+            <CardTitle className="text-white">Payment Setup Required</CardTitle>
+            <CardDescription className="text-gray-400">
+              Configure your Stripe keys to enable subscriptions
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-sm text-gray-300">
+              <p>To enable payments, you need to:</p>
+              <ol className="list-decimal list-inside mt-2 space-y-1">
+                <li>Set up your Stripe account</li>
+                <li>Create Basic ($10) and Pro ($39.99) products</li>
+                <li>Add your Stripe keys to environment variables</li>
+              </ol>
+            </div>
+            <Button 
+              onClick={() => window.location.href = '/studio'} 
+              className="w-full"
+              data-testid="button-back-studio"
+            >
+              Back to Studio
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center p-4">
@@ -170,7 +202,7 @@ export default function Subscribe() {
                 <Code className="h-5 w-5 text-blue-400 mt-0.5" />
                 <div>
                   <h4 className="text-white font-medium">Bidirectional Translation</h4>
-                  <p className="text-gray-400 text-sm">Convert code to music AND music back to functional code with 98.32% accuracy</p>
+                  <p className="text-gray-400 text-sm">Convert code to music AND music back to functional code - the world's first bidirectional translation</p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
