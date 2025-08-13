@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Studio from "@/pages/studio";
 import Subscribe from "@/pages/Subscribe";
+import TestCircular from "@/pages/TestCircular";
 
 function Router() {
   return (
@@ -13,6 +14,7 @@ function Router() {
       <Route path="/" component={Studio} />
       <Route path="/studio" component={Studio} />
       <Route path="/subscribe" component={Subscribe} />
+      <Route path="/test-circular" component={TestCircular} />
       <Route component={NotFound} />
     </Switch>
   );
