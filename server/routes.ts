@@ -585,48 +585,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Song ID or name is required" });
       }
 
-      // Advanced AI analysis prompt for comprehensive feedback
-      const analysisPrompt = `Analyze this uploaded song "${songName}" and provide actionable feedback for improvement and creative opportunities:
+      // Enhanced AI analysis prompt with specific focus on vocal and lyric detection
+      const analysisPrompt = `Analyze this uploaded song "${songName}" with special attention to vocal content and collaborative artists. Provide comprehensive analysis:
 
-**1. TECHNICAL ANALYSIS:**
-- BPM and timing accuracy assessment
-- Key signature and harmonic analysis
-- Mix quality and production evaluation
-- Audio clarity and mastering review
+**1. VOCAL & LYRIC DETECTION (Critical - Analyze Carefully):**
+- Are there ANY vocals present in this song? (Yes/No - be definitive)
+- If YES, describe ALL vocal elements heard:
+  * Main vocalist(s) - how many different voices?
+  * Background vocals, harmonies, or ad-libs?
+  * Featured artists or collaborators?
+  * Rap verses vs sung melodies?
+  * Auto-tuned or processed vocals?
+- Lyric content analysis:
+  * Can you make out any words or phrases?
+  * Language(s) used in vocals
+  * Vocal style (rap, singing, talking, etc.)
+  * Emotional delivery and tone
+- Vocal quality rating (1-10) and improvement suggestions
 
-**2. LYRICAL ANALYSIS (if vocals present):**
-- Lyric quality and creativity rating (1-10)
-- Rhyme scheme effectiveness
-- Emotional impact and storytelling strength
-- Specific suggestions for lyrical improvements
-- Vocal delivery and style assessment
+**2. TECHNICAL ANALYSIS:**
+- BPM estimation (be specific)
+- Key signature identification
+- Genre classification (be precise - subgenres welcome)
+- Production quality assessment
+- Mix and mastering evaluation
 
-**3. IMPROVEMENT SUGGESTIONS:**
-- Specific areas that need work
-- Mix/master enhancement recommendations
-- Arrangement suggestions (add/remove elements)
-- Performance improvements needed
-- Creative expansion opportunities
+**3. COLLABORATION ANALYSIS:**
+- Evidence of multiple artists/collaborators?
+- Different vocal styles suggesting featured artists?
+- Production credits that can be inferred from style?
+- Cross-genre collaboration elements?
 
-**4. REMIX & EDITING OPTIONS:**
-- Could lyrics be removed for instrumental version?
-- What different beats/rhythms would complement this?
-- Instruments that could be added/layered
-- Genre crossover possibilities
-- Tempo variation suggestions
+**4. MUSICAL ELEMENTS:**
+- Instruments clearly identifiable in the mix
+- Song structure breakdown (intro, verse, chorus, etc.)
+- Mood and energy level
+- Commercial viability assessment
 
-**5. CREATIVE OPPORTUNITIES:**
-- Similar successful songs for reference
-- Collaboration suggestions
-- Market potential assessment
-- Playlist placement recommendations
+**5. ACTIONABLE FEEDBACK:**
+- Specific improvements for vocal performance
+- Mix suggestions for better vocal clarity
+- Collaboration opportunities based on style
+- Market positioning recommendations
 
-**6. ACTIONABLE NEXT STEPS:**
-- Priority improvements to make first
-- Tools/techniques to achieve goals
-- Timeline for implementation
-
-Provide honest, constructive feedback that helps the artist improve while identifying commercial and creative potential.`;
+IMPORTANT: Be extremely thorough in vocal detection. Even subtle background vocals, harmonies, or processed voices should be noted. If you detect ANY human voice sounds, report them as vocals present.`;
 
       console.log('🎵 Sending enhanced analysis request to AI for:', songName);
       
@@ -635,11 +637,41 @@ Provide honest, constructive feedback that helps the artist improve while identi
 
       console.log('🎵 Enhanced AI Analysis completed, length:', analysis_notes.length);
 
-      // Extract key information for database storage
+      // Enhanced extraction with better vocal/lyric detection
       const bpmMatch = analysis_notes.match(/(\d+)\s*BPM/i);
       const keyMatch = analysis_notes.match(/([A-G][#b]?\s*(Major|Minor|major|minor))/i);
       const genreMatch = analysis_notes.match(/Genre[:\s]*([^\n\r,\.]+)/i);
       const moodMatch = analysis_notes.match(/Mood[:\s]*([^\n\r,\.]+)/i);
+      
+      // Enhanced vocal detection patterns
+      const vocalDetection = analysis_notes.toLowerCase();
+      const hasVocals = vocalDetection.includes('vocals present: yes') || 
+                       vocalDetection.includes('vocals: yes') ||
+                       vocalDetection.includes('singing') ||
+                       vocalDetection.includes('rapper') ||
+                       vocalDetection.includes('vocalist') ||
+                       vocalDetection.includes('lyrics') ||
+                       vocalDetection.includes('voice') ||
+                       vocalDetection.includes('vocal') ||
+                       vocalDetection.includes('harmony') ||
+                       vocalDetection.includes('ad-lib') ||
+                       vocalDetection.includes('featured artist') ||
+                       vocalDetection.includes('collaboration');
+
+      // Extract instruments with better vocal detection
+      let instruments = ["drums", "bass"];
+      if (hasVocals) {
+        instruments.push("vocals");
+        console.log('🎵 Vocals detected in analysis for:', songName);
+      } else {
+        console.log('🎵 No vocals detected in analysis for:', songName);
+      }
+      
+      // Add other instruments based on analysis
+      if (analysis_notes.toLowerCase().includes('guitar')) instruments.push("guitar");
+      if (analysis_notes.toLowerCase().includes('piano') || analysis_notes.toLowerCase().includes('keys')) instruments.push("piano");
+      if (analysis_notes.toLowerCase().includes('synth')) instruments.push("synth");
+      if (analysis_notes.toLowerCase().includes('strings')) instruments.push("strings");
 
       const analysis = {
         title: songName,
@@ -656,7 +688,8 @@ Provide honest, constructive feedback that helps the artist improve while identi
           bridge: "2:15-2:30",
           outro: "2:30-end"
         },
-        instruments: ["drums", "bass", "guitar", "vocals", "synth"],
+        instruments: instruments,
+        hasVocals: hasVocals,
         analysis_notes: analysis_notes
       };
 
@@ -687,11 +720,18 @@ Provide honest, constructive feedback that helps the artist improve while identi
     }
   });
 
-  // AI Assistant Routes
+  // AI Assistant Routes with enhanced memory
   app.post("/api/assistant/chat", async (req, res) => {
     try {
-      const { message, context } = req.body;
-      const response = await chatAssistant(message, context);
+      const { message, context, conversationHistory } = req.body;
+      console.log('💬 AI chat request with history:', conversationHistory?.length || 0, 'messages');
+      
+      const response = await chatAssistant(
+        message, 
+        context || "CodedSwitch Studio", 
+        conversationHistory || []
+      );
+      
       res.json({ response });
     } catch (error) {
       console.error("AI assistant error:", error);
